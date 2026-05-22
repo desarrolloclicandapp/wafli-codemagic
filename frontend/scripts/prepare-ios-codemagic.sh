@@ -6,6 +6,7 @@ IOS_DIR="$ROOT_DIR/ios"
 PODFILE="$IOS_DIR/App/Podfile"
 ICON_SOURCE="$ROOT_DIR/resources/icon.png"
 APPICON_DIR="$IOS_DIR/App/App/Assets.xcassets/AppIcon.appiconset"
+INFO_PLIST="$IOS_DIR/App/App/Info.plist"
 
 if [ ! -d "$IOS_DIR" ]; then
   echo "Missing frontend/ios. Run: npx cap add ios"
@@ -76,11 +77,16 @@ if [ -f "$ICON_SOURCE" ]; then
 JSON
 fi
 
-if [ -f "$IOS_DIR/App/App/Info.plist" ] && [ -n "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then
-  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$IOS_DIR/App/App/Info.plist" 2>/dev/null || true
-  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$IOS_DIR/App/App/Info.plist" 2>/dev/null || true
-  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$IOS_DIR/App/App/Info.plist" 2>/dev/null || true
-  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $GOOGLE_REVERSED_CLIENT_ID" "$IOS_DIR/App/App/Info.plist" 2>/dev/null || true
+if [ -f "$INFO_PLIST" ]; then
+  /usr/libexec/PlistBuddy -c "Delete :ITSAppUsesNonExemptEncryption" "$INFO_PLIST" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$INFO_PLIST"
+fi
+
+if [ -f "$INFO_PLIST" ] && [ -n "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$INFO_PLIST" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$INFO_PLIST" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$INFO_PLIST" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $GOOGLE_REVERSED_CLIENT_ID" "$INFO_PLIST" 2>/dev/null || true
 fi
 
 echo "iOS project prepared for Codemagic."
