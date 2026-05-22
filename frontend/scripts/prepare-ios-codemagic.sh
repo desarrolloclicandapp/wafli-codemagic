@@ -7,6 +7,8 @@ PODFILE="$IOS_DIR/App/Podfile"
 ICON_SOURCE="$ROOT_DIR/resources/icon.png"
 APPICON_DIR="$IOS_DIR/App/App/Assets.xcassets/AppIcon.appiconset"
 INFO_PLIST="$IOS_DIR/App/App/Info.plist"
+GOOGLE_SERVICE_PLIST="$IOS_DIR/App/App/GoogleService-Info.plist"
+XCODEPROJ="$IOS_DIR/App/App.xcodeproj"
 
 if [ ! -d "$IOS_DIR" ]; then
   echo "Missing frontend/ios. Run: npx cap add ios"
@@ -87,6 +89,27 @@ if [ -f "$INFO_PLIST" ] && [ -n "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then
   /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$INFO_PLIST" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$INFO_PLIST" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $GOOGLE_REVERSED_CLIENT_ID" "$INFO_PLIST" 2>/dev/null || true
+fi
+
+if [ -f "$GOOGLE_SERVICE_PLIST" ] && [ -d "$XCODEPROJ" ]; then
+  XCODEPROJ_PATH="$XCODEPROJ" ruby <<'RUBY'
+require 'xcodeproj'
+
+project_path = ENV.fetch('XCODEPROJ_PATH')
+project = Xcodeproj::Project.open(project_path)
+target = project.targets.find { |candidate| candidate.name == 'App' } || project.targets.first
+raise 'Could not find an Xcode target to attach GoogleService-Info.plist' unless target
+
+app_group = project.main_group.find_subpath('App', true)
+file_ref = app_group.files.find { |file| file.path == 'GoogleService-Info.plist' } ||
+           app_group.new_file('GoogleService-Info.plist')
+
+unless target.resources_build_phase.files_references.any? { |file| file.path == 'GoogleService-Info.plist' }
+  target.resources_build_phase.add_file_reference(file_ref)
+end
+
+project.save
+RUBY
 fi
 
 echo "iOS project prepared for Codemagic."
