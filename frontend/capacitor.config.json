@@ -1,0 +1,18 @@
+{
+  "appId": "com.wafli.app",
+  "appName": "WaFli",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "ios": {
+    "scheme": "WaFli"
+  },
+  "plugins": {
+    "SocialLogin": {
+      "providers": {
+        "google": true,
+        "apple": true,
+        "facebook": false
+      }
+    }
+  }
+}

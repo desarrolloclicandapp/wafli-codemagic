@@ -1,0 +1,152 @@
+# WaFli Codemagic workflows
+# Docs:
+# - https://docs.codemagic.io/yaml-quick-start/building-an-ionic-app/
+# - https://docs.codemagic.io/yaml-code-signing/signing-ios/
+
+workflows:
+  ios-testflight:
+    name: WaFli iOS - TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+
+    integrations:
+      app_store_connect: codemagic
+
+    environment:
+      groups:
+        # Create these groups in Codemagic UI before the first build.
+        # wafli_frontend_prod: all VITE_* production variables.
+        # wafli_ios_firebase: GOOGLE_SERVICE_INFO_PLIST_BASE64.
+        # wafli_ios_signing: App Store Connect integration / signing metadata if not using UI-only integration.
+        - wafli_frontend_prod
+        - wafli_ios_firebase
+        - wafli_ios_signing
+      vars:
+        BUNDLE_ID: com.wafli.app
+        XCODE_WORKSPACE: App.xcworkspace
+        XCODE_SCHEME: App
+      node: latest
+      xcode: latest
+      cocoapods: default
+
+    cache:
+      cache_paths:
+        - $HOME/Library/Caches/CocoaPods
+        - $HOME/.npm
+        - frontend/node_modules
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+
+    scripts:
+      - name: Install frontend dependencies
+        script: |
+          cd frontend
+          npm ci
+
+      - name: Create iOS platform if missing
+        script: |
+          cd frontend
+          if [ ! -d ios ]; then
+            npx cap add ios
+          fi
+
+      - name: Restore Firebase iOS config
+        script: |
+          if [ -z "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            echo "Missing GOOGLE_SERVICE_INFO_PLIST_BASE64 in Codemagic variable group wafli_ios_firebase"
+            exit 1
+          fi
+          echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > frontend/ios/App/App/GoogleService-Info.plist
+
+      - name: Prepare Capacitor iOS project
+        script: |
+          cd frontend
+          bash scripts/prepare-ios-codemagic.sh
+          npm run build
+          npx cap sync ios
+
+      - name: Fetch iOS signing files
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          keychain initialize
+          keychain add-certificates
+          cd frontend/ios/App
+          xcode-project use-profiles
+
+      - name: Build IPA
+        script: |
+          cd frontend/ios/App
+          xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - frontend/ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - frontend/ios/App/build/ios/archive/*.xcarchive
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  ios-simulator:
+    name: WaFli iOS - Simulator build
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+    environment:
+      groups:
+        - wafli_frontend_prod
+        - wafli_ios_firebase
+      vars:
+        XCODE_WORKSPACE: App.xcworkspace
+        XCODE_SCHEME: App
+      node: latest
+      xcode: latest
+      cocoapods: default
+
+    scripts:
+      - name: Install frontend dependencies
+        script: |
+          cd frontend
+          npm ci
+
+      - name: Create iOS platform if missing
+        script: |
+          cd frontend
+          if [ ! -d ios ]; then
+            npx cap add ios
+          fi
+
+      - name: Restore Firebase iOS config
+        script: |
+          if [ -n "$GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            echo "$GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > frontend/ios/App/App/GoogleService-Info.plist
+          fi
+
+      - name: Prepare Capacitor iOS project
+        script: |
+          cd frontend
+          bash scripts/prepare-ios-codemagic.sh
+          npm run build
+          npx cap sync ios
+
+      - name: Build for iOS simulator
+        script: |
+          cd frontend/ios/App
+          xcodebuild \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+    artifacts:
+      - /tmp/xcodebuild_logs/*.log

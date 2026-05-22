@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#5B5FE0" />
+    <meta name="description" content="WaFli te ayuda a responder conversaciones de tu WhatsApp con sugerencias en tu tono." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="WaFli" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <script>
+      (() => {
+        try {
+          const theme = localStorage.getItem('wafli:theme');
+          if (theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-theme', theme);
+        } catch (_) {}
+      })();
+    </script>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/wafli-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/wafli-icon.svg" />
+    <title>WaFli</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

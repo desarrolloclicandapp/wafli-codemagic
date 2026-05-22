@@ -1,0 +1,10 @@
+﻿const express = require("express");
+const privacy = require("../controllers/privacyController");
+const { asyncHandler } = require("../utils/asyncHandler");
+const { requireAuth } = require("../middleware/auth");
+const router = express.Router();
+router.post("/privacy/export", requireAuth, asyncHandler(privacy.exportData));
+router.post("/privacy/history/delete", requireAuth, asyncHandler(privacy.deleteHistory));
+router.post("/account/delete/request", requireAuth, asyncHandler(privacy.requestDelete));
+router.post("/account/delete/cancel", requireAuth, asyncHandler(privacy.cancelDelete));
+module.exports = router;

@@ -1,0 +1,27 @@
+{
+  "name": "WaFli",
+  "short_name": "WaFli",
+  "description": "Sugerencias para responder conversaciones de tu WhatsApp en tu tono.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F6F8",
+  "theme_color": "#5B5FE0",
+  "categories": ["productivity", "social"],
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icons/wafli-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/wafli-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

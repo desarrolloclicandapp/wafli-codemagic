@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WaFli</string>
+    <string name="title_activity_main">WaFli</string>
+    <string name="package_name">com.wafli.app</string>
+    <string name="custom_url_scheme">com.wafli.app</string>
+</resources>

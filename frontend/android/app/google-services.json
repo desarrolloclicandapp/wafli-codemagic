@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "354075200436",
+    "project_id": "wafli-495617",
+    "storage_bucket": "wafli-495617.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:354075200436:android:6f68d9bc70dcc30aed40e1",
+        "android_client_info": {
+          "package_name": "com.wafli.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "354075200436-p5gevf27aih7ltbdlipd9v6dh4s520so.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wafli.app",
+            "certificate_hash": "fda72e69acaea31c55ae667d66e966d3eaea4a09"
+          }
+        },
+        {
+          "client_id": "354075200436-c9qgo0omkg1vcsb3l8u53b9cv88c3la3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBi2ipQG3mcPbm7tL1nTFuJ9-9ZbCfm5Qk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "354075200436-c9qgo0omkg1vcsb3l8u53b9cv88c3la3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

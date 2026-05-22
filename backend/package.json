@@ -1,0 +1,49 @@
+{
+  "name": "wafli-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WaFli V0 backend API",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "start:api": "node src/index.js --api",
+    "start:worker": "node src/index.js --worker",
+    "dev": "nodemon src/index.js",
+    "dev:api": "nodemon src/index.js --api",
+    "dev:worker": "nodemon src/index.js --worker",
+    "db:init": "node src/db/runInit.js",
+    "chat:dedup:dry-run": "node scripts/chat-dedup-dry-run.js",
+    "postinstall": "node scripts/patch-baileys.js",
+    "test": "node --test tests"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "file:vendor/baileys/baileys-7.0.0-rc.9.tgz",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "ffmpeg-static": "^5.3.0",
+    "firebase-admin": "^13.10.0",
+    "https-proxy-agent": "^9.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "libphonenumber-js": "^1.12.42",
+    "openai": "^6.9.1",
+    "pg": "^8.16.3",
+    "pino": "^10.1.0",
+    "socket.io": "^4.8.2",
+    "stripe": "^20.0.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  },
+  "overrides": {
+    "libsignal": {
+      "protobufjs": "7.5.6"
+    },
+    "@whiskeysockets/libsignal-node": {
+      "protobufjs": "7.5.6"
+    }
+  }
+}
