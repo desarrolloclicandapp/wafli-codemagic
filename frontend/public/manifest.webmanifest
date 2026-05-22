@@ -6,21 +6,27 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F6F6F8",
-  "theme_color": "#5B5FE0",
+  "background_color": "#382689",
+  "theme_color": "#382689",
   "categories": ["productivity", "social"],
   "lang": "es",
   "icons": [
     {
-      "src": "/icons/wafli-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/wafli-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/wafli-maskable.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/wafli-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/wafli-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ]

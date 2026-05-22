@@ -1,6 +1,3 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#5B5FE0"/>
-  <circle cx="256" cy="256" r="192" fill="#ECEDFB"/>
-  <path fill="#5B5FE0" d="M151 160c0-18 15-33 33-33h144c18 0 33 15 33 33v116c0 18-15 33-33 33h-83l-57 54c-12 11-31 3-31-13v-41h-6c-18 0-33-15-33-33V160Z"/>
-  <path fill="#fff" d="M200 188h112c8 0 15 7 15 15s-7 15-15 15H200c-8 0-15-7-15-15s7-15 15-15Zm0 56h74c8 0 15 7 15 15s-7 15-15 15h-74c-8 0-15-7-15-15s7-15 15-15Z"/>
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="WaFli">
+  <image href="/icons/wafli-logo-official.png" width="1024" height="1024" preserveAspectRatio="xMidYMid meet"/>
 </svg>

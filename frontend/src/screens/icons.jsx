@@ -41,10 +41,15 @@ const Icons = {
   Cellular: (p) => <Icon {...p}><path d="M2 12h2v3H2zM6 9h2v6H6zM10 6h2v9h-2zM14 3h2v12h-2z" fill="currentColor" stroke="none" /></Icon>,
   Wifi: (p) => <Icon {...p}><path d="M2 8a14 14 0 0 1 20 0M5 11.5a9 9 0 0 1 14 0M8.5 15a4 4 0 0 1 7 0M12 19h.01" /></Icon>,
   Battery: (p) => <Icon {...p}><rect x="2" y="7" width="18" height="10" rx="2" /><path d="M22 11v2" /><rect x="4" y="9" width="14" height="6" rx="0.5" fill="currentColor" stroke="none" /></Icon>,
-  Logo: ({ size = 20, color = 'currentColor' }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M3 4.5C3 3.67 3.67 3 4.5 3h2.4c.62 0 1.17.38 1.4.96L12 13l3.7-9.04c.23-.58.78-.96 1.4-.96h2.4c.83 0 1.5.67 1.5 1.5 0 .19-.04.38-.11.56l-5.2 14.04A2 2 0 0 1 13.8 21h-3.6a2 2 0 0 1-1.89-1.94L3.11 5.06A1.55 1.55 0 0 1 3 4.5Z" fill={color}/>
-    </svg>
+  Logo: ({ size = 20, color: _color = 'currentColor' }) => (
+    <img
+      src="/icons/wafli-icon-192.png"
+      alt=""
+      aria-hidden="true"
+      width={size}
+      height={size}
+      style={{ display: 'block', borderRadius: '22%' }}
+    />
   ),
 };
 

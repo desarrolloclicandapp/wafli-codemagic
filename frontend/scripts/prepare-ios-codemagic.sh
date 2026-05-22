@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IOS_DIR="$ROOT_DIR/ios"
 PODFILE="$IOS_DIR/App/Podfile"
+ICON_SOURCE="$ROOT_DIR/resources/icon.png"
+APPICON_DIR="$IOS_DIR/App/App/Assets.xcassets/AppIcon.appiconset"
 
 if [ ! -d "$IOS_DIR" ]; then
   echo "Missing frontend/ios. Run: npx cap add ios"
@@ -17,6 +19,61 @@ fi
 
 if ! grep -q "CapacitorFirebaseAnalytics/Analytics" "$PODFILE"; then
   ruby -0pi -e "sub(/# Add your Pods here\\n/, \"# Add your Pods here\\n  pod 'CapacitorFirebaseAnalytics\\/AnalyticsWithoutAdIdSupport', :path => '..\\/..\\/node_modules\\/@capacitor-firebase\\/analytics'\\n\")" "$PODFILE"
+fi
+
+if [ -f "$ICON_SOURCE" ]; then
+  mkdir -p "$APPICON_DIR"
+
+  make_icon() {
+    local size="$1"
+    local filename="$2"
+    sips -z "$size" "$size" "$ICON_SOURCE" --out "$APPICON_DIR/$filename" >/dev/null
+  }
+
+  make_icon 40 "Icon-App-20x20@2x.png"
+  make_icon 60 "Icon-App-20x20@3x.png"
+  make_icon 58 "Icon-App-29x29@2x.png"
+  make_icon 87 "Icon-App-29x29@3x.png"
+  make_icon 80 "Icon-App-40x40@2x.png"
+  make_icon 120 "Icon-App-40x40@3x.png"
+  make_icon 120 "Icon-App-60x60@2x.png"
+  make_icon 180 "Icon-App-60x60@3x.png"
+  make_icon 20 "Icon-App-20x20@1x-ipad.png"
+  make_icon 40 "Icon-App-20x20@2x-ipad.png"
+  make_icon 29 "Icon-App-29x29@1x-ipad.png"
+  make_icon 58 "Icon-App-29x29@2x-ipad.png"
+  make_icon 40 "Icon-App-40x40@1x-ipad.png"
+  make_icon 80 "Icon-App-40x40@2x-ipad.png"
+  make_icon 76 "Icon-App-76x76@1x-ipad.png"
+  make_icon 152 "Icon-App-76x76@2x-ipad.png"
+  make_icon 167 "Icon-App-83.5x83.5@2x-ipad.png"
+  make_icon 1024 "Icon-App-1024x1024@1x.png"
+
+  cat > "$APPICON_DIR/Contents.json" <<'JSON'
+{
+  "images": [
+    { "size": "20x20", "idiom": "iphone", "filename": "Icon-App-20x20@2x.png", "scale": "2x" },
+    { "size": "20x20", "idiom": "iphone", "filename": "Icon-App-20x20@3x.png", "scale": "3x" },
+    { "size": "29x29", "idiom": "iphone", "filename": "Icon-App-29x29@2x.png", "scale": "2x" },
+    { "size": "29x29", "idiom": "iphone", "filename": "Icon-App-29x29@3x.png", "scale": "3x" },
+    { "size": "40x40", "idiom": "iphone", "filename": "Icon-App-40x40@2x.png", "scale": "2x" },
+    { "size": "40x40", "idiom": "iphone", "filename": "Icon-App-40x40@3x.png", "scale": "3x" },
+    { "size": "60x60", "idiom": "iphone", "filename": "Icon-App-60x60@2x.png", "scale": "2x" },
+    { "size": "60x60", "idiom": "iphone", "filename": "Icon-App-60x60@3x.png", "scale": "3x" },
+    { "size": "20x20", "idiom": "ipad", "filename": "Icon-App-20x20@1x-ipad.png", "scale": "1x" },
+    { "size": "20x20", "idiom": "ipad", "filename": "Icon-App-20x20@2x-ipad.png", "scale": "2x" },
+    { "size": "29x29", "idiom": "ipad", "filename": "Icon-App-29x29@1x-ipad.png", "scale": "1x" },
+    { "size": "29x29", "idiom": "ipad", "filename": "Icon-App-29x29@2x-ipad.png", "scale": "2x" },
+    { "size": "40x40", "idiom": "ipad", "filename": "Icon-App-40x40@1x-ipad.png", "scale": "1x" },
+    { "size": "40x40", "idiom": "ipad", "filename": "Icon-App-40x40@2x-ipad.png", "scale": "2x" },
+    { "size": "76x76", "idiom": "ipad", "filename": "Icon-App-76x76@1x-ipad.png", "scale": "1x" },
+    { "size": "76x76", "idiom": "ipad", "filename": "Icon-App-76x76@2x-ipad.png", "scale": "2x" },
+    { "size": "83.5x83.5", "idiom": "ipad", "filename": "Icon-App-83.5x83.5@2x-ipad.png", "scale": "2x" },
+    { "size": "1024x1024", "idiom": "ios-marketing", "filename": "Icon-App-1024x1024@1x.png", "scale": "1x" }
+  ],
+  "info": { "version": 1, "author": "xcode" }
+}
+JSON
 fi
 
 if [ -f "$IOS_DIR/App/App/Info.plist" ] && [ -n "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then

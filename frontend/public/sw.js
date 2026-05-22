@@ -1,8 +1,8 @@
-const CACHE_NAME = 'wafli-pwa-v6';
+﻿const CACHE_NAME = 'wafli-pwa-v6';
 const APP_SHELL = [
   '/manifest.webmanifest',
-  '/icons/wafli-icon.svg',
-  '/icons/wafli-maskable.svg'
+  '/icons/wafli-icon-192.png',
+  '/icons/wafli-maskable-512.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -99,8 +99,8 @@ self.addEventListener('push', (event) => {
   const title = payload.title || 'WaFli';
   const options = {
     body: payload.body || 'Tienes una novedad en tu WhatsApp.',
-    icon: payload.icon || '/icons/wafli-icon.svg',
-    badge: payload.badge || '/icons/wafli-icon.svg',
+    icon: payload.icon || '/icons/wafli-icon-192.png',
+    badge: payload.badge || '/icons/wafli-icon-192.png',
     tag: payload.tag || payload.chatId || payload.notificationType || 'wafli',
     renotify: payload.renotify === true,
     data: {
@@ -112,3 +112,4 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(self.registration.showNotification(title, options));
 });
+
