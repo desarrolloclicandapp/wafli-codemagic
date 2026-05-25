@@ -5,6 +5,7 @@ import * as nativePurchases from "./nativePurchases.js";
 const ANDROID_BILLING_MODE = String(import.meta.env.VITE_ANDROID_BILLING_MODE || "disabled").toLowerCase();
 const PLAY_BILLING_ENABLED = String(import.meta.env.VITE_PLAY_BILLING_ENABLED || "false").toLowerCase() === "true";
 const PLAY_PLUS_PRODUCT_ID = import.meta.env.VITE_PLAY_PLUS_PRODUCT_ID || "wafli_plus_monthly";
+const PLAY_PRO_PRODUCT_ID = import.meta.env.VITE_PLAY_PRO_PRODUCT_ID || "wafli_pro_monthly";
 const PLAY_PACK_50_PRODUCT_ID = import.meta.env.VITE_PLAY_PACK_50_PRODUCT_ID || "wafli_pack_50";
 
 function getNativePlatform() {
@@ -45,6 +46,7 @@ function capabilities() {
     nativePurchases: nativePurchases.capabilities(),
     products: {
       plusMonthly: PLAY_PLUS_PRODUCT_ID,
+      proMonthly: PLAY_PRO_PRODUCT_ID,
       pack50: PLAY_PACK_50_PRODUCT_ID,
     },
   };
@@ -74,8 +76,17 @@ const customerPortal = async () => {
   trackEvent("customer_portal_opened").catch(() => {});
   return request("/billing/customer-portal", { method: "POST" });
 };
+const manageSubscription = async () => {
+  if (nativePurchases.isNativePurchasePlatform()) return nativePurchases.manageSubscription();
+  return customerPortal();
+};
+const restorePurchases = async () => {
+  if (!nativePurchases.isNativePurchasePlatform()) return { native: false, restored: false };
+  return nativePurchases.restorePurchases();
+};
 const playProducts = () => request("/billing/play/products");
 const submitPlayPurchase = (purchase) => request("/billing/play/purchase", { method: "POST", body: purchase });
+const nativePurchaseOptions = () => nativePurchases.purchaseOptions();
 
 export {
   capabilities,
@@ -85,8 +96,11 @@ export {
   isAndroidNative,
   isExternalCheckoutAllowed,
   isPlayBillingReady,
+  manageSubscription,
+  nativePurchaseOptions,
   plan,
   playProducts,
+  restorePurchases,
   submitPlayPurchase,
   usage,
 };

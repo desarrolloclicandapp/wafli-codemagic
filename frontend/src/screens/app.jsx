@@ -922,10 +922,10 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
         <AnalysisSheet chatId={activeChat} message={analysisMessage} onQuota={() => { setSheet(null); setModal('quota'); }} onSuggest={() => setSheet('suggest')} />
       </BottomSheet>
       <BottomSheet open={billingSheet === 'plans'} onClose={() => setBillingSheet(null)} height="84%">
-        <PlanSelectorSheet onChoose={() => { setBillingSheet('success'); showToast('Redirigiendo a checkout de Stripe…'); }} />
+        <PlanSelectorSheet onChoose={() => { setBillingSheet('success'); showToast('Compra confirmada. Actualizando cuota...'); }} />
       </BottomSheet>
       <BottomSheet open={billingSheet === 'packs'} onClose={() => setBillingSheet(null)} height="74%">
-        <PackSelectorSheet onBuy={() => { setBillingSheet('success'); showToast('Redirigiendo a checkout de Stripe…'); }} />
+        <PackSelectorSheet onBuy={() => { setBillingSheet('success'); showToast('Compra confirmada. Actualizando cuota...'); }} />
       </BottomSheet>
       <BottomSheet open={billingSheet === 'history'} onClose={() => setBillingSheet(null)} height="90%">
         <UsageHistorySheet />
@@ -1001,49 +1001,86 @@ function nativePaymentsBlocked() {
   return Boolean(caps?.nativePurchases?.nativePurchasePlatform && !caps?.nativePurchases?.nativePurchasesConfigured && !caps?.externalCheckoutAllowed);
 }
 
+function nativePaymentsStoreCopy() {
+  const caps = WaFliAPI?.billing?.capabilities?.();
+  const platform = caps?.nativePurchases?.platform;
+  if (platform === 'ios') return { platformName: 'iOS', storeName: 'App Store' };
+  if (platform === 'android') return { platformName: 'Android', storeName: 'Google Play Billing' };
+  return { platformName: 'esta app', storeName: 'la tienda nativa' };
+}
+
 function NativePaymentsNotice() {
   if (!nativePaymentsBlocked()) return null;
+  const { platformName, storeName } = nativePaymentsStoreCopy();
   return (
     <div className="card" style={{padding: 12, borderColor: 'rgba(14, 165, 143, 0.18)', background: 'var(--accent-soft)'}}>
       <div className="t-small" style={{fontWeight: 800, color: 'var(--accent)', marginBottom: 4}}>Compras nativas</div>
       <div className="t-caption" style={{color: 'var(--text-secondary)'}}>
-        Las compras dentro de Android se habilitan con Google Play Billing. Esta version no abre pagos externos.
+        Las compras dentro de {platformName} se gestionan con {storeName}. Esta version no abre pagos externos.
       </div>
     </div>
   );
 }
 
 function PlanSelectorSheet({ onChoose }) {
-  const [period, setPeriod] = React.useState('monthly');
   const [loadingPlan, setLoadingPlan] = React.useState('');
+  const [loadingManage, setLoadingManage] = React.useState(false);
   const [error, setError] = React.useState('');
+  const [nativeOptions, setNativeOptions] = React.useState(null);
   const blocked = nativePaymentsBlocked();
+  const proMonthlyMessages = Math.max(0, Number(import.meta.env.VITE_PRO_MONTHLY_MESSAGES || 500));
+  React.useEffect(() => {
+    let alive = true;
+    if (!WaFliAPI?.billing?.nativePurchaseOptions || !WaFliAPI?.billing?.capabilities?.().nativePurchases?.nativePurchasePlatform) return undefined;
+    WaFliAPI.billing.nativePurchaseOptions()
+      .then((options) => { if (alive) setNativeOptions(options); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
   const plans = [
-    { id: 'free', name: 'Gratis', monthly: '€0', yearly: '€0', quota: '5 generaciones/día', features: ['Sugerir y reescribir', 'No acumulable'] },
-    { id: 'plus', name: 'Plus', monthly: '€4.99/mes', yearly: 'Pronto', quota: '150 generaciones/mes', features: ['Más generaciones mensuales', 'Sugerir, reescribir y abrir'] },
+    { id: 'free', name: 'Gratis', monthly: '€0', quota: '5 generaciones/día', features: ['Plan básico incluido', 'Sugerir y reescribir', 'Para volver a Gratis, cancela Plus/Pro desde la tienda'] },
+    { id: 'plus', name: 'Plus', monthly: nativeOptions?.plus?.price ? `${nativeOptions.plus.price}/mes` : '€4.99/mes', quota: '150 generaciones/mes', features: ['Más generaciones mensuales', 'Sugerir, reescribir y abrir'] },
+    { id: 'pro', name: 'Pro', monthly: nativeOptions?.pro?.price ? `${nativeOptions.pro.price}/mes` : '€9.99/mes', quota: `${proMonthlyMessages} generaciones/mes`, features: ['Mayor cupo mensual', 'Pensado para uso intensivo', 'Packs extra compatibles'] },
   ];
   return (
     <div style={{padding: '8px 18px 18px', display: 'flex', flexDirection: 'column', gap: 10}}>
       <span className="t-h3">Selector de plan</span>
-      <div className="row gap-2">
-        <button className={'btn btn--sm ' + (period === 'monthly' ? 'btn--primary' : 'btn--secondary')} onClick={() => setPeriod('monthly')}>Mensual</button>
-        <button className="btn btn--sm btn--secondary" disabled style={{opacity: 0.55}}>Anual pronto</button>
-      </div>
+      <span className="t-caption" style={{color: 'var(--text-secondary)'}}>Planes mensuales y gestión desde la tienda correspondiente.</span>
       <NativePaymentsNotice />
       {plans.map((p) => (
         <div key={p.id} className="card" style={{padding: 12}}>
           <div className="row" style={{justifyContent: 'space-between', alignItems: 'center'}}>
             <span style={{fontWeight: 700}}>{p.name}</span>
-            <span className="t-small" style={{fontWeight: 700}}>{period === 'monthly' ? p.monthly : p.yearly}</span>
+            <span className="t-small" style={{fontWeight: 700}}>{p.monthly}</span>
           </div>
           <p className="t-caption" style={{margin: '4px 0 8px'}}>{p.quota}</p>
           {p.features.map((f, i) => <div key={i} className="t-small">- {f}</div>)}
           {p.id === 'free' ? (
-            <span className="t-caption" style={{display: 'inline-block', marginTop: 8}}>Plan gratuito</span>
+            <button className="btn btn--secondary btn--md" style={{marginTop: 10}} disabled={loadingManage} onClick={async () => {
+              setError('');
+              setLoadingManage(true);
+              try {
+                if (WaFliAPI?.billing?.manageSubscription && WaFliAPI?.client?.isAuthenticated?.()) {
+                  const result = await WaFliAPI.billing.manageSubscription();
+                  const url = result?.url || result?.managementUrl;
+                  if (url) {
+                    window.location.href = url;
+                    return;
+                  }
+                  setError('No encontramos una suscripción activa para gestionar.');
+                  return;
+                }
+                setError('Para volver a Gratis, cancela la suscripción activa desde la tienda o portal de pagos.');
+              } catch (apiError) {
+                setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos abrir la gestion de suscripcion.');
+              } finally {
+                setLoadingManage(false);
+              }
+            }}>{loadingManage ? 'Abriendo...' : 'Gestionar / volver a Gratis'}</button>
           ) : (
             <button className="btn btn--primary btn--md" style={{marginTop: 10}} disabled={loadingPlan === p.id} onClick={async () => {
               if (blocked) {
-                setError('Las compras nativas todavia no estan configuradas para esta version.');
+                setError('No pudimos cargar las compras nativas en esta instalación.');
                 return;
               }
               setLoadingPlan(p.id);
@@ -1055,8 +1092,12 @@ function PlanSelectorSheet({ onChoose }) {
                     window.location.href = result.url;
                     return;
                   }
+                  if (result.cancelled) {
+                    setError('Compra cancelada. No se realizó ningún cargo.');
+                    return;
+                  }
                 }
-                onChoose && onChoose();
+                onChoose && onChoose({ type: 'plan', plan: p.id });
               } catch (apiError) {
                 setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos abrir el checkout.');
               } finally {
@@ -1074,9 +1115,18 @@ function PlanSelectorSheet({ onChoose }) {
 function PackSelectorSheet({ onBuy }) {
   const [loadingPack, setLoadingPack] = React.useState('');
   const [error, setError] = React.useState('');
+  const [nativeOptions, setNativeOptions] = React.useState(null);
   const blocked = nativePaymentsBlocked();
+  React.useEffect(() => {
+    let alive = true;
+    if (!WaFliAPI?.billing?.nativePurchaseOptions || !WaFliAPI?.billing?.capabilities?.().nativePurchases?.nativePurchasePlatform) return undefined;
+    WaFliAPI.billing.nativePurchaseOptions()
+      .then((options) => { if (alive) setNativeOptions(options); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
   const packs = [
-    { qty: 50, price: '€2.99' },
+    { qty: 50, price: nativeOptions?.pack50?.price || '€2.99' },
   ];
   return (
     <div style={{padding: '8px 18px 18px', display: 'flex', flexDirection: 'column', gap: 10}}>
@@ -1091,7 +1141,7 @@ function PackSelectorSheet({ onBuy }) {
           <p className="t-caption" style={{margin: '4px 0 10px'}}>No caducan nunca.</p>
           <button className="btn btn--primary btn--md" disabled={loadingPack === String(p.qty)} onClick={async () => {
             if (blocked) {
-              setError('Las compras nativas todavia no estan configuradas para esta version.');
+              setError('No pudimos cargar las compras nativas en esta instalación.');
               return;
             }
             setLoadingPack(String(p.qty));
@@ -1103,8 +1153,12 @@ function PackSelectorSheet({ onBuy }) {
                   window.location.href = result.url;
                   return;
                 }
+                if (result.cancelled) {
+                  setError('Compra cancelada. No se realizó ningún cargo.');
+                  return;
+                }
               }
-              onBuy && onBuy();
+              onBuy && onBuy({ type: 'pack', packSize: p.qty });
             } catch (apiError) {
               setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos abrir el checkout.');
             } finally {

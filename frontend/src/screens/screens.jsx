@@ -4334,7 +4334,7 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
   const renewLabel = summary.periodType === 'month'
     ? 'Se renueva al empezar el próximo mes.'
     : summary.periodType === 'trial'
-      ? 'Tu periodo Plus actual se mantiene hasta su vencimiento. Después vuelves a Free si no renuevas.'
+      ? 'Tu periodo actual se mantiene hasta su vencimiento. Después vuelves a Gratis si no renuevas.'
       : 'Se renueva a las 00:00.';
   const pct = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
   const gaugeColor = pct > 0.25 ? 'var(--success)' : pct > 0.1 ? 'var(--warning)' : 'var(--danger)';
@@ -4348,6 +4348,30 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
     ...formatUsageRow(row),
   }));
   const visibleHistory = history;
+  const openNativeSubscriptionManagement = async () => {
+    setRestoreMsg('');
+    try {
+      const result = await WaFliAPI.billing.customerPortal();
+      const url = result?.url || result?.managementUrl;
+      if (!url) {
+        setRestoreMsg('No encontramos una suscripción activa para gestionar.');
+        return;
+      }
+      window.location.href = url;
+      setRestoreMsg('Abrimos la tienda para gestionar tu suscripción.');
+    } catch (error) {
+      setRestoreMsg(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos abrir la gestión de suscripción.');
+    }
+  };
+  const restoreNativePurchases = async () => {
+    setRestoreMsg('');
+    try {
+      await WaFliAPI.billing.restorePurchases();
+      setRestoreMsg('Compras restauradas y sincronizadas.');
+    } catch (error) {
+      setRestoreMsg(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos restaurar compras.');
+    }
+  };
 
   return (
     <>
@@ -4376,19 +4400,14 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
 
           <div className="col gap-2" style={{marginTop: 14}}>
             <button className="btn btn--primary btn--full" onClick={onOpenPlans}>Ver planes</button>
-          <button className="btn btn--secondary btn--full" onClick={onOpenPacks}>Comprar 50 generaciones extra</button>
+          <button className="btn btn--secondary btn--full" onClick={onOpenPacks}>Comprar pack de 50 generaciones</button>
           {nativePurchaseCaps?.nativePurchasePlatform ? (
-            <button className="btn btn--text" style={{height: 40}} onClick={async () => {
-              setRestoreMsg('');
-              try {
-                await WaFliAPI.billing.customerPortal();
-                setRestoreMsg('Compras restauradas y sincronizadas.');
-              } catch (error) {
-                setRestoreMsg(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos restaurar compras.');
-              }
-            }}>Restaurar compras</button>
+            <>
+              <button className="btn btn--secondary btn--full" onClick={openNativeSubscriptionManagement}>Gestionar suscripción / volver a Gratis</button>
+              <button className="btn btn--text" style={{height: 40}} onClick={restoreNativePurchases}>Restaurar compras</button>
+            </>
           ) : null}
-          {restoreMsg ? <p className="t-caption" style={{margin: 0, color: restoreMsg.startsWith('Compras') ? 'var(--success, var(--accent))' : 'var(--danger)'}}>{restoreMsg}</p> : null}
+          {restoreMsg ? <p className="t-caption" style={{margin: 0, color: restoreMsg.startsWith('Compras') || restoreMsg.startsWith('Abrimos') ? 'var(--success, var(--accent))' : 'var(--danger)'}}>{restoreMsg}</p> : null}
           </div>
 
           <div className="card" style={{marginTop: 16, padding: 0, overflow: 'hidden'}}>
@@ -4447,7 +4466,7 @@ function QuotaExhausted({ onClose, onOpenPlans, onOpenPacks }) {
           Para seguir, elige una opción. Tu próxima recarga llega a las 00:00.
         </p>
         <div className="col gap-2" style={{width: '100%', maxWidth: 320}}>
-          <button className="btn btn--primary btn--full" onClick={onOpenPlans}>Subir a Plan Plus</button>
+          <button className="btn btn--primary btn--full" onClick={onOpenPlans}>Ver Plus y Pro</button>
           <button className="btn btn--secondary btn--full" onClick={onOpenPacks}>Comprar 50 extra por €2.99</button>
           <button className="btn btn--text" style={{height: 44, marginTop: 4}} onClick={onClose}>Esperar a 00:00</button>
         </div>
@@ -4755,7 +4774,9 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
           <div className="card" style={{padding: 12, marginBottom: 14}}>
             <div className="t-small" style={{fontWeight: 600, marginBottom: 8}}>Pagos y facturas</div>
             <p className="t-caption" style={{margin: 0, color: 'var(--text-secondary)'}}>
-              La gestión de tarjetas y facturas se hará desde Stripe cuando el checkout esté activo.
+              {WaFliAPI?.billing?.capabilities?.().nativePurchases?.nativePurchasePlatform
+                ? 'En iOS y Android, las suscripciones se compran, cancelan o cambian desde App Store o Google Play. En Plan puedes restaurar compras o abrir la gestión de suscripción.'
+                : 'En web, la gestión de pagos se realiza desde el portal de facturación.'}
             </p>
           </div>
         </div>
@@ -4969,32 +4990,39 @@ function androidBillingBlocked() {
   return Boolean(caps?.nativePurchases?.nativePurchasePlatform && !caps?.nativePurchases?.nativePurchasesConfigured && !caps?.externalCheckoutAllowed);
 }
 
+function nativeBillingStoreCopy() {
+  const caps = WaFliAPI?.billing?.capabilities?.();
+  const platform = caps?.nativePurchases?.platform;
+  if (platform === 'ios') return { platformName: 'iOS', storeName: 'App Store' };
+  if (platform === 'android') return { platformName: 'Android', storeName: 'Google Play Billing' };
+  return { platformName: 'esta app', storeName: 'la tienda nativa' };
+}
+
 function AndroidBillingNotice() {
   if (!androidBillingBlocked()) return null;
+  const { platformName, storeName } = nativeBillingStoreCopy();
   return (
     <div className="card" style={{padding: 12, marginBottom: 12, borderColor: 'rgba(14, 165, 143, 0.18)', background: 'var(--accent-soft)'}}>
       <div className="t-small" style={{fontWeight: 800, color: 'var(--accent)', marginBottom: 4}}>Compras nativas</div>
       <div className="t-caption" style={{color: 'var(--text-secondary)'}}>
-        En Android/iOS las compras se habilitan mediante Google Play Billing o App Store. Esta version no abre pagos externos.
+        Las compras dentro de {platformName} se gestionan con {storeName}. Esta version no abre pagos externos.
       </div>
     </div>
   );
 }
 
 function PlanSelectorSheet({ onChoose }) {
-  const [billing, setBilling] = React.useState('monthly');
   const blocked = androidBillingBlocked();
+  const { storeName } = nativeBillingStoreCopy();
   const plans = [
-    { id: 'free', name: 'Gratis', price: '€0', quota: '5 generaciones IA/dia', features: ['Sugerir y reescribir', 'No acumulable'] },
+    { id: 'free', name: 'Gratis', price: '€0', quota: '5 generaciones IA/dia', features: ['Plan básico incluido', 'Sugerir y reescribir', 'Vuelve a Gratis cancelando Plus/Pro desde la tienda'] },
     { id: 'plus', name: 'Plus', price: '€4.99/mes', quota: '150 generaciones IA/mes', features: ['Más generaciones mensuales', 'Sugerir, reescribir y abrir'] },
+    { id: 'pro', name: 'Pro', price: '€9.99/mes', quota: '500 generaciones IA/mes', features: ['Mayor cupo mensual', 'Pensado para uso intensivo', 'Packs extra compatibles'] },
   ];
   return (
     <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
       <span className="t-h3" style={{marginBottom: 10}}>Ver planes</span>
-      <div className="row gap-2" style={{marginBottom: 12}}>
-        <button className={'btn btn--sm ' + (billing === 'monthly' ? 'btn--primary' : 'btn--secondary')} onClick={() => setBilling('monthly')}>Mensual</button>
-        <button className="btn btn--sm btn--secondary" disabled style={{opacity: 0.55}}>Anual pronto</button>
-      </div>
+      <span className="t-caption" style={{color: 'var(--text-secondary)', marginBottom: 12}}>Planes mensuales y gestión desde la tienda correspondiente.</span>
       <AndroidBillingNotice />
       <div className="col gap-2" style={{overflow: 'auto'}}>
         {plans.map((p) => (
@@ -5006,10 +5034,23 @@ function PlanSelectorSheet({ onChoose }) {
             <div className="t-caption" style={{margin: '4px 0 8px'}}>{p.quota}</div>
             {p.features.map((f, i) => <div key={i} className="t-small">- {f}</div>)}
             {p.id === 'free' ? (
-              <span className="t-caption" style={{display: 'inline-block', marginTop: 8}}>Plan base incluido</span>
+              <button className="btn btn--secondary btn--md" style={{width: '100%', marginTop: 10}} onClick={async () => {
+                try {
+                  const result = WaFliAPI?.billing?.manageSubscription
+                    ? await WaFliAPI.billing.manageSubscription()
+                    : WaFliAPI?.billing?.customerPortal
+                      ? await WaFliAPI.billing.customerPortal()
+                      : null;
+                  const url = result?.url || result?.managementUrl;
+                  if (url) window.location.href = url;
+                  else onChoose && onChoose('free');
+                } catch (_) {
+                  onChoose && onChoose('free');
+                }
+              }}>Gestionar / volver a Gratis</button>
             ) : (
               <button className={'btn btn--md ' + (p.current || blocked ? 'btn--secondary' : 'btn--primary')} style={{width: '100%', marginTop: 10}} onClick={() => !p.current && !blocked && onChoose && onChoose(p.id)} disabled={p.current || blocked}>
-                {blocked ? 'Disponible con Google Play Billing' : 'Elegir Plus'}
+                {blocked ? `Disponible con ${storeName}` : `Elegir ${p.name}`}
               </button>
             )}
           </div>
@@ -5021,6 +5062,7 @@ function PlanSelectorSheet({ onChoose }) {
 
 function PackSelectorSheet({ onBuy }) {
   const blocked = androidBillingBlocked();
+  const { storeName } = nativeBillingStoreCopy();
   const packs = [
     { id: '50', qty: 50, price: 2.99 },
   ];
@@ -5036,8 +5078,8 @@ function PackSelectorSheet({ onBuy }) {
               <span className="t-mono" style={{fontWeight: 700}}>€{p.price.toFixed(2)}</span>
             </div>
             <div className="t-caption" style={{marginTop: 4}}>No caducan nunca.</div>
-            <button className={'btn btn--md ' + (blocked ? 'btn--secondary' : 'btn--primary')} style={{width: '100%', marginTop: 10}} disabled={blocked} onClick={() => !blocked && onBuy && onBuy(p.id)}>
-              {blocked ? 'Disponible con Google Play Billing' : 'Comprar'}
+            <button className={'btn btn--md ' + (blocked ? 'btn--secondary' : 'btn--primary')} style={{width: '100%', marginTop: 10}} disabled={blocked} onClick={() => !blocked && onBuy && onBuy(p.qty)}>
+              {blocked ? `Disponible con ${storeName}` : 'Comprar'}
             </button>
           </div>
         ))}

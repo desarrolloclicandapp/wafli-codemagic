@@ -21,16 +21,20 @@ VITE_FIREBASE_MEASUREMENT_ID=G-Z4EL2B1ZJJ
 # Google Play Billing / Play Store
 # Para builds publicos de Android en Play Store mantener el checkout externo bloqueado.
 # Cambiar a "play" y true solo cuando existan los productos en Play Console y el cliente nativo de billing este integrado.
-VITE_ANDROID_BILLING_MODE=disabled
-VITE_PLAY_BILLING_ENABLED=false
+VITE_ANDROID_BILLING_MODE=play
+VITE_PLAY_BILLING_ENABLED=true
 VITE_PLAY_PLUS_PRODUCT_ID=wafli_plus_monthly
+VITE_PLAY_PRO_PRODUCT_ID=wafli_pro_monthly
 VITE_PLAY_PACK_50_PRODUCT_ID=wafli_pack_50
+VITE_PRO_MONTHLY_MESSAGES=500
 
 # RevenueCat para compras nativas Android/iOS
 # Web sigue usando Stripe. Android/iOS usan RevenueCat + Google Play Billing / App Store.
-VITE_REVENUECAT_ANDROID_API_KEY=
-VITE_REVENUECAT_IOS_API_KEY=
+VITE_REVENUECAT_ANDROID_API_KEY=goog_ondQLwzikwrCrDtjnHxaVrdYipX
+VITE_REVENUECAT_IOS_API_KEY=<SET_IN_CODEMAGIC_WAFLI_FRONTEND_PROD>
 VITE_REVENUECAT_ENTITLEMENT_PLUS=plus
+VITE_REVENUECAT_ENTITLEMENT_PRO=pro
 VITE_REVENUECAT_OFFERING_ID=default
 VITE_REVENUECAT_PLUS_PRODUCT_ID=wafli_plus_monthly:monthly
+VITE_REVENUECAT_PRO_PRODUCT_ID=wafli_pro_monthly:monthly
 VITE_REVENUECAT_PACK_50_PRODUCT_ID=wafli_pack_50

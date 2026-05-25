@@ -2,17 +2,36 @@ const { pool } = require("../config/db");
 const { config } = require("../config/env");
 const { ApiError } = require("../utils/responses");
 const quotaService = require("./quotaService");
+const crypto = require("crypto");
 
 const REVENUECAT_API_BASE = "https://api.revenuecat.com/v1";
 const PLUS_ENTITLEMENT = process.env.REVENUECAT_ENTITLEMENT_PLUS || "plus";
+const PRO_ENTITLEMENT = process.env.REVENUECAT_ENTITLEMENT_PRO || "pro";
 const PLUS_PRODUCTS = new Set([
   process.env.REVENUECAT_PLUS_PRODUCT_ID,
   process.env.PLAY_PRODUCT_PLUS_MONTHLY,
   "wafli_plus_monthly",
+  "wafli_plus_monthly:monthly",
 ].filter(Boolean));
+const PRO_PRODUCTS = new Set([
+  process.env.REVENUECAT_PRO_PRODUCT_ID,
+  process.env.PLAY_PRODUCT_PRO_MONTHLY,
+  "wafli_pro_monthly",
+  "wafli_pro_monthly:monthly",
+].filter(Boolean));
+const PAID_ENTITLEMENTS = new Set([PLUS_ENTITLEMENT, PRO_ENTITLEMENT]);
 const PACK_PRODUCT_AMOUNTS = new Map([
   [process.env.REVENUECAT_PACK_50_PRODUCT_ID || process.env.PLAY_PRODUCT_PACK_50 || "wafli_pack_50", Number(config.quota.topUpPackSize || 50)],
 ]);
+
+function isPaidProductId(productId) {
+  return PLUS_PRODUCTS.has(productId) || PRO_PRODUCTS.has(productId);
+}
+
+function isPaidExpirationEvent(event = {}) {
+  const entitlementIds = Array.isArray(event.entitlement_ids) ? event.entitlement_ids : [];
+  return entitlementIds.some((id) => PAID_ENTITLEMENTS.has(id)) || isPaidProductId(event.product_id);
+}
 
 function expectedAppUserId(userId) {
   return `wafli_${userId}`;
@@ -72,31 +91,40 @@ function isActiveExpiration(expiresDate) {
   return !expires || expires.getTime() > Date.now();
 }
 
-function activePlusFromSubscriber(subscriber = {}) {
+function activePlanFromSubscriber(subscriber = {}) {
   const entitlements = subscriber.entitlements || {};
-  const plus = entitlements[PLUS_ENTITLEMENT];
-  if (plus && isActiveExpiration(plus.expires_date)) {
-    return {
-      entitlementId: PLUS_ENTITLEMENT,
-      productId: plus.product_identifier || null,
-      expiresAt: parseDate(plus.expires_date),
-      purchasedAt: parseDate(plus.purchase_date),
-      store: plus.store || null,
-      raw: plus,
-    };
-  }
+  const plans = [
+    { planName: "pro", entitlementId: PRO_ENTITLEMENT, products: PRO_PRODUCTS },
+    { planName: "plus", entitlementId: PLUS_ENTITLEMENT, products: PLUS_PRODUCTS },
+  ];
 
   const subscriptions = subscriber.subscriptions || {};
-  for (const [productId, subscription] of Object.entries(subscriptions)) {
-    if (PLUS_PRODUCTS.has(productId) && isActiveExpiration(subscription.expires_date)) {
+  for (const plan of plans) {
+    const entitlement = entitlements[plan.entitlementId];
+    if (entitlement && isActiveExpiration(entitlement.expires_date)) {
       return {
-        entitlementId: PLUS_ENTITLEMENT,
-        productId,
-        expiresAt: parseDate(subscription.expires_date),
-        purchasedAt: parseDate(subscription.purchase_date),
-        store: subscription.store || null,
-        raw: subscription,
+        planName: plan.planName,
+        entitlementId: plan.entitlementId,
+        productId: entitlement.product_identifier || null,
+        expiresAt: parseDate(entitlement.expires_date),
+        purchasedAt: parseDate(entitlement.purchase_date),
+        store: entitlement.store || null,
+        raw: entitlement,
       };
+    }
+
+    for (const [productId, subscription] of Object.entries(subscriptions)) {
+      if (plan.products.has(productId) && isActiveExpiration(subscription.expires_date)) {
+        return {
+          planName: plan.planName,
+          entitlementId: plan.entitlementId,
+          productId,
+          expiresAt: parseDate(subscription.expires_date),
+          purchasedAt: parseDate(subscription.purchase_date),
+          store: subscription.store || null,
+          raw: subscription,
+        };
+      }
     }
   }
   return null;
@@ -152,6 +180,29 @@ async function upsertNativeEntitlement(userId, appUserId, entitlement) {
   );
 }
 
+async function deactivateOtherPaidEntitlements(appUserId, activeEntitlementId) {
+  if (!activeEntitlementId) {
+    await pool.query(
+      `UPDATE native_entitlements
+       SET active = FALSE, updated_at = NOW()
+       WHERE provider = 'revenuecat'
+         AND app_user_id = $1
+         AND entitlement_id = ANY($2::text[])`,
+      [appUserId, [PLUS_ENTITLEMENT, PRO_ENTITLEMENT]]
+    );
+    return;
+  }
+  await pool.query(
+    `UPDATE native_entitlements
+     SET active = FALSE, updated_at = NOW()
+     WHERE provider = 'revenuecat'
+       AND app_user_id = $1
+       AND entitlement_id = ANY($2::text[])
+       AND entitlement_id <> $3`,
+    [appUserId, [PLUS_ENTITLEMENT, PRO_ENTITLEMENT], activeEntitlementId]
+  );
+}
+
 async function insertPackTransaction(userId, tx) {
   const result = await pool.query(
     `INSERT INTO native_store_transactions (
@@ -169,13 +220,13 @@ async function insertPackTransaction(userId, tx) {
   return false;
 }
 
-async function hasActiveStripePlan(userId) {
+async function hasActivePaidStripePlan(userId) {
   const result = await pool.query(
     `SELECT 1
      FROM plan_subscriptions
      WHERE user_id = $1
        AND status IN ('active', 'trialing')
-       AND plan_name = 'plus'
+       AND plan_name IN ('plus', 'pro')
      LIMIT 1`,
     [userId]
   );
@@ -183,14 +234,22 @@ async function hasActiveStripePlan(userId) {
 }
 
 async function applySubscriber(user, appUserId, subscriber = {}) {
-  const plus = activePlusFromSubscriber(subscriber);
+  const paidPlan = activePlanFromSubscriber(subscriber);
   const packTransactions = packTransactionsFromSubscriber(subscriber);
   const packsApplied = [];
 
-  if (plus) {
-    await upsertNativeEntitlement(user.id, appUserId, plus);
-    await quotaService.applyPlan(user.id, "plus");
-    await pool.query(`UPDATE users SET default_plan = 'plus', status = 'active', updated_at = NOW() WHERE id = $1`, [user.id]);
+  if (paidPlan) {
+    await upsertNativeEntitlement(user.id, appUserId, paidPlan);
+    await deactivateOtherPaidEntitlements(appUserId, paidPlan.entitlementId);
+    await quotaService.applyPlan(user.id, paidPlan.planName);
+    await pool.query(`UPDATE users SET default_plan = $2, status = 'active', updated_at = NOW() WHERE id = $1`, [user.id, paidPlan.planName]);
+  } else {
+    await deactivateOtherPaidEntitlements(appUserId, "");
+    const activeStripe = await hasActivePaidStripePlan(user.id);
+    if (!activeStripe) {
+      await quotaService.applyPlan(user.id, "free");
+      await pool.query(`UPDATE users SET default_plan = 'free', updated_at = NOW() WHERE id = $1`, [user.id]);
+    }
   }
 
   for (const tx of packTransactions) {
@@ -201,7 +260,9 @@ async function applySubscriber(user, appUserId, subscriber = {}) {
     provider: "revenuecat",
     verified: true,
     appUserId,
-    plusActive: Boolean(plus),
+    plusActive: paidPlan?.planName === "plus",
+    proActive: paidPlan?.planName === "pro",
+    planName: paidPlan?.planName || null,
     packsApplied,
   };
 }
@@ -222,9 +283,16 @@ async function syncFromClient(user, payload = {}) {
 
 function validateWebhookAuth(headers = {}) {
   const expected = process.env.REVENUECAT_WEBHOOK_AUTH_HEADER || "";
-  if (!expected) return;
+  if (!expected) {
+    if (config.env === "production") throw new ApiError(500, "revenuecat_webhook_secret_missing", "Falta REVENUECAT_WEBHOOK_AUTH_HEADER");
+    return;
+  }
   const actual = headers.authorization || headers.Authorization || "";
-  if (actual !== expected) throw new ApiError(401, "invalid_revenuecat_webhook", "Webhook RevenueCat no autorizado");
+  const expectedBuffer = Buffer.from(expected);
+  const actualBuffer = Buffer.from(String(actual || ""));
+  if (expectedBuffer.length !== actualBuffer.length || !crypto.timingSafeEqual(expectedBuffer, actualBuffer)) {
+    throw new ApiError(401, "invalid_revenuecat_webhook", "Webhook RevenueCat no autorizado");
+  }
 }
 
 async function recordWebhookEvent(event, body) {
@@ -232,21 +300,31 @@ async function recordWebhookEvent(event, body) {
   const result = await pool.query(
     `INSERT INTO revenuecat_events (event_id, event_type, app_user_id, product_id, payload)
      VALUES ($1, $2, $3, $4, $5::jsonb)
-     ON CONFLICT (event_id) DO NOTHING`,
+     ON CONFLICT (event_id) DO NOTHING
+     RETURNING event_id`,
     [eventId, event.type || "unknown", event.app_user_id || null, event.product_id || null, JSON.stringify(body || event)]
   );
-  return result.rowCount === 1;
+  if (result.rowCount === 1) return { eventId, shouldProcess: true, duplicate: false };
+  const existing = await pool.query(`SELECT processed_at FROM revenuecat_events WHERE event_id = $1`, [eventId]);
+  return { eventId, shouldProcess: !existing.rows[0]?.processed_at, duplicate: true };
+}
+
+async function markWebhookEventProcessed(eventId) {
+  await pool.query(`UPDATE revenuecat_events SET processed_at = NOW() WHERE event_id = $1`, [eventId]);
 }
 
 async function processWebhook(headers, body = {}) {
   validateWebhookAuth(headers);
   const event = body.event || body;
-  const shouldProcess = await recordWebhookEvent(event, body);
-  if (!shouldProcess) return { duplicate: true };
+  const eventState = await recordWebhookEvent(event, body);
+  if (!eventState.shouldProcess) return { duplicate: true };
 
   const appUserId = event.app_user_id || event.original_app_user_id || "";
   const userId = userIdFromAppUserId(appUserId);
-  if (!userId) return { ignored: true, reason: "unknown_app_user_id" };
+  if (!userId) {
+    await markWebhookEventProcessed(eventState.eventId);
+    return { ignored: true, reason: "unknown_app_user_id" };
+  }
 
   const user = { id: userId };
   if (!isRevenueCatServerConfigured()) {
@@ -255,18 +333,19 @@ async function processWebhook(headers, body = {}) {
 
   const subscriber = await fetchSubscriber(appUserId);
   const applied = await applySubscriber(user, appUserId, subscriber);
-  if (event.type === "EXPIRATION" && (event.entitlement_ids || []).includes(PLUS_ENTITLEMENT)) {
-    const activeStripe = await hasActiveStripePlan(userId);
-    if (!applied.plusActive && !activeStripe) {
+  if (event.type === "EXPIRATION" && isPaidExpirationEvent(event)) {
+    const activeStripe = await hasActivePaidStripePlan(userId);
+    if (!applied.plusActive && !applied.proActive && !activeStripe) {
       await quotaService.applyPlan(userId, "free");
       await pool.query(`UPDATE users SET default_plan = 'free', updated_at = NOW() WHERE id = $1`, [userId]);
       await pool.query(
         `UPDATE native_entitlements SET active = FALSE, updated_at = NOW()
-         WHERE provider = 'revenuecat' AND app_user_id = $1 AND entitlement_id = $2`,
-        [appUserId, PLUS_ENTITLEMENT]
+         WHERE provider = 'revenuecat' AND app_user_id = $1 AND entitlement_id = ANY($2::text[])`,
+        [appUserId, [PLUS_ENTITLEMENT, PRO_ENTITLEMENT]]
       );
     }
   }
+  await markWebhookEventProcessed(eventState.eventId);
   return applied;
 }
 
