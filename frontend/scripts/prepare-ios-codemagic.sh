@@ -8,6 +8,7 @@ ICON_SOURCE="$ROOT_DIR/resources/icon.png"
 APPICON_DIR="$IOS_DIR/App/App/Assets.xcassets/AppIcon.appiconset"
 INFO_PLIST="$IOS_DIR/App/App/Info.plist"
 GOOGLE_SERVICE_PLIST="$IOS_DIR/App/App/GoogleService-Info.plist"
+ENTITLEMENTS_PLIST="$IOS_DIR/App/App/App.entitlements"
 XCODEPROJ="$IOS_DIR/App/App.xcodeproj"
 
 if [ ! -d "$IOS_DIR" ]; then
@@ -86,6 +87,14 @@ if [ -f "$INFO_PLIST" ]; then
   fi
   /usr/libexec/PlistBuddy -c "Delete :ITSAppUsesNonExemptEncryption" "$INFO_PLIST" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$INFO_PLIST"
+  /usr/libexec/PlistBuddy -c "Delete :NSCameraUsageDescription" "$INFO_PLIST" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string WaFli usa la camara para adjuntar fotos a tus chats." "$INFO_PLIST"
+  /usr/libexec/PlistBuddy -c "Delete :NSMicrophoneUsageDescription" "$INFO_PLIST" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string WaFli usa el microfono para grabar notas de voz." "$INFO_PLIST"
+  /usr/libexec/PlistBuddy -c "Delete :NSPhotoLibraryUsageDescription" "$INFO_PLIST" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string WaFli usa tu galeria para adjuntar imagenes y videos a tus chats." "$INFO_PLIST"
+  /usr/libexec/PlistBuddy -c "Delete :NSPhotoLibraryAddUsageDescription" "$INFO_PLIST" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string WaFli puede guardar archivos que descargues desde tus chats." "$INFO_PLIST"
 fi
 
 if [ -f "$INFO_PLIST" ] && [ -n "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then
@@ -94,6 +103,21 @@ if [ -f "$INFO_PLIST" ] && [ -n "${GOOGLE_REVERSED_CLIENT_ID:-}" ]; then
   /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$INFO_PLIST" 2>/dev/null || true
   /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $GOOGLE_REVERSED_CLIENT_ID" "$INFO_PLIST" 2>/dev/null || true
 fi
+
+cat > "$ENTITLEMENTS_PLIST" <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>aps-environment</key>
+  <string>production</string>
+  <key>com.apple.developer.applesignin</key>
+  <array>
+    <string>Default</string>
+  </array>
+</dict>
+</plist>
+PLIST
 
 if [ -f "$GOOGLE_SERVICE_PLIST" ] && [ -d "$XCODEPROJ" ]; then
   XCODEPROJ_PATH="$XCODEPROJ" ruby <<'RUBY'
@@ -111,6 +135,16 @@ file_ref = app_group.files.find { |file| file.path == 'GoogleService-Info.plist'
 unless target.resources_build_phase.files_references.any? { |file| file.path == 'GoogleService-Info.plist' }
   target.resources_build_phase.add_file_reference(file_ref)
 end
+
+target.build_configurations.each do |config|
+  config.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'App/App.entitlements'
+end
+
+target_attributes = project.root_object.attributes['TargetAttributes'] ||= {}
+target_settings = target_attributes[target.uuid] ||= {}
+capabilities = target_settings['SystemCapabilities'] ||= {}
+capabilities['com.apple.SignInWithApple'] = { 'enabled' => 1 }
+capabilities['com.apple.Push'] = { 'enabled' => 1 }
 
 project.save
 RUBY

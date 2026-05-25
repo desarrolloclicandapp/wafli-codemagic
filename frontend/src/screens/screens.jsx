@@ -97,7 +97,47 @@ function pickCountryOptionByPhone(rawPhone = "") {
 
 function buildPhonePlaceholder(countryValue) {
   const prefix = String(countryValue || COUNTRY_PREFIX_OPTIONS[0][0]).split(' ')[0];
-  return `${prefix} 981234567`;
+  const samples = {
+    '+595': '981234567',
+    '+54': '91123456789',
+    '+591': '71234567',
+    '+55': '11987654321',
+    '+56': '912345678',
+    '+57': '3001234567',
+    '+506': '61234567',
+    '+53': '51234567',
+    '+593': '991234567',
+    '+503': '71234567',
+    '+34': '612345678',
+    '+502': '51234567',
+    '+504': '91234567',
+    '+52': '5512345678',
+    '+505': '81234567',
+    '+507': '61234567',
+    '+51': '912345678',
+    '+1': '2025550123',
+    '+598': '91234567',
+    '+58': '4121234567',
+    '+44': '7400123456',
+    '+33': '612345678',
+    '+49': '15123456789',
+    '+39': '3123456789',
+    '+351': '912345678',
+  };
+  return `Ej. ${samples[prefix] || '981234567'}`;
+}
+
+function sanitizeLocalPhoneInput(rawPhone, countryValue) {
+  const clean = sanitizePhoneInput(rawPhone);
+  const selectedPrefix = phoneDigits(String(countryValue || COUNTRY_PREFIX_OPTIONS[0][0]).split(' ')[0]);
+  const digits = phoneDigits(clean);
+  if (clean.startsWith('+') && selectedPrefix && digits.startsWith(selectedPrefix)) {
+    return digits.slice(selectedPrefix.length).slice(0, 15);
+  }
+  if (!clean.startsWith('+') && selectedPrefix && digits.length > selectedPrefix.length + 3 && digits.startsWith(selectedPrefix)) {
+    return digits.slice(selectedPrefix.length).slice(0, 15);
+  }
+  return clean;
 }
 
 const CHAT_LIST_LIMIT = 60;
@@ -945,7 +985,7 @@ function getInstallProfile() {
   };
 }
 
-function ConnectedSuccessScreen({ onContinue, onInstall, onInstallOpportunitySeen }) {
+function ConnectedSuccessScreen({ isNativeApp = false, onContinue, onInstall, onInstallOpportunitySeen }) {
   const install = getInstallProfile();
   React.useEffect(() => {
     onInstallOpportunitySeen && onInstallOpportunitySeen();
@@ -967,17 +1007,29 @@ function ConnectedSuccessScreen({ onContinue, onInstall, onInstallOpportunitySee
           <p className="t-small" style={{color: 'var(--text-secondary)', margin: '0 0 12px'}}>
             Ya podemos leer tus chats y ayudarte a contestar.
           </p>
-          <div className="install-help-card">
-            <div>
-              <span className="install-help-card__badge">{install.label}</span>
-              <p className="t-small" style={{margin: '6px 0 0'}}>Añade WaFli a tu pantalla de inicio para usarlo como una app.</p>
-              <p className="t-caption" style={{margin: '4px 0 0'}}>{install.summary}</p>
+          {isNativeApp ? (
+            <div className="install-help-card install-help-card--native">
+              <div>
+                <span className="install-help-card__badge">App nativa</span>
+                <p className="t-small" style={{margin: '6px 0 0'}}>WaFli ya está instalada en tu iPhone.</p>
+                <p className="t-caption" style={{margin: '4px 0 0'}}>Puedes continuar directo a tus chats; no hace falta Safari ni añadir a pantalla de inicio.</p>
+              </div>
             </div>
-            <button className="btn btn--secondary btn--md" onClick={onInstall}>Añadir / ver tutorial</button>
-          </div>
-          <p className="t-caption" style={{margin: '10px 0 0', textAlign: 'left'}}>
-            {install.pushNote}
-          </p>
+          ) : (
+            <>
+              <div className="install-help-card">
+                <div>
+                  <span className="install-help-card__badge">{install.label}</span>
+                  <p className="t-small" style={{margin: '6px 0 0'}}>Añade WaFli a tu pantalla de inicio para usarlo como una app.</p>
+                  <p className="t-caption" style={{margin: '4px 0 0'}}>{install.summary}</p>
+                </div>
+                <button className="btn btn--secondary btn--md" onClick={onInstall}>Añadir / ver tutorial</button>
+              </div>
+              <p className="t-caption" style={{margin: '10px 0 0', textAlign: 'left'}}>
+                {install.pushNote}
+              </p>
+            </>
+          )}
           <button className="btn btn--primary btn--full" style={{marginTop: 12}} onClick={onContinue}>Ir a mis chats</button>
         </div>
       </div>
@@ -1694,7 +1746,7 @@ function ConnectScreen({ onBack, onConnected }) {
               <label className="t-small" style={{display: 'block', marginBottom: 8, fontWeight: 500}}>País</label>
               <CountryPrefixSelect value={country} onChange={setCountry} style={{width: '100%', border: '1px solid var(--border-strong)', borderRadius: 12, padding: '11px 12px', outline: 'none', fontSize: 16, marginBottom: 12, fontFamily: 'inherit'}} />
               <label className="t-small" style={{display: 'block', marginBottom: 8, fontWeight: 500}}>Número de teléfono</label>
-              <input value={phone} onChange={(e) => setPhone(sanitizePhoneInput(e.target.value))} placeholder={phonePlaceholder} inputMode="tel" maxLength={16} style={{width: '100%', border: '1px solid var(--border-strong)', borderRadius: 12, padding: '11px 12px', outline: 'none', fontSize: 16, fontFamily: 'inherit'}} />
+              <input value={phone} onChange={(e) => setPhone(sanitizeLocalPhoneInput(e.target.value, country))} placeholder={phonePlaceholder} inputMode="tel" maxLength={16} style={{width: '100%', border: '1px solid var(--border-strong)', borderRadius: 12, padding: '11px 12px', outline: 'none', fontSize: 16, fontFamily: 'inherit'}} />
               {error ? <p className="t-caption" style={{marginTop: 8, color: 'var(--danger)'}}>{error}</p> : null}
               <button className="btn btn--primary btn--full" style={{marginTop: 12, opacity: canGenerate && !loading ? 1 : 0.55}} disabled={!canGenerate || loading} onClick={() => generateCode()}>
                 {loading ? 'Generando...' : 'Generar código'}
@@ -2445,6 +2497,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
   const [imageViewer, setImageViewer] = React.useState(null);
   const scrollRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
+  const audioCaptureInputRef = React.useRef(null);
   const mediaRecorderRef = React.useRef(null);
   const audioChunksRef = React.useRef([]);
   const audioStreamRef = React.useRef(null);
@@ -2465,6 +2518,11 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
     mediaContext: buildAiMediaContext(messages, extra.quotedMessage || null)
   });
   const isEmpty = messages.length === 0;
+  const canRecordInlineAudio = Boolean(navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined');
+  const dismissComposerKeyboard = React.useCallback(() => {
+    const active = document.activeElement;
+    if (active && active !== document.body && typeof active.blur === 'function') active.blur();
+  }, []);
   const lastMessage = isEmpty ? null : messages[messages.length - 1];
   const lastSentAt = lastMessage?.sentAt ? new Date(lastMessage.sentAt).getTime() : 0;
   const inactiveHours = lastSentAt ? (Date.now() - lastSentAt) / 36e5 : 0;
@@ -2673,8 +2731,14 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
   }, [sendPresenceUpdate]);
   const startAudioRecording = React.useCallback(async () => {
     if (offline || sending || recordingAudio || audioDraft) return;
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      setChatError('Tu navegador no permite grabar notas de voz desde aqui.');
+    if (!canRecordInlineAudio) {
+      if (audioCaptureInputRef.current) {
+        audioCaptureInputRef.current.value = '';
+        audioCaptureInputRef.current.click();
+        setChatError('');
+        return;
+      }
+      setChatError('Tu dispositivo no habilitó el grabador de audio. Revisa permisos de micrófono e intenta de nuevo.');
       return;
     }
     try {
@@ -2732,7 +2796,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       sendPresenceUpdate('paused');
       setChatError('No pudimos acceder al microfono. Revisa los permisos e intenta de nuevo.');
     }
-  }, [audioDraft, offline, recordingAudio, sending, sendPresenceUpdate]);
+  }, [audioDraft, canRecordInlineAudio, offline, recordingAudio, sending, sendPresenceUpdate]);
   const handleMicPointerDown = () => {
     if (offline || sending || audioDraft || recordingAudio) return;
     if (micPressTimerRef.current) window.clearTimeout(micPressTimerRef.current);
@@ -3077,12 +3141,12 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         {showContextualCta && (
           <div style={{padding: '8px 14px', background: 'var(--gray-50)', borderTop: '1px solid var(--border)'}}>
             {ctaMode === 'opener' && (
-              <button onClick={onOpener} disabled={offline} className="btn btn--primary btn--full" style={{height: 48, opacity: offline ? 0.55 : 1}}>
+              <button onClick={() => { dismissComposerKeyboard(); onOpener && onOpener(); }} disabled={offline} className="btn btn--primary btn--full" style={{height: 48, opacity: offline ? 0.55 : 1}}>
                 <Icons.Sparkles size={16} /> Necesito abrir
               </button>
             )}
             {ctaMode === 'reactivate' && (
-              <button onClick={() => onReactivate && onReactivate(buildAiContext())} disabled={offline} className="btn btn--primary btn--full" style={{height: 48, opacity: offline ? 0.55 : 1}}>
+              <button onClick={() => { dismissComposerKeyboard(); onReactivate && onReactivate(buildAiContext()); }} disabled={offline} className="btn btn--primary btn--full" style={{height: 48, opacity: offline ? 0.55 : 1}}>
                 <Icons.Sparkles size={16} /> Reactivar hilo
               </button>
             )}
@@ -3111,13 +3175,21 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
             </div>
           ) : null}
           <div style={{display: 'flex', alignItems: 'flex-end', gap: 8, width: '100%'}}>
-            <button className="appheader__icon-btn" disabled={offline} style={{color: 'var(--text-secondary)', opacity: offline ? 0.45 : 1}} aria-label="Opciones IA" onClick={() => setAiMenuOpen(true)}><Icons.Sparkles size={20} /></button>
+            <button className="appheader__icon-btn" disabled={offline} style={{color: 'var(--text-secondary)', opacity: offline ? 0.45 : 1}} aria-label="Opciones IA" onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(true); }}><Icons.Sparkles size={20} /></button>
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*,video/*,audio/*,.webp"
               style={{display: 'none'}}
               onChange={(event) => sendMediaFile(event.target.files?.[0])}
+            />
+            <input
+              ref={audioCaptureInputRef}
+              type="file"
+              accept="audio/*"
+              capture="microphone"
+              style={{display: 'none'}}
+              onChange={(event) => sendMediaFile(event.target.files?.[0], { mediaType: 'audio', ptt: true, label: 'Nota de voz' })}
             />
             <button
               className="appheader__icon-btn"
@@ -3292,8 +3364,8 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       <BottomSheet open={aiMenuOpen} onClose={() => setAiMenuOpen(false)} height="44%">
         <div style={{padding: '8px 18px 18px'}}>
           <div className="t-h3" style={{marginBottom: 12}}>Acciones IA</div>
-          <button style={menuActionStyle} onClick={() => { setAiMenuOpen(false); onSuggest && onSuggest(buildAiContext(replyTo ? { quotedMessage: quotedMessagePayload(replyTo, match) } : {})); }}><Icons.Sparkles size={16} /> {replyTo ? 'Sugerir respuesta al mensaje' : 'Sugerir respuesta'}</button>
-          <button style={menuActionStyle} onClick={() => { setAiMenuOpen(false); onReactivate && onReactivate(buildAiContext()); }}><Icons.Refresh size={16} /> Reactivar hilo frío</button>
+          <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onSuggest && onSuggest(buildAiContext(replyTo ? { quotedMessage: quotedMessagePayload(replyTo, match) } : {})); }}><Icons.Sparkles size={16} /> {replyTo ? 'Sugerir respuesta al mensaje' : 'Sugerir respuesta'}</button>
+          <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onReactivate && onReactivate(buildAiContext()); }}><Icons.Refresh size={16} /> Reactivar hilo frío</button>
         </div>
       </BottomSheet>
       <BottomSheet open={editOpen} onClose={() => setEditOpen(false)} height="88%">
@@ -3338,7 +3410,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
           />
           <input
             value={editPhone}
-            onChange={e => setEditPhone(sanitizePhoneInput(e.target.value))}
+            onChange={e => setEditPhone(sanitizeLocalPhoneInput(e.target.value, editPhoneCountry))}
             placeholder={buildPhonePlaceholder(editPhoneCountry)}
             inputMode="tel"
             autoComplete="tel"

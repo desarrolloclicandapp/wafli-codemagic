@@ -47,6 +47,18 @@ const screenForOnboardingStep = (nextStep) => {
   return 'chats';
 };
 
+function AppLoadingScreen({ label = 'Preparando WaFli...' }) {
+  return (
+    <div className="app-loading">
+      <div className="app-loading__mark">
+        <Icons.Logo size={34} />
+        <span className="app-loading__ring" aria-hidden="true" />
+      </div>
+      <span className="t-small">{label}</span>
+    </div>
+  );
+}
+
 // WaFliApp - main navigation state machine
 function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   const params = new URLSearchParams(window.location.search);
@@ -105,8 +117,8 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
     phone: null,
     checkedAt: 0,
   });
-  const [pwaInstallSeen, setPwaInstallSeen] = React.useState(() => localStorage.getItem(PWA_INSTALL_SEEN_KEY) === '1');
-  const [pwaInstalled, setPwaInstalled] = React.useState(() => localStorage.getItem(PWA_INSTALLED_KEY) === '1' || isPwaStandalone());
+  const [pwaInstallSeen, setPwaInstallSeen] = React.useState(() => isCapacitorNative || localStorage.getItem(PWA_INSTALL_SEEN_KEY) === '1');
+  const [pwaInstalled, setPwaInstalled] = React.useState(() => isCapacitorNative || localStorage.getItem(PWA_INSTALLED_KEY) === '1' || isPwaStandalone());
   const screenRef = React.useRef(initialScreen);
   const sheetRef = React.useRef(sheet);
   const modalRef = React.useRef(modal);
@@ -169,12 +181,12 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
           const status = await WaFliAPI.me.onboardingStatus().catch(() => null);
           goTo(screenForOnboardingStep(status?.nextStep));
         } else if (alive) {
-          goTo('landing');
+          goTo('landing', { replace: true });
         }
       } catch (error) {
         WaFliAPI.client.clearSession();
         if (alive) {
-          goTo('landing');
+          goTo('landing', { replace: true });
         }
       } finally {
         if (alive) setAuthReady(true);
@@ -214,12 +226,13 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
     const registrations = [];
     PushNotifications.addListener('registration', async ({ value }) => {
       if (cancelled || !value) return;
-      await WaFliAPI?.push?.subscribeNative?.({ token: value, platform: 'android' }).catch(() => {});
+      const nativePushPlatform = window.Capacitor?.getPlatform?.() === 'ios' ? 'ios' : 'android';
+      await WaFliAPI?.push?.subscribeNative?.({ token: value, platform: nativePushPlatform }).catch(() => {});
       await WaFliAPI?.push?.updatePreferences?.({ global_enabled: true }).catch(() => {});
       setNotificationPermission('granted');
     }).then((handle) => registrations.push(handle)).catch(() => {});
     PushNotifications.addListener('registrationError', () => {
-      if (!cancelled) showToast('No pudimos registrar notificaciones Android.');
+      if (!cancelled) showToast('No pudimos registrar notificaciones en este dispositivo.');
     }).then((handle) => registrations.push(handle)).catch(() => {});
     PushNotifications.addListener('pushNotificationActionPerformed', ({ notification }) => {
       const data = notification?.data || {};
@@ -241,6 +254,14 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
     }
   }, [theme]);
   React.useEffect(() => {
+    if (isCapacitorNative) {
+      window.WaFliInstallPrompt = null;
+      localStorage.setItem(PWA_INSTALL_SEEN_KEY, '1');
+      localStorage.setItem(PWA_INSTALLED_KEY, '1');
+      setPwaInstallSeen(true);
+      setPwaInstalled(true);
+      return undefined;
+    }
     const handleBeforeInstallPrompt = (event) => {
       event.preventDefault();
       window.WaFliInstallPrompt = event;
@@ -258,7 +279,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [isCapacitorNative]);
   React.useEffect(() => {
     const handleSessionCleared = () => {
       WaFliAPI?.analytics?.resetUser?.().catch(() => {});
@@ -390,16 +411,17 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   const markInstallOpportunitySeen = React.useCallback(() => {
     localStorage.setItem(PWA_INSTALL_SEEN_KEY, '1');
     setPwaInstallSeen(true);
-    if (isPwaStandalone()) {
+    if (isCapacitorNative || isPwaStandalone()) {
       localStorage.setItem(PWA_INSTALLED_KEY, '1');
       setPwaInstalled(true);
     }
-  }, []);
+  }, [isCapacitorNative]);
   const openInstallGuide = React.useCallback((options = {}) => {
     markInstallOpportunitySeen();
+    if (isCapacitorNative) return;
     setReturnScreen(options?.returnScreen || screenRef.current || 'chats');
     goTo('install');
-  }, [markInstallOpportunitySeen]);
+  }, [isCapacitorNative, markInstallOpportunitySeen]);
   React.useEffect(() => {
     if (typeof window === 'undefined') return undefined;
 
@@ -819,7 +841,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
 
   let body;
   if (!authReady) {
-    body = <div className="scroll-y" style={{display: 'grid', placeItems: 'center', minHeight: '100%'}}><span className="t-small">Preparando WaFli...</span></div>;
+    body = <AppLoadingScreen />;
   } else if (effectiveScreen === 'landing') {
     body = <LandingScreen onStart={() => goTo('auth')} onLogin={() => goTo('auth')} />;
   } else if (effectiveScreen === 'auth') {
@@ -833,7 +855,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   } else if (effectiveScreen === 'connect') {
     body = <ConnectScreen onBack={() => goTo('tone-base')} onConnected={() => { showToast('Tu WhatsApp quedó vinculado'); goTo('connected'); }} />;
   } else if (effectiveScreen === 'connected') {
-    body = <ConnectedSuccessScreen onContinue={() => { markInstallOpportunitySeen(); goTo('chats'); }} onInstall={openInstallGuide} onInstallOpportunitySeen={markInstallOpportunitySeen} />;
+    body = <ConnectedSuccessScreen isNativeApp={isCapacitorNative} onContinue={() => { markInstallOpportunitySeen(); goTo('chats'); }} onInstall={openInstallGuide} onInstallOpportunitySeen={markInstallOpportunitySeen} />;
   } else if (effectiveScreen === 'install') {
     const installReturnTarget = returnScreen && !['install', 'connected'].includes(returnScreen) ? returnScreen : 'chats';
     body = <AddToHomeScreen
@@ -852,9 +874,9 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       onReconnectWhatsApp={reconnectWhatsApp}
     />;
   } else if (effectiveScreen === 'chat') {
-    body = <ChatScreen matchId={activeChat} composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onOpener={() => setSheet('opener')} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '') => { setComposerSeed(sourceText); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage((LOCAL_CONVERSATIONS.find(m => m.id === activeChat)?.messages || []).slice(-1)[0]?.text || ''); setSheet('analysis'); }} offline={systemState.offline || whatsappUnavailable} showInstallShortcut={Boolean(whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat' })} aiSheetOpen={Boolean(sheet)} />;
+    body = <ChatScreen matchId={activeChat} composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onOpener={() => setSheet('opener')} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '') => { setComposerSeed(sourceText); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage((LOCAL_CONVERSATIONS.find(m => m.id === activeChat)?.messages || []).slice(-1)[0]?.text || ''); setSheet('analysis'); }} offline={systemState.offline || whatsappUnavailable} showInstallShortcut={Boolean(!isCapacitorNative && whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat' })} aiSheetOpen={Boolean(sheet)} />;
   } else if (effectiveScreen === 'chat-empty') {
-    body = <ChatScreen matchId="" composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onOpener={() => setSheet('opener')} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '') => { setComposerSeed(sourceText); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage(''); setSheet('analysis'); }} offline={systemState.offline || whatsappUnavailable} showInstallShortcut={Boolean(whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat-empty' })} aiSheetOpen={Boolean(sheet)} />;
+    body = <ChatScreen matchId="" composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onOpener={() => setSheet('opener')} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '') => { setComposerSeed(sourceText); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage(''); setSheet('analysis'); }} offline={systemState.offline || whatsappUnavailable} showInstallShortcut={Boolean(!isCapacitorNative && whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat-empty' })} aiSheetOpen={Boolean(sheet)} />;
   } else if (effectiveScreen === 'plan') {
     body = <PlanScreen
       onNavigate={navigate}
