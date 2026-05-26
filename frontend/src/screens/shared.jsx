@@ -1,4 +1,5 @@
 import React from 'react';
+import { Keyboard } from '@capacitor/keyboard';
 const { Icons } = window;
 // shared.jsx - shared WaFli components (avatars, header, bottom nav, toast, etc.)
 
@@ -236,6 +237,10 @@ function BottomSheet({ open, onClose, height = '75%', children }) {
   }, [onClose]);
   React.useEffect(() => {
     if (!open) return undefined;
+    document.documentElement.classList.add('sheet-open');
+    document.body?.classList.add('sheet-open');
+    const shouldLockNativeScroll = Boolean(window.WaFliAPI?.client?.IS_CAPACITOR_NATIVE && window.Capacitor?.getPlatform?.() === 'ios');
+    if (shouldLockNativeScroll) Keyboard.setScroll({ isDisabled: true }).catch(() => {});
     const handleNativeBack = (event) => {
       event.preventDefault?.();
       closeSheet();
@@ -248,6 +253,9 @@ function BottomSheet({ open, onClose, height = '75%', children }) {
     return () => {
       window.removeEventListener('wafli:native-back', handleNativeBack);
       window.removeEventListener('keydown', handleKeyDown);
+      document.documentElement.classList.remove('sheet-open');
+      document.body?.classList.remove('sheet-open');
+      if (shouldLockNativeScroll) Keyboard.setScroll({ isDisabled: false }).catch(() => {});
     };
   }, [open, closeSheet]);
   if (!open) return null;

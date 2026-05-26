@@ -1,4 +1,4 @@
-ï»¿import React from 'react';
+import React from 'react';
 import QRCode from 'qrcode';
 const { Icons, WaFliAPI, Avatar, AppHeader, IconButton, BottomNav, QuotaPill, BottomSheet, FullModal, EmptyState, Toast, StatusBar } = window;
 const LOCAL_CONVERSATIONS = [];
@@ -14,19 +14,19 @@ const COUNTRY_PREFIX_OPTIONS = [
   ['+53 CU', 'Cuba (+53)'],
   ['+593 EC', 'Ecuador (+593)'],
   ['+503 SV', 'El Salvador (+503)'],
-  ['+34 ES', 'EspaÃ±a (+34)'],
+  ['+34 ES', 'España (+34)'],
   ['+502 GT', 'Guatemala (+502)'],
   ['+504 HN', 'Honduras (+504)'],
-  ['+52 MX', 'MÃ©xico (+52)'],
+  ['+52 MX', 'México (+52)'],
   ['+505 NI', 'Nicaragua (+505)'],
-  ['+507 PA', 'PanamÃ¡ (+507)'],
-  ['+51 PE', 'PerÃº (+51)'],
+  ['+507 PA', 'Panamá (+507)'],
+  ['+51 PE', 'Perú (+51)'],
   ['+1 PR', 'Puerto Rico (+1)'],
-  ['+1 DO', 'RepÃºblica Dominicana (+1)'],
+  ['+1 DO', 'República Dominicana (+1)'],
   ['+598 UY', 'Uruguay (+598)'],
   ['+58 VE', 'Venezuela (+58)'],
   ['+1 US', 'Estados Unidos (+1)'],
-  ['+1 CA', 'CanadÃ¡ (+1)'],
+  ['+1 CA', 'Canadá (+1)'],
   ['+44 GB', 'Reino Unido (+44)'],
   ['+33 FR', 'Francia (+33)'],
   ['+49 DE', 'Alemania (+49)'],
@@ -35,28 +35,28 @@ const COUNTRY_PREFIX_OPTIONS = [
 ];
 
 const SPANISH_VARIANT_OPTIONS = [
-  { id: 'EspaÃ±a', badge: 'ES', title: 'EspaÃ±a', sample: 'Natural de EspaÃ±a, claro y directo sin sonar forzado.' },
-  { id: 'MÃ©xico', badge: 'MX', title: 'MÃ©xico', sample: 'Cercano, cÃ¡lido y cotidiano sin exceso de modismos.' },
+  { id: 'España', badge: 'ES', title: 'España', sample: 'Natural de España, claro y directo sin sonar forzado.' },
+  { id: 'México', badge: 'MX', title: 'México', sample: 'Cercano, cálido y cotidiano sin exceso de modismos.' },
   { id: 'Argentina', badge: 'AR', title: 'Argentina', sample: 'Suelto, conversado y con voseo cuando encaja.' },
   { id: 'Chile', badge: 'CL', title: 'Chile', sample: 'Breve, cotidiano y aterrizado sin exagerar localismos.' },
-  { id: 'Paraguay', badge: 'PY', title: 'Paraguay', sample: 'CÃ¡lido, directo y natural sin forzar joparÃ¡.' },
+  { id: 'Paraguay', badge: 'PY', title: 'Paraguay', sample: 'Cálido, directo y natural sin forzar jopará.' },
   { id: 'Uruguay', badge: 'UY', title: 'Uruguay', sample: 'Cercano, rioplatense suave y sin copiar otros tonos.' },
-  { id: 'Colombia', badge: 'CO', title: 'Colombia', sample: 'Amable, claro y cÃ¡lido sin sonar ceremonioso.' },
-  { id: 'PerÃº', badge: 'PE', title: 'PerÃº', sample: 'Cordial, simple y natural para chat real.' },
-  { id: 'Venezuela', badge: 'VE', title: 'Venezuela', sample: 'Cercano y expresivo, con energÃ­a moderada.' },
-  { id: 'Ecuador', badge: 'EC', title: 'Ecuador', sample: 'Amable, cotidiano y fÃ¡cil de entender.' },
-  { id: 'Bolivia', badge: 'BO', title: 'Bolivia', sample: 'Respetuoso, cÃ¡lido y directo sin rigidez.' },
+  { id: 'Colombia', badge: 'CO', title: 'Colombia', sample: 'Amable, claro y cálido sin sonar ceremonioso.' },
+  { id: 'Perú', badge: 'PE', title: 'Perú', sample: 'Cordial, simple y natural para chat real.' },
+  { id: 'Venezuela', badge: 'VE', title: 'Venezuela', sample: 'Cercano y expresivo, con energía moderada.' },
+  { id: 'Ecuador', badge: 'EC', title: 'Ecuador', sample: 'Amable, cotidiano y fácil de entender.' },
+  { id: 'Bolivia', badge: 'BO', title: 'Bolivia', sample: 'Respetuoso, cálido y directo sin rigidez.' },
   { id: 'Costa Rica', badge: 'CR', title: 'Costa Rica', sample: 'Tranquilo, amable y cercano.' },
-  { id: 'RepÃºblica Dominicana', badge: 'DO', title: 'RepÃºblica Dominicana', sample: 'EspontÃ¡neo y cercano sin escribir el acento.' },
-  { id: 'PanamÃ¡', badge: 'PA', title: 'PanamÃ¡', sample: 'Claro, cercano y compatible con chat cotidiano.' },
+  { id: 'República Dominicana', badge: 'DO', title: 'República Dominicana', sample: 'Espontáneo y cercano sin escribir el acento.' },
+  { id: 'Panamá', badge: 'PA', title: 'Panamá', sample: 'Claro, cercano y compatible con chat cotidiano.' },
   { id: 'Guatemala', badge: 'GT', title: 'Guatemala', sample: 'Amable, prudente y natural.' },
   { id: 'El Salvador', badge: 'SV', title: 'El Salvador', sample: 'Cercano, claro y sin frases estereotipadas.' },
   { id: 'Honduras', badge: 'HN', title: 'Honduras', sample: 'Amable, directo y cotidiano.' },
   { id: 'Nicaragua', badge: 'NI', title: 'Nicaragua', sample: 'Natural, cercano y respetuoso.' },
-  { id: 'Cuba', badge: 'CU', title: 'Cuba', sample: 'CÃ¡lido y expresivo con moderaciÃ³n.' },
-  { id: 'Puerto Rico', badge: 'PR', title: 'Puerto Rico', sample: 'CÃ¡lido y cotidiano sin forzar spanglish.' },
+  { id: 'Cuba', badge: 'CU', title: 'Cuba', sample: 'Cálido y expresivo con moderación.' },
+  { id: 'Puerto Rico', badge: 'PR', title: 'Puerto Rico', sample: 'Cálido y cotidiano sin forzar spanglish.' },
   { id: 'Hispanos en Estados Unidos', badge: 'US', title: 'Hispanos en Estados Unidos', sample: 'Bicultural solo si el contexto ya lo pide.' },
-  { id: 'Neutro', badge: 'ES', title: 'Neutro', sample: 'EspaÃ±ol claro si prefieres evitar localismos.' },
+  { id: 'Neutro', badge: 'ES', title: 'Neutro', sample: 'Español claro si prefieres evitar localismos.' },
 ];
 function CountryPrefixSelect({ value, onChange, style = {} }) {
   return (
@@ -188,7 +188,7 @@ function isValidPhoneInput(rawPhone, countryValue) {
 }
 // screens.jsx - All WaFli screens
 
-// SCREEN 1 Â· Landing pÃºblica
+// SCREEN 1 · Landing pública
 function LandingScreen({ onStart, onLogin, onOpenLegal }) {
   const [doc, setDoc] = React.useState(null);
   const openLegal = (type) => {
@@ -210,16 +210,16 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
       {/* Hero */}
       <div style={{padding: '32px 22px 24px'}}>
         <div style={{display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: 'var(--accent-soft)', color: 'var(--accent)', borderRadius: 'var(--r-pill)', fontSize: 12, fontWeight: 500, marginBottom: 18}}>
-          <Icons.Sparkles size={12} sw={2} /> Beta privada Â· ES
+          <Icons.Sparkles size={12} sw={2} /> Beta privada · ES
         </div>
         <h1 style={{fontSize: 38, lineHeight: 1.05, fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 16px'}}>
           Tu wingman para WhatsApp.
         </h1>
         <p style={{fontSize: 17, lineHeight: 1.45, color: 'var(--text-secondary)', margin: '0 0 28px', textWrap: 'pretty'}}>
-          Te lee la conversaciÃ³n, te sugiere quÃ© decir, tÃº decides. En tu espaÃ±ol.
+          Te lee la conversación, te sugiere qué decir, tú decides. En tu español.
         </p>
         <button className="btn btn--primary btn--full" onClick={onStart}>Empezar gratis</button>
-        <p className="t-caption" style={{textAlign: 'center', marginTop: 12}}>Plan Free incluido. Puedes ampliar cuando necesites mÃ¡s generaciones.</p>
+        <p className="t-caption" style={{textAlign: 'center', marginTop: 12}}>Plan Free incluido. Puedes ampliar cuando necesites más generaciones.</p>
       </div>
 
       {/* Vista de producto */}
@@ -256,7 +256,7 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
                 <div className="row gap-1" style={{color: 'var(--accent)', fontSize: 11, fontWeight: 600, marginBottom: 6, letterSpacing: '0.02em', textTransform: 'uppercase'}}>
                   <Icons.Sparkles size={11} sw={2} /> Sugerencia
                 </div>
-                <div style={{fontSize: 13, lineHeight: 1.45}}>WaFli prepara una respuesta editable. TÃº decides si enviarla.</div>
+                <div style={{fontSize: 13, lineHeight: 1.45}}>WaFli prepara una respuesta editable. Tú decides si enviarla.</div>
               </div>
             </div>
           </div>
@@ -266,9 +266,9 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
       {/* 3 value blocks */}
       <div style={{padding: '0 22px 40px', display: 'flex', flexDirection: 'column', gap: 24}}>
         {[
-          { icon: <Icons.Globe size={22} />, t: 'En tu espaÃ±ol de verdad', s: 'Castizo, andaluz, mexicano, argentino. Sin sonar a manual.' },
-          { icon: <Icons.Phone size={22} />, t: 'Sin copiar y pegar', s: 'Conecta tu WhatsApp. Tus chats, aquÃ­.' },
-          { icon: <Icons.Check size={22} />, t: 'TÃº decides siempre', s: 'WaFli sugiere, tÃº envÃ­as. Nunca manda nada por su cuenta.' },
+          { icon: <Icons.Globe size={22} />, t: 'En tu español de verdad', s: 'Castizo, andaluz, mexicano, argentino. Sin sonar a manual.' },
+          { icon: <Icons.Phone size={22} />, t: 'Sin copiar y pegar', s: 'Conecta tu WhatsApp. Tus chats, aquí.' },
+          { icon: <Icons.Check size={22} />, t: 'Tú decides siempre', s: 'WaFli sugiere, tú envías. Nunca manda nada por su cuenta.' },
         ].map((v, i) => (
           <div key={i} style={{display: 'flex', gap: 14, alignItems: 'flex-start'}}>
             <div style={{
@@ -285,14 +285,14 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
         ))}
       </div>
 
-      {/* CÃ³mo funciona */}
+      {/* Cómo funciona */}
       <div style={{padding: '24px 22px 36px', background: 'var(--gray-50)', borderTop: '1px solid var(--border)'}}>
-        <h2 className="t-h2" style={{margin: '0 0 24px'}}>CÃ³mo funciona</h2>
+        <h2 className="t-h2" style={{margin: '0 0 24px'}}>Cómo funciona</h2>
         <div style={{display: 'flex', flexDirection: 'column', gap: 22}}>
           {[
-            { n: '01', t: 'Conecta tu WhatsApp', s: 'VinculaciÃ³n guiada con cÃ³digo de 8 caracteres. Te explicamos cada paso.' },
-            { n: '02', t: 'Abre cualquier chat', s: 'VerÃ¡s tus conversaciones tal cual estÃ¡n, sin nada nuevo encima.' },
-            { n: '03', t: 'Pide una sugerencia', s: 'WaFli te propone quÃ© decir. TÃº lo lees, lo editas o lo envÃ­as.' },
+            { n: '01', t: 'Conecta tu WhatsApp', s: 'Vinculación guiada con código de 8 caracteres. Te explicamos cada paso.' },
+            { n: '02', t: 'Abre cualquier chat', s: 'Verás tus conversaciones tal cual están, sin nada nuevo encima.' },
+            { n: '03', t: 'Pide una sugerencia', s: 'WaFli te propone qué decir. Tú lo lees, lo editas o lo envías.' },
           ].map(s => (
             <div key={s.n} style={{display: 'flex', gap: 16}}>
               <span className="t-mono" style={{fontSize: 13, fontWeight: 500, color: 'var(--accent)', paddingTop: 2, minWidth: 24}}>{s.n}</span>
@@ -307,7 +307,7 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
 
       {/* CTA secundario */}
       <div style={{padding: '36px 22px 24px', textAlign: 'center'}}>
-        <h2 className="t-h2" style={{margin: '0 0 8px'}}>Â¿Listo para probarlo?</h2>
+        <h2 className="t-h2" style={{margin: '0 0 8px'}}>¿Listo para probarlo?</h2>
         <p className="t-small" style={{color: 'var(--text-secondary)', margin: '0 0 20px'}}>Configurar lleva menos de 2 minutos.</p>
         <button className="btn btn--primary btn--full" onClick={onStart}>Conectar mi WhatsApp</button>
       </div>
@@ -316,7 +316,7 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
       <div style={{padding: '20px 22px 32px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
         <span className="t-caption">(c) WaFli 2026</span>
         <div className="row gap-4">
-          <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('terms')}>TÃ©rminos</button>
+          <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('terms')}>Términos</button>
           <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('privacy')}>Privacidad</button>
           <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('deletion')}>Eliminar datos</button>
           <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('cookies')}>Cookies</button>
@@ -364,104 +364,104 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
 
 const LEGAL_DOCUMENTS = {
   terms: {
-    title: 'TÃ©rminos y Condiciones',
+    title: 'Términos y Condiciones',
     eyebrow: 'Documento de uso del servicio',
-    updated: 'Ãšltima actualizaciÃ³n: mayo 2026',
-    intro: 'Estos tÃ©rminos explican las reglas para usar WaFli como copiloto de conversaciÃ³n. Al crear una cuenta o continuar usando la app, aceptas estos tÃ©rminos y nuestra PolÃ­tica de Privacidad.',
+    updated: 'Última actualización: mayo 2026',
+    intro: 'Estos términos explican las reglas para usar WaFli como copiloto de conversación. Al crear una cuenta o continuar usando la app, aceptas estos términos y nuestra Política de Privacidad.',
     sections: [
       ['1. Contacto', 'Para soporte, privacidad o consultas legales puedes escribir a soporte@wafli.ai.'],
-      ['2. QuÃ© es WaFli', 'WaFli es un wingman de conversaciÃ³n: muestra chats que tÃº conectas, analiza contexto reciente cuando lo solicitas y genera borradores editables. WaFli no es una red social, no ofrece citas, no decide por ti y no envÃ­a mensajes automÃ¡ticamente.'],
-      ['3. Edad mÃ­nima', 'WaFli estÃ¡ pensado para personas adultas. Solo puedes usar la app si tienes al menos 18 aÃ±os o la mayorÃ­a de edad aplicable en tu jurisdicciÃ³n, la que sea mayor.'],
-      ['4. Responsabilidad sobre tus conversaciones', 'Debes tener derecho o base legÃ­tima para conectar, visualizar y procesar tus conversaciones. Eres responsable de respetar privacidad, consentimiento, derechos de terceros y normas de las plataformas que uses.'],
-      ['5. ConexiÃ³n con WhatsApp', 'La conexiÃ³n con WhatsApp depende de servicios y condiciones de terceros, puede pausarse, fallar o requerir reconexiÃ³n. No debes usar WaFli para spam, mensajerÃ­a masiva, automatizaciÃ³n no autorizada, suplantaciÃ³n o cualquier uso prohibido por WhatsApp.'],
+      ['2. Qué es WaFli', 'WaFli es un wingman de conversación: muestra chats que tú conectas, analiza contexto reciente cuando lo solicitas y genera borradores editables. WaFli no es una red social, no ofrece citas, no decide por ti y no envía mensajes automáticamente.'],
+      ['3. Edad mínima', 'WaFli está pensado para personas adultas. Solo puedes usar la app si tienes al menos 18 años o la mayoría de edad aplicable en tu jurisdicción, la que sea mayor.'],
+      ['4. Responsabilidad sobre tus conversaciones', 'Debes tener derecho o base legítima para conectar, visualizar y procesar tus conversaciones. Eres responsable de respetar privacidad, consentimiento, derechos de terceros y normas de las plataformas que uses.'],
+      ['5. Conexión con WhatsApp', 'La conexión con WhatsApp depende de servicios y condiciones de terceros, puede pausarse, fallar o requerir reconexión. No debes usar WaFli para spam, mensajería masiva, automatización no autorizada, suplantación o cualquier uso prohibido por WhatsApp.'],
       ['6. Contenido generado por IA', 'Las respuestas generadas por IA son borradores. Pueden ser incorrectas, incompletas, ofensivas o no adecuadas al contexto. Siempre debes revisar y editar cualquier texto antes de copiarlo o enviarlo.'],
-      ['7. Usos prohibidos', 'No debes usar WaFli para acoso, amenazas, manipulaciÃ³n, odio, violencia, fraude, phishing, spam, suplantaciÃ³n, vigilancia abusiva, scraping, extracciÃ³n masiva de datos o cualquier actividad ilegal o daÃ±ina.'],
-      ['8. Sin consejos profesionales', 'WaFli no ofrece asesoramiento legal, mÃ©dico, psicolÃ³gico, financiero ni de seguridad personal. Si una conversaciÃ³n implica riesgo, emergencia, acoso, violencia, autolesiÃ³n o una situaciÃ³n sensible, busca ayuda profesional o servicios de emergencia.'],
+      ['7. Usos prohibidos', 'No debes usar WaFli para acoso, amenazas, manipulación, odio, violencia, fraude, phishing, spam, suplantación, vigilancia abusiva, scraping, extracción masiva de datos o cualquier actividad ilegal o dañina.'],
+      ['8. Sin consejos profesionales', 'WaFli no ofrece asesoramiento legal, médico, psicológico, financiero ni de seguridad personal. Si una conversación implica riesgo, emergencia, acoso, violencia, autolesión o una situación sensible, busca ayuda profesional o servicios de emergencia.'],
       ['9. Cuotas, planes y pagos', 'Las cuotas de IA se consumen al generar, regenerar, reescribir, analizar, abrir o reactivar conversaciones. En web los pagos pueden procesarse mediante Stripe. En apps distribuidas por App Store o Google Play, las compras digitales deben usar los sistemas de pago requeridos por cada tienda cuando corresponda.'],
-      ['10. Privacidad y eliminaciÃ³n', 'El tratamiento de datos se describe en la PolÃ­tica de Privacidad. Puedes solicitar exportaciÃ³n, borrar historial cacheado, desconectar tu WhatsApp y solicitar eliminaciÃ³n de cuenta desde Ajustes o mediante el recurso pÃºblico de eliminaciÃ³n.'],
-      ['11. SuspensiÃ³n o limitaciÃ³n', 'Podemos limitar, suspender o cancelar acceso si detectamos abuso, riesgo de seguridad, incumplimiento legal, violaciÃ³n de estos tÃ©rminos o uso que pueda daÃ±ar a WaFli, a terceros o a plataformas conectadas.'],
-      ['12. Cambios y disponibilidad', 'WaFli puede cambiar funciones, precios, lÃ­mites, proveedores o disponibilidad. Haremos esfuerzos razonables por mantener el servicio, pero no garantizamos disponibilidad continua ni resultados concretos de la IA.'],
+      ['10. Privacidad y eliminación', 'El tratamiento de datos se describe en la Política de Privacidad. Puedes solicitar exportación, borrar historial cacheado, desconectar tu WhatsApp y solicitar eliminación de cuenta desde Ajustes o mediante el recurso público de eliminación.'],
+      ['11. Suspensión o limitación', 'Podemos limitar, suspender o cancelar acceso si detectamos abuso, riesgo de seguridad, incumplimiento legal, violación de estos términos o uso que pueda dañar a WaFli, a terceros o a plataformas conectadas.'],
+      ['12. Cambios y disponibilidad', 'WaFli puede cambiar funciones, precios, límites, proveedores o disponibilidad. Haremos esfuerzos razonables por mantener el servicio, pero no garantizamos disponibilidad continua ni resultados concretos de la IA.'],
     ],
   },
   privacy: {
-    title: 'PolÃ­tica de Privacidad',
+    title: 'Política de Privacidad',
     eyebrow: 'Tratamiento de datos en WaFli',
-    updated: 'Ãšltima actualizaciÃ³n: mayo 2026',
-    intro: 'Esta polÃ­tica explica quÃ© datos trata WaFli, para quÃ© los usa, con quiÃ©n puede compartirlos y quÃ© controles tienes sobre tu informaciÃ³n.',
+    updated: 'Última actualización: mayo 2026',
+    intro: 'Esta política explica qué datos trata WaFli, para qué los usa, con quién puede compartirlos y qué controles tienes sobre tu información.',
     sections: [
       ['1. Contacto de privacidad', 'Para consultas de privacidad puedes escribir a soporte@wafli.ai.'],
-      ['2. Datos de cuenta', 'Tratamos datos como email, identificadores internos de usuario, sesiÃ³n, login social, preferencias, idioma, tono, estado de onboarding y aceptaciÃ³n legal.'],
-      ['3. Datos de conversaciones', 'Cuando conectas WhatsApp, WaFli puede procesar chats, mensajes recientes, metadatos de conversaciÃ³n, estado de lectura, archivos o medios recientes y datos tÃ©cnicos necesarios para mostrar la app y generar sugerencias.'],
-      ['4. IA y contexto', 'WaFli envÃ­a contexto limitado a proveedores de IA Ãºnicamente cuando pides una acciÃ³n como sugerir, reescribir, analizar, abrir o reactivar. No activamos el LLM en segundo plano para leer tus chats sin una acciÃ³n tuya. Aplicamos minimizaciÃ³n y anonimizaciÃ³n tÃ©cnica cuando corresponde.'],
+      ['2. Datos de cuenta', 'Tratamos datos como email, identificadores internos de usuario, sesión, login social, preferencias, idioma, tono, estado de onboarding y aceptación legal.'],
+      ['3. Datos de conversaciones', 'Cuando conectas WhatsApp, WaFli puede procesar chats, mensajes recientes, metadatos de conversación, estado de lectura, archivos o medios recientes y datos técnicos necesarios para mostrar la app y generar sugerencias.'],
+      ['4. IA y contexto', 'WaFli envía contexto limitado a proveedores de IA únicamente cuando pides una acción como sugerir, reescribir, analizar, abrir o reactivar. No activamos el LLM en segundo plano para leer tus chats sin una acción tuya. Aplicamos minimización y anonimización técnica cuando corresponde.'],
       ['5. Finalidades', 'Usamos datos para autenticarte, prestar la app, conectar conversaciones, generar borradores de IA, gestionar cuota y pagos, enviar notificaciones, mejorar estabilidad, prevenir abuso, cumplir obligaciones legales y ofrecer soporte.'],
       ['6. Proveedores', 'Podemos usar proveedores como OpenAI para IA, Google/Firebase para notificaciones y Analytics, Google o Apple para login, Stripe o los sistemas de pago de las tiendas para pagos, servicios de hosting, email y herramientas de soporte.'],
-      ['7. Analytics', 'Usamos Firebase/Google Analytics para entender uso de la app, pantallas, eventos de producto y estabilidad. No debemos registrar contenido de mensajes, nÃºmeros de telÃ©fono completos ni texto privado dentro de eventos de Analytics.'],
-      ['8. Notificaciones', 'Si activas notificaciones, registramos tokens push o suscripciones para avisos de mensajes, cuota, conexiÃ³n y novedades. Puedes desactivar las notificaciones desde Ajustes o desde el sistema operativo.'],
-      ['9. RetenciÃ³n', 'Conservamos datos mientras tu cuenta estÃ© activa o mientras sea necesario para prestar el servicio. El cache de conversaciones debe ser limitado. Al solicitar eliminaciÃ³n de cuenta, iniciamos la eliminaciÃ³n y podemos conservar ciertos registros por seguridad, prevenciÃ³n de fraude, cumplimiento legal o respaldo durante un periodo limitado.'],
-      ['10. Tus derechos', 'Puedes solicitar acceso, exportaciÃ³n, correcciÃ³n, eliminaciÃ³n, desconexiÃ³n de WhatsApp y borrado de historial desde Ajustes o escribiendo a soporte@wafli.ai. Algunas leyes pueden darte derechos adicionales segÃºn tu paÃ­s.'],
-      ['11. Seguridad', 'Usamos medidas razonables como HTTPS, control de acceso, minimizaciÃ³n y separaciÃ³n de secretos. NingÃºn sistema es perfecto; si detectamos una incidencia relevante, actuaremos conforme a la ley aplicable.'],
-      ['12. Edad e informaciÃ³n sensible', 'WaFli estÃ¡ pensada para personas adultas. No debes usar la app para tratar informaciÃ³n de terceros sin una base legÃ­tima.'],
-      ['13. Transferencias internacionales', 'WaFli y sus proveedores pueden procesar datos en Estados Unidos y otros paÃ­ses. Cuando sea necesario, usaremos mecanismos legales adecuados para transferencias internacionales.'],
+      ['7. Analytics', 'Usamos Firebase/Google Analytics para entender uso de la app, pantallas, eventos de producto y estabilidad. No debemos registrar contenido de mensajes, números de teléfono completos ni texto privado dentro de eventos de Analytics.'],
+      ['8. Notificaciones', 'Si activas notificaciones, registramos tokens push o suscripciones para avisos de mensajes, cuota, conexión y novedades. Puedes desactivar las notificaciones desde Ajustes o desde el sistema operativo.'],
+      ['9. Retención', 'Conservamos datos mientras tu cuenta esté activa o mientras sea necesario para prestar el servicio. El cache de conversaciones debe ser limitado. Al solicitar eliminación de cuenta, iniciamos la eliminación y podemos conservar ciertos registros por seguridad, prevención de fraude, cumplimiento legal o respaldo durante un periodo limitado.'],
+      ['10. Tus derechos', 'Puedes solicitar acceso, exportación, corrección, eliminación, desconexión de WhatsApp y borrado de historial desde Ajustes o escribiendo a soporte@wafli.ai. Algunas leyes pueden darte derechos adicionales según tu país.'],
+      ['11. Seguridad', 'Usamos medidas razonables como HTTPS, control de acceso, minimización y separación de secretos. Ningún sistema es perfecto; si detectamos una incidencia relevante, actuaremos conforme a la ley aplicable.'],
+      ['12. Edad e información sensible', 'WaFli está pensada para personas adultas. No debes usar la app para tratar información de terceros sin una base legítima.'],
+      ['13. Transferencias internacionales', 'WaFli y sus proveedores pueden procesar datos en Estados Unidos y otros países. Cuando sea necesario, usaremos mecanismos legales adecuados para transferencias internacionales.'],
     ],
   },
   deletion: {
-    title: 'EliminaciÃ³n de cuenta y datos',
+    title: 'Eliminación de cuenta y datos',
     eyebrow: 'Control de privacidad',
-    updated: 'Ãšltima actualizaciÃ³n: mayo 2026',
-    intro: 'Puedes solicitar la eliminaciÃ³n de tu cuenta de WaFli y de los datos asociados desde la app o desde el recurso pÃºblico disponible sin iniciar sesiÃ³n.',
+    updated: 'Última actualización: mayo 2026',
+    intro: 'Puedes solicitar la eliminación de tu cuenta de WaFli y de los datos asociados desde la app o desde el recurso público disponible sin iniciar sesión.',
     sections: [
-      ['1. Solicitud desde la app', 'Abre Ajustes, entra en Privacidad y datos y solicita la eliminaciÃ³n de cuenta. La app revoca sesiones, desconecta servicios vinculados, borra cachÃ©s de conversaciÃ³n y elimina tokens de notificaciÃ³n.'],
-      ['2. Solicitud sin acceso a la app', 'Si ya desinstalaste WaFli o no puedes iniciar sesiÃ³n, escribe desde el email asociado a tu cuenta a soporte@wafli.ai con el asunto â€œSolicitud de eliminaciÃ³n de cuenta WaFliâ€.'],
-      ['3. EliminaciÃ³n parcial de datos', 'Puedes solicitar borrar historial cacheado, desconectar servicios vinculados o eliminar datos concretos sin cerrar tu cuenta. Indica quÃ© datos quieres eliminar al contactar con soporte.'],
-      ['4. Datos eliminados', 'Eliminamos o anonimizamos sesiones, identidades de acceso, perfil, preferencias, conversaciones cacheadas, contactos cacheados, medios temporales, datos tÃ©cnicos de conexiÃ³n, tokens push y datos de uso que no deban conservarse.'],
-      ['5. Datos retenidos', 'Podemos conservar registros mÃ­nimos por seguridad, prevenciÃ³n de fraude, soporte, impuestos, pagos, cumplimiento legal, disputas, polÃ­ticas de tienda o backups durante un periodo limitado.'],
-      ['6. Plazos', 'La solicitud desde la app inicia limpieza inmediata y deja la cuenta en periodo de gracia de 7 dÃ­as. DespuÃ©s, la cuenta se elimina o anonimiza definitivamente. Las solicitudes por email pueden requerir verificaciÃ³n y normalmente se procesan en un mÃ¡ximo de 30 dÃ­as.'],
-      ['7. Suscripciones', 'Si tienes una suscripciÃ³n gestionada por Google Play u otro proveedor, cancÃ©lala desde el proveedor correspondiente. La eliminaciÃ³n de cuenta no siempre cancela automÃ¡ticamente cobros gestionados fuera de WaFli.'],
-      ['8. PÃ¡gina pÃºblica', 'El recurso pÃºblico para Play Console y App Store es /account-deletion.html y no requiere iniciar sesiÃ³n. La polÃ­tica de privacidad pÃºblica estÃ¡ disponible en /privacy.html.'],
+      ['1. Solicitud desde la app', 'Abre Ajustes, entra en Privacidad y datos y solicita la eliminación de cuenta. La app revoca sesiones, desconecta servicios vinculados, borra cachés de conversación y elimina tokens de notificación.'],
+      ['2. Solicitud sin acceso a la app', 'Si ya desinstalaste WaFli o no puedes iniciar sesión, escribe desde el email asociado a tu cuenta a soporte@wafli.ai con el asunto “Solicitud de eliminación de cuenta WaFli”.'],
+      ['3. Eliminación parcial de datos', 'Puedes solicitar borrar historial cacheado, desconectar servicios vinculados o eliminar datos concretos sin cerrar tu cuenta. Indica qué datos quieres eliminar al contactar con soporte.'],
+      ['4. Datos eliminados', 'Eliminamos o anonimizamos sesiones, identidades de acceso, perfil, preferencias, conversaciones cacheadas, contactos cacheados, medios temporales, datos técnicos de conexión, tokens push y datos de uso que no deban conservarse.'],
+      ['5. Datos retenidos', 'Podemos conservar registros mínimos por seguridad, prevención de fraude, soporte, impuestos, pagos, cumplimiento legal, disputas, políticas de tienda o backups durante un periodo limitado.'],
+      ['6. Plazos', 'La solicitud desde la app inicia limpieza inmediata y deja la cuenta en periodo de gracia de 7 días. Después, la cuenta se elimina o anonimiza definitivamente. Las solicitudes por email pueden requerir verificación y normalmente se procesan en un máximo de 30 días.'],
+      ['7. Suscripciones', 'Si tienes una suscripción gestionada por Google Play u otro proveedor, cancélala desde el proveedor correspondiente. La eliminación de cuenta no siempre cancela automáticamente cobros gestionados fuera de WaFli.'],
+      ['8. Página pública', 'El recurso público para Play Console y App Store es /account-deletion.html y no requiere iniciar sesión. La política de privacidad pública está disponible en /privacy.html.'],
     ],
   },
   cookies: {
-    title: 'PolÃ­tica de Cookies y TecnologÃ­as Similares',
-    eyebrow: 'Cookies, almacenamiento local y mediciÃ³n',
-    updated: 'Ãšltima actualizaciÃ³n: mayo 2026',
-    intro: 'WaFli usa almacenamiento local, cookies tÃ©cnicas y herramientas de mediciÃ³n para que la app funcione y para entender su uso.',
+    title: 'Política de Cookies y Tecnologías Similares',
+    eyebrow: 'Cookies, almacenamiento local y medición',
+    updated: 'Última actualización: mayo 2026',
+    intro: 'WaFli usa almacenamiento local, cookies técnicas y herramientas de medición para que la app funcione y para entender su uso.',
     sections: [
-      ['1. TecnologÃ­as usadas', 'Podemos usar cookies, localStorage, sessionStorage, service workers, tokens de sesiÃ³n y SDKs como Firebase Analytics.'],
-      ['2. Finalidades tÃ©cnicas', 'Estas tecnologÃ­as permiten mantener sesiÃ³n, recordar preferencias, activar PWA, notificaciones, seguridad y funcionamiento offline bÃ¡sico.'],
-      ['3. MediciÃ³n', 'Firebase/Google Analytics puede medir eventos de uso, pantallas y rendimiento. No usamos estos eventos para guardar contenido de chats.'],
+      ['1. Tecnologías usadas', 'Podemos usar cookies, localStorage, sessionStorage, service workers, tokens de sesión y SDKs como Firebase Analytics.'],
+      ['2. Finalidades técnicas', 'Estas tecnologías permiten mantener sesión, recordar preferencias, activar PWA, notificaciones, seguridad y funcionamiento offline básico.'],
+      ['3. Medición', 'Firebase/Google Analytics puede medir eventos de uso, pantallas y rendimiento. No usamos estos eventos para guardar contenido de chats.'],
       ['4. Control', 'Puedes borrar cookies y almacenamiento desde tu navegador o sistema operativo. Si lo haces, algunas funciones pueden dejar de funcionar o requerir nuevo login.'],
     ],
   },
   support: {
     title: 'Soporte',
     eyebrow: 'Ayuda y preguntas frecuentes',
-    updated: 'Ãšltima actualizaciÃ³n: mayo 2026',
-    intro: 'AquÃ­ tienes respuestas rÃ¡pidas sobre uso, privacidad, IA, notificaciones, pagos y cuenta. Si necesitas ayuda humana, escribe a soporte@wafli.ai.',
+    updated: 'Última actualización: mayo 2026',
+    intro: 'Aquí tienes respuestas rápidas sobre uso, privacidad, IA, notificaciones, pagos y cuenta. Si necesitas ayuda humana, escribe a soporte@wafli.ai.',
     sections: [
-      ['1. Â¿QuÃ© es WaFli?', 'WaFli es un wingman de conversaciÃ³n: te ayuda a entender contexto, escribir mejor y preparar respuestas editables. TÃº decides quÃ© usar, editar o descartar.'],
-      ['2. Â¿WaFli es una app de citas?', 'No. WaFli no es una red social ni una app de citas. Es una herramienta privada de apoyo para redactar y organizar conversaciones que tÃº conectas.'],
-      ['3. Â¿WaFli envÃ­a mensajes automÃ¡ticamente?', 'No. WaFli no envÃ­a mensajes por ti. La app genera borradores editables y cualquier envÃ­o requiere una acciÃ³n explÃ­cita tuya.'],
-      ['4. Â¿CÃ³mo conecto mi WhatsApp?', 'En la pantalla Conectar introduces tu nÃºmero, recibes un cÃ³digo de emparejamiento y lo usas desde Dispositivos vinculados en tu WhatsApp.'],
-      ['5. Â¿Por quÃ© puede pausarse o caer la conexiÃ³n?', 'La conexiÃ³n depende de disponibilidad de terceros, red, sesiÃ³n del dispositivo y estado del servicio. Si se pausa, la app te avisarÃ¡ y podrÃ¡s reconectar cuando corresponda.'],
-      ['6. Â¿QuÃ© puede hacer la IA?', 'Puede sugerir respuestas, reescribir textos, analizar quÃ© quiso decir una persona, ayudarte a abrir una conversaciÃ³n o reactivar un hilo frÃ­o.'],
-      ['7. Â¿La IA siempre acierta?', 'No. Las sugerencias pueden ser incorrectas, sonar raras o no captar el contexto. Debes revisar y editar cada texto antes de usarlo.'],
-      ['8. Â¿QuÃ© consume cuota?', 'Sugerir, regenerar, reescribir, analizar, abrir y reactivar consumen generaciones. Editar manualmente un texto no consume cuota.'],
-      ['9. Â¿QuÃ© pasa si se agota mi cuota?', 'Puedes seguir leyendo chats y escribiendo manualmente. La app bloquearÃ¡ nuevas generaciones de IA hasta el prÃ³ximo reinicio de cuota o hasta que compres/actives mÃ¡s saldo si estÃ¡ disponible.'],
-      ['10. Â¿Mis conversaciones se usan para entrenar modelos?', 'WaFli debe usar tus conversaciones solo para prestar la funciÃ³n que solicitas. No debe enviar contenido privado a Analytics ni usarlo para entrenamiento sin una base vÃ¡lida y consentimiento cuando corresponda.'],
-      ['11. Â¿QuÃ© datos procesa WaFli?', 'Puede procesar datos de cuenta, preferencias, conexiÃ³n, mensajes recientes, metadatos de conversaciÃ³n, uso de IA, notificaciones, pagos y soporte. La PolÃ­tica de Privacidad explica el detalle.'],
-      ['12. Â¿CuÃ¡ndo se envÃ­a contexto a la IA?', 'Solo cuando pides una acciÃ³n de IA como sugerir, reescribir, analizar, abrir o reactivar. WaFli no activa el modelo para leer chats nuevos en segundo plano sin acciÃ³n tuya.'],
-      ['13. Â¿QuÃ© son las notificaciones?', 'Son avisos de mensajes, conversaciones encalladas, cuota, estado de conexiÃ³n o novedades. Puedes activar o desactivar categorÃ­as desde Ajustes y tambiÃ©n desde el sistema operativo.'],
-      ['14. No me llegan notificaciones. Â¿QuÃ© hago?', 'Verifica que el permiso del sistema estÃ© concedido, que Permitir notificaciones estÃ© activo en WaFli, que no hayas silenciado la conversaciÃ³n y que el telÃ©fono no bloquee la app por ahorro de baterÃ­a.'],
-      ['15. Â¿Puedo silenciar o excluir chats?', 'SÃ­. Puedes silenciar notificaciones de una conversaciÃ³n o excluirla de WaFli si no quieres verla ni usarla con IA. Las conversaciones excluidas pueden gestionarse desde Privacidad y datos cuando la funciÃ³n estÃ© disponible.'],
-      ['16. Â¿CÃ³mo borro mis datos?', 'Desde Ajustes > Privacidad y datos puedes solicitar exportaciÃ³n, borrar historial cacheado, desconectar WhatsApp o solicitar eliminaciÃ³n de cuenta. TambiÃ©n existe una pÃ¡gina pÃºblica de eliminaciÃ³n de cuenta.'],
-      ['17. Â¿QuÃ© pasa al eliminar mi cuenta?', 'Se inicia la eliminaciÃ³n de datos asociados a tu cuenta. Puede existir un periodo de gracia y algunos registros mÃ­nimos pueden conservarse temporalmente por seguridad, prevenciÃ³n de fraude, cumplimiento legal o respaldo.'],
-      ['18. Â¿CÃ³mo cancelo un plan?', 'Si pagaste en web, revisa Plan y facturaciÃ³n o escribe a soporte@wafli.ai. Si pagaste desde App Store o Google Play, debes cancelar desde la tienda correspondiente.'],
-      ['19. Â¿WaFli guarda mi tarjeta?', 'No deberÃ­amos almacenar datos completos de tarjeta. Los pagos se gestionan mediante proveedores externos como Stripe o los sistemas de pago de las tiendas.'],
-      ['20. Â¿Hay edad mÃ­nima para usar WaFli?', 'SÃ­. WaFli estÃ¡ pensada para personas adultas. Solo puedes usarla si tienes al menos 18 aÃ±os o la mayorÃ­a de edad aplicable en tu jurisdicciÃ³n.'],
-      ['21. Â¿QuÃ© usos estÃ¡n prohibidos?', 'No uses WaFli para acoso, amenazas, spam, fraude, suplantaciÃ³n, manipulaciÃ³n, explotaciÃ³n, contenido ilegal, vigilancia abusiva o cualquier actividad que viole derechos de terceros.'],
-      ['22. Â¿QuÃ© hago si la app muestra un error?', 'Cierra y vuelve a abrir la app, verifica internet y prueba reconectar si el problema es de conexiÃ³n. Si persiste, escribe a soporte@wafli.ai indicando dispositivo, fecha aproximada y quÃ© acciÃ³n estabas haciendo.'],
-      ['23. Â¿QuÃ© informaciÃ³n debo enviar a soporte?', 'EnvÃ­a tu email de cuenta, dispositivo, sistema operativo, captura si ayuda y una descripciÃ³n del problema. No envÃ­es contenido Ã­ntimo o sensible si no es necesario.'],
-      ['24. Â¿DÃ³nde estÃ¡n los documentos legales?', 'Puedes consultar TÃ©rminos, Privacidad, Cookies y EliminaciÃ³n de cuenta desde la app o en las pÃ¡ginas pÃºblicas de WaFli tras el despliegue web.'],
+      ['1. ¿Qué es WaFli?', 'WaFli es un wingman de conversación: te ayuda a entender contexto, escribir mejor y preparar respuestas editables. Tú decides qué usar, editar o descartar.'],
+      ['2. ¿WaFli es una app de citas?', 'No. WaFli no es una red social ni una app de citas. Es una herramienta privada de apoyo para redactar y organizar conversaciones que tú conectas.'],
+      ['3. ¿WaFli envía mensajes automáticamente?', 'No. WaFli no envía mensajes por ti. La app genera borradores editables y cualquier envío requiere una acción explícita tuya.'],
+      ['4. ¿Cómo conecto mi WhatsApp?', 'En la pantalla Conectar introduces tu número, recibes un código de emparejamiento y lo usas desde Dispositivos vinculados en tu WhatsApp.'],
+      ['5. ¿Por qué puede pausarse o caer la conexión?', 'La conexión depende de disponibilidad de terceros, red, sesión del dispositivo y estado del servicio. Si se pausa, la app te avisará y podrás reconectar cuando corresponda.'],
+      ['6. ¿Qué puede hacer la IA?', 'Puede sugerir respuestas, reescribir textos, analizar qué quiso decir una persona, ayudarte a abrir una conversación o reactivar un hilo frío.'],
+      ['7. ¿La IA siempre acierta?', 'No. Las sugerencias pueden ser incorrectas, sonar raras o no captar el contexto. Debes revisar y editar cada texto antes de usarlo.'],
+      ['8. ¿Qué consume cuota?', 'Sugerir, regenerar, reescribir, analizar, abrir y reactivar consumen generaciones. Editar manualmente un texto no consume cuota.'],
+      ['9. ¿Qué pasa si se agota mi cuota?', 'Puedes seguir leyendo chats y escribiendo manualmente. La app bloqueará nuevas generaciones de IA hasta el próximo reinicio de cuota o hasta que compres/actives más saldo si está disponible.'],
+      ['10. ¿Mis conversaciones se usan para entrenar modelos?', 'WaFli debe usar tus conversaciones solo para prestar la función que solicitas. No debe enviar contenido privado a Analytics ni usarlo para entrenamiento sin una base válida y consentimiento cuando corresponda.'],
+      ['11. ¿Qué datos procesa WaFli?', 'Puede procesar datos de cuenta, preferencias, conexión, mensajes recientes, metadatos de conversación, uso de IA, notificaciones, pagos y soporte. La Política de Privacidad explica el detalle.'],
+      ['12. ¿Cuándo se envía contexto a la IA?', 'Solo cuando pides una acción de IA como sugerir, reescribir, analizar, abrir o reactivar. WaFli no activa el modelo para leer chats nuevos en segundo plano sin acción tuya.'],
+      ['13. ¿Qué son las notificaciones?', 'Son avisos de mensajes, conversaciones encalladas, cuota, estado de conexión o novedades. Puedes activar o desactivar categorías desde Ajustes y también desde el sistema operativo.'],
+      ['14. No me llegan notificaciones. ¿Qué hago?', 'Verifica que el permiso del sistema esté concedido, que Permitir notificaciones esté activo en WaFli, que no hayas silenciado la conversación y que el teléfono no bloquee la app por ahorro de batería.'],
+      ['15. ¿Puedo silenciar o excluir chats?', 'Sí. Puedes silenciar notificaciones de una conversación o excluirla de WaFli si no quieres verla ni usarla con IA. Las conversaciones excluidas pueden gestionarse desde Privacidad y datos cuando la función esté disponible.'],
+      ['16. ¿Cómo borro mis datos?', 'Desde Ajustes > Privacidad y datos puedes solicitar exportación, borrar historial cacheado, desconectar WhatsApp o solicitar eliminación de cuenta. También existe una página pública de eliminación de cuenta.'],
+      ['17. ¿Qué pasa al eliminar mi cuenta?', 'Se inicia la eliminación de datos asociados a tu cuenta. Puede existir un periodo de gracia y algunos registros mínimos pueden conservarse temporalmente por seguridad, prevención de fraude, cumplimiento legal o respaldo.'],
+      ['18. ¿Cómo cancelo un plan?', 'Si pagaste en web, revisa Plan y facturación o escribe a soporte@wafli.ai. Si pagaste desde App Store o Google Play, debes cancelar desde la tienda correspondiente.'],
+      ['19. ¿WaFli guarda mi tarjeta?', 'No deberíamos almacenar datos completos de tarjeta. Los pagos se gestionan mediante proveedores externos como Stripe o los sistemas de pago de las tiendas.'],
+      ['20. ¿Hay edad mínima para usar WaFli?', 'Sí. WaFli está pensada para personas adultas. Solo puedes usarla si tienes al menos 18 años o la mayoría de edad aplicable en tu jurisdicción.'],
+      ['21. ¿Qué usos están prohibidos?', 'No uses WaFli para acoso, amenazas, spam, fraude, suplantación, manipulación, explotación, contenido ilegal, vigilancia abusiva o cualquier actividad que viole derechos de terceros.'],
+      ['22. ¿Qué hago si la app muestra un error?', 'Cierra y vuelve a abrir la app, verifica internet y prueba reconectar si el problema es de conexión. Si persiste, escribe a soporte@wafli.ai indicando dispositivo, fecha aproximada y qué acción estabas haciendo.'],
+      ['23. ¿Qué información debo enviar a soporte?', 'Envía tu email de cuenta, dispositivo, sistema operativo, captura si ayuda y una descripción del problema. No envíes contenido íntimo o sensible si no es necesario.'],
+      ['24. ¿Dónde están los documentos legales?', 'Puedes consultar Términos, Privacidad, Cookies y Eliminación de cuenta desde la app o en las páginas públicas de WaFli tras el despliegue web.'],
     ],
   },
 };
@@ -470,11 +470,11 @@ function getLegalDocument(title, body) {
   const normalized = String(title || '').toLowerCase();
   if (normalized.includes('privacidad')) return LEGAL_DOCUMENTS.privacy;
   if (normalized.includes('cookies')) return LEGAL_DOCUMENTS.cookies;
-  if (normalized.includes('tÃ©rminos') || normalized.includes('terminos') || normalized.includes('condiciones')) return LEGAL_DOCUMENTS.terms;
+  if (normalized.includes('términos') || normalized.includes('terminos') || normalized.includes('condiciones')) return LEGAL_DOCUMENTS.terms;
   if (normalized.includes('soporte')) return LEGAL_DOCUMENTS.support;
   return {
     title,
-    eyebrow: 'InformaciÃ³n',
+    eyebrow: 'Información',
     updated: '',
     intro: '',
     sections: (body || []).map((p, i) => [`${i + 1}. Detalle`, p]),
@@ -509,7 +509,7 @@ function LegalFullscreen({ title, body, onClose }) {
           </div>
           {doc === LEGAL_DOCUMENTS.terms || doc === LEGAL_DOCUMENTS.privacy ? (
             <div className="legal-doc__notice">
-              Estos documentos resumen el funcionamiento pÃºblico de WaFli. Si tienes dudas legales o de privacidad, escribe a soporte@wafli.ai.
+              Estos documentos resumen el funcionamiento público de WaFli. Si tienes dudas legales o de privacidad, escribe a soporte@wafli.ai.
             </div>
           ) : null}
         </article>
@@ -539,7 +539,7 @@ function PublicLegalPage({ type = 'privacy' }) {
           ))}
         </div>
         <div className="legal-doc__notice">
-          PÃ¡gina pÃºblica de WaFli. Para privacidad, eliminaciÃ³n de cuenta o soporte, escribe a soporte@wafli.ai.
+          Página pública de WaFli. Para privacidad, eliminación de cuenta o soporte, escribe a soporte@wafli.ai.
         </div>
       </article>
     </div>
@@ -601,15 +601,15 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
     setLoadingProvider(provider);
     try {
       const result = await WaFliAPI?.auth?.socialLogin?.(provider, payload);
-      onShowToast && onShowToast(result?.recovered ? 'Cuenta recuperada' : 'SesiÃ³n iniciada');
+      onShowToast && onShowToast(result?.recovered ? 'Cuenta recuperada' : 'Sesión iniciada');
       onMagicLink && onMagicLink({ firstTime: Boolean(result?.firstTime) });
     } catch (apiError) {
       if (apiError?.code === 'account_pending_deletion') {
         setPendingRecovery({ provider, payload });
-        setError('Esta cuenta tiene una eliminaciÃ³n pendiente. Puedes recuperarla ahora y volver a usar WaFli.');
+        setError('Esta cuenta tiene una eliminación pendiente. Puedes recuperarla ahora y volver a usar WaFli.');
         return;
       }
-      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos iniciar sesiÃ³n con ese proveedor.');
+      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos iniciar sesión con ese proveedor.');
     } finally {
       setLoadingProvider('');
     }
@@ -617,7 +617,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
 
   const handleGoogleCredential = React.useCallback((response) => {
     if (!response?.credential) {
-      setError('Google no devolviÃ³ una credencial vÃ¡lida.');
+      setError('Google no devolvió una credencial válida.');
       return;
     }
     finishProviderLogin('google', { idToken: response.credential, nonce: googleNonceRef.current });
@@ -695,7 +695,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
         profile: response?.user || null
       });
     } catch (apiError) {
-      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos iniciar sesiÃ³n con Apple.');
+      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos iniciar sesión con Apple.');
       setLoadingProvider('');
     }
   };
@@ -738,12 +738,12 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
     <>
       <AppHeader
         title="Registro / Login"
-        leading={<IconButton onClick={onBack} label="AtrÃ¡s"><Icons.Back size={20} /></IconButton>}
+        leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
       />
       <div className="scroll-y" style={{padding: '20px 22px 24px'}}>
         <div className="card" style={{padding: 14, marginBottom: 12}}>
           <p style={{margin: '0 0 12px', fontSize: 15, textWrap: 'pretty'}}>
-            Entra o crea tu cuenta para continuar con la vinculaciÃ³n de tu WhatsApp.
+            Entra o crea tu cuenta para continuar con la vinculación de tu WhatsApp.
           </p>
           {canUseNativeGoogle ? (
             <button
@@ -786,9 +786,9 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
           {error ? <p className="t-caption" style={{marginTop: 10, color: 'var(--danger)'}}>{error}</p> : null}
           {pendingRecovery ? (
             <div className="card" style={{padding: 12, marginTop: 12, background: 'var(--accent-soft)', borderColor: 'rgba(0,0,0,0.06)'}}>
-              <div className="t-small" style={{fontWeight: 700, marginBottom: 6}}>Â¿Quieres recuperar tu cuenta?</div>
+              <div className="t-small" style={{fontWeight: 700, marginBottom: 6}}>¿Quieres recuperar tu cuenta?</div>
               <p className="t-caption" style={{margin: '0 0 10px', color: 'var(--text-secondary)'}}>
-                Vamos a cancelar la eliminaciÃ³n pendiente y mantener tu cuenta activa.
+                Vamos a cancelar la eliminación pendiente y mantener tu cuenta activa.
               </p>
               <button
                 className="btn btn--primary btn--full"
@@ -805,20 +805,20 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
           Al continuar aceptas{' '}
           <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12}} onClick={() => openLegal('terms')}>T&C</button>
           {' '}y{' '}
-          <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12}} onClick={() => openLegal('privacy')}>polÃ­tica de privacidad</button>.
+          <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12}} onClick={() => openLegal('privacy')}>política de privacidad</button>.
         </p>
       </div>
       {doc === 'terms' ? (
         <LegalFullscreen
-          title="TÃ©rminos y Condiciones"
-          body={['TÃ©rminos del servicio WaFli.', 'Al continuar aceptas estos tÃ©rminos.']}
+          title="Términos y Condiciones"
+          body={['Términos del servicio WaFli.', 'Al continuar aceptas estos términos.']}
           onClose={() => setDoc(null)}
         />
       ) : null}
       {doc === 'privacy' ? (
         <LegalFullscreen
-          title="PolÃ­tica de Privacidad"
-          body={['PolÃ­tica de privacidad de WaFli.', 'AquÃ­ se explica el uso de datos de forma transparente.']}
+          title="Política de Privacidad"
+          body={['Política de privacidad de WaFli.', 'Aquí se explica el uso de datos de forma transparente.']}
           onClose={() => setDoc(null)}
         />
       ) : null}
@@ -835,7 +835,7 @@ function LegalAcceptanceScreen({ onBack, onContinue }) {
     <>
       <AppHeader
         title="Antes de empezar"
-        leading={<IconButton onClick={onBack} label="AtrÃ¡s"><Icons.Back size={20} /></IconButton>}
+        leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
       />
       <div className="scroll-y" style={{padding: '20px 22px 24px'}}>
         <div className="onboarding-progress">
@@ -846,19 +846,19 @@ function LegalAcceptanceScreen({ onBack, onContinue }) {
         <div className="card" style={{padding: 14}}>
           <label style={{display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12, cursor: 'pointer'}}>
             <input type="checkbox" checked={ageOk} onChange={(e) => setAgeOk(e.target.checked)} style={{marginTop: 3}} />
-            <span style={{fontSize: 14.5}}>Soy mayor de 18 aÃ±os.</span>
+            <span style={{fontSize: 14.5}}>Soy mayor de 18 años.</span>
           </label>
           <label style={{display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 12, cursor: 'pointer'}}>
             <input type="checkbox" checked={legalOk} onChange={(e) => setLegalOk(e.target.checked)} style={{marginTop: 3}} />
             <span style={{fontSize: 14.5}}>
-              He leÃ­do y acepto los{' '}
+              He leído y acepto los{' '}
               <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 14.5}} onClick={(e) => { e.preventDefault(); setDoc('terms'); }}>T&C</button>
               {' '}y la{' '}
-              <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 14.5}} onClick={(e) => { e.preventDefault(); setDoc('privacy'); }}>PolÃ­tica de Privacidad</button>.
+              <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 14.5}} onClick={(e) => { e.preventDefault(); setDoc('privacy'); }}>Política de Privacidad</button>.
             </span>
           </label>
           <p className="t-caption" style={{color: 'var(--text-secondary)', textWrap: 'pretty'}}>
-            Entiendo que WaFli puede procesar contexto reciente de mis conversaciones cuando solicito una acciÃ³n de IA. Soy responsable de usarlo de forma legal, respetuosa y respetando la privacidad de terceros.
+            Entiendo que WaFli puede procesar contexto reciente de mis conversaciones cuando solicito una acción de IA. Soy responsable de usarlo de forma legal, respetuosa y respetando la privacidad de terceros.
           </p>
         </div>
         <button className="btn btn--primary btn--full" style={{marginTop: 14, opacity: canContinue ? 1 : 0.55}} disabled={!canContinue} onClick={onContinue}>
@@ -867,21 +867,21 @@ function LegalAcceptanceScreen({ onBack, onContinue }) {
       </div>
       {doc === 'terms' ? (
         <LegalFullscreen
-          title="TÃ©rminos y Condiciones"
+          title="Términos y Condiciones"
           body={[
             'Documento legal de WaFli.',
-            'WaFli sugiere respuestas, pero tÃº decides siempre quÃ© enviar.',
-            'El uso del servicio implica aceptaciÃ³n de estos tÃ©rminos.',
+            'WaFli sugiere respuestas, pero tú decides siempre qué enviar.',
+            'El uso del servicio implica aceptación de estos términos.',
           ]}
           onClose={() => setDoc(null)}
         />
       ) : null}
       {doc === 'privacy' ? (
         <LegalFullscreen
-          title="PolÃ­tica de Privacidad"
+          title="Política de Privacidad"
           body={[
             'Documento legal de WaFli.',
-            'Procesamos los datos mÃ­nimos necesarios para ofrecer sugerencias.',
+            'Procesamos los datos mínimos necesarios para ofrecer sugerencias.',
             'Puedes gestionar o eliminar tus datos desde Ajustes.',
           ]}
           onClose={() => setDoc(null)}
@@ -893,19 +893,19 @@ function LegalAcceptanceScreen({ onBack, onContinue }) {
 
 function SpanishVariantScreen({ onBack, onContinue }) {
   const options = [
-    { id: 'EspaÃ±a', badge: 'ES', title: 'EspaÃ±a', sample: 'Natural, directo y con ritmo peninsular.' },
-    { id: 'MÃ©xico', badge: 'MX', title: 'MÃ©xico', sample: 'Cercano, cÃ¡lido y sin sonar forzado.' },
+    { id: 'España', badge: 'ES', title: 'España', sample: 'Natural, directo y con ritmo peninsular.' },
+    { id: 'México', badge: 'MX', title: 'México', sample: 'Cercano, cálido y sin sonar forzado.' },
     { id: 'Argentina', badge: 'AR', title: 'Argentina', sample: 'Suena suelto, conversado y con confianza.' },
-    { id: 'Chile', badge: 'CL', title: 'Chile', sample: 'MÃ¡s cotidiano, breve y aterrizado.' },
-    { id: 'Neutro', badge: 'ES', title: 'Neutro', sample: 'EspaÃ±ol claro si prefieres evitar localismos.' },
+    { id: 'Chile', badge: 'CL', title: 'Chile', sample: 'Más cotidiano, breve y aterrizado.' },
+    { id: 'Neutro', badge: 'ES', title: 'Neutro', sample: 'Español claro si prefieres evitar localismos.' },
   ];
-  const [selected, setSelected] = React.useState('EspaÃ±a');
+  const [selected, setSelected] = React.useState('España');
   return (
     <>
       <AppHeader
-        title="Â¿CÃ³mo hablas?"
-        subtitle="Para que las sugerencias suenen como tÃº"
-        leading={<IconButton onClick={onBack} label="AtrÃ¡s"><Icons.Back size={20} /></IconButton>}
+        title="¿Cómo hablas?"
+        subtitle="Para que las sugerencias suenen como tú"
+        leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
       />
       <div className="scroll-y" style={{padding: '20px 22px 24px'}}>
         <div className="onboarding-progress">
@@ -945,7 +945,7 @@ function SpanishVariantScreen({ onBack, onContinue }) {
 function ToneBaseScreen({ onBack, onContinue }) {
   const tones = [
     { id: 'relajado', title: 'Relajado', sample: 'Tranqui, sin agobios. Que tal el finde?' },
-    { id: 'desenfadado', title: 'Desenfadado', sample: 'Eh, quÃ© tal. Llevaba pensando en escribirte :)' },
+    { id: 'desenfadado', title: 'Desenfadado', sample: 'Eh, qué tal. Llevaba pensando en escribirte :)' },
     { id: 'picante', title: 'Picante', sample: 'Estaba pensando en ti... mala idea o buena idea?' },
     { id: 'intelectual', title: 'Intelectual', sample: 'Tu ultima frase me hizo pensar. Contame mas.' },
   ];
@@ -953,9 +953,9 @@ function ToneBaseScreen({ onBack, onContinue }) {
   return (
     <>
       <AppHeader
-        title="Â¿QuÃ© tono prefieres por defecto?"
-        subtitle="Lo puedes cambiar para cada conversaciÃ³n"
-        leading={<IconButton onClick={onBack} label="AtrÃ¡s"><Icons.Back size={20} /></IconButton>}
+        title="¿Qué tono prefieres por defecto?"
+        subtitle="Lo puedes cambiar para cada conversación"
+        leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
       />
       <div className="scroll-y" style={{padding: '20px 22px 24px'}}>
         <div className="onboarding-progress">
@@ -997,44 +997,44 @@ function getInstallProfile() {
   if (isIOS) {
     return {
       label: 'iOS Safari',
-      summary: 'Toca Compartir y luego AÃ±adir a pantalla de inicio.',
-      steps: ['Toca el botÃ³n Compartir.', 'Elige AÃ±adir a pantalla de inicio.', 'Confirma con AÃ±adir.'],
+      summary: 'Toca Compartir y luego Añadir a pantalla de inicio.',
+      steps: ['Toca el botón Compartir.', 'Elige Añadir a pantalla de inicio.', 'Confirma con Añadir.'],
       visual: 'ios-a2hs.gif',
       visualSteps: [
-        { src: 'ios-install-1.jpeg', title: 'Abre el menÃº de compartir', text: 'Desde Safari, toca el icono de compartir en la barra inferior.' },
-        { src: 'ios-install-2.jpeg', title: 'Busca la opciÃ³n correcta', text: 'Desliza el menÃº hasta encontrar AÃ±adir a pantalla de inicio.' },
-        { src: 'ios-install-3.jpeg', title: 'AÃ±ade WaFli', text: 'Confirma el nombre y toca AÃ±adir.' },
+        { src: 'ios-install-1.jpeg', title: 'Abre el menú de compartir', text: 'Desde Safari, toca el icono de compartir en la barra inferior.' },
+        { src: 'ios-install-2.jpeg', title: 'Busca la opción correcta', text: 'Desliza el menú hasta encontrar Añadir a pantalla de inicio.' },
+        { src: 'ios-install-3.jpeg', title: 'Añade WaFli', text: 'Confirma el nombre y toca Añadir.' },
         { src: 'ios-install-4.jpeg', title: 'Listo', text: 'WaFli queda como app en tu pantalla de inicio.' },
       ],
       canAutoInstall: false,
-      pushNote: 'En iPhone, las notificaciones web funcionan cuando WaFli estÃ¡ aÃ±adida a pantalla de inicio y el dispositivo usa iOS 16.4 o superior.',
+      pushNote: 'En iPhone, las notificaciones web funcionan cuando WaFli está añadida a pantalla de inicio y el dispositivo usa iOS 16.4 o superior.',
     };
   }
   if (isAndroid) {
     return {
       label: 'Android Chrome',
-      summary: 'Abre el menÃº de tres puntos y toca Instalar app.',
-      steps: ['Toca el menÃº de tres puntos.', 'Elige Instalar app o AÃ±adir a pantalla de inicio.', 'Confirma la instalaciÃ³n.'],
+      summary: 'Abre el menú de tres puntos y toca Instalar app.',
+      steps: ['Toca el menú de tres puntos.', 'Elige Instalar app o Añadir a pantalla de inicio.', 'Confirma la instalación.'],
       visual: 'android-a2hs.gif',
       visualSteps: [
-        { src: 'android-install-1.jpeg', title: 'Abre el menÃº', text: 'Toca los tres puntos de Chrome.' },
-        { src: 'android-install-2.jpeg', title: 'Instala WaFli', text: 'Elige Instalar app o AÃ±adir a pantalla de inicio.' },
-        { src: 'android-install-3.jpeg', title: 'Confirma', text: 'Acepta la instalaciÃ³n y abre WaFli desde tu inicio.' },
+        { src: 'android-install-1.jpeg', title: 'Abre el menú', text: 'Toca los tres puntos de Chrome.' },
+        { src: 'android-install-2.jpeg', title: 'Instala WaFli', text: 'Elige Instalar app o Añadir a pantalla de inicio.' },
+        { src: 'android-install-3.jpeg', title: 'Confirma', text: 'Acepta la instalación y abre WaFli desde tu inicio.' },
       ],
       canAutoInstall: true,
-      pushNote: 'En Android/Chrome podemos mostrar un botÃ³n de instalaciÃ³n si el navegador habilita el prompt.',
+      pushNote: 'En Android/Chrome podemos mostrar un botón de instalación si el navegador habilita el prompt.',
     };
   }
   return {
-    label: isMobile ? 'Navegador mÃ³vil' : 'Desktop',
-    summary: isMobile ? 'Busca la opciÃ³n AÃ±adir a pantalla de inicio en tu navegador.' : 'Usa el icono de instalar de la barra del navegador si estÃ¡ disponible.',
+    label: isMobile ? 'Navegador móvil' : 'Desktop',
+    summary: isMobile ? 'Busca la opción Añadir a pantalla de inicio en tu navegador.' : 'Usa el icono de instalar de la barra del navegador si está disponible.',
     steps: isMobile
-      ? ['Abre el menÃº de tu navegador.', 'Busca AÃ±adir a pantalla de inicio o Instalar app.', 'Confirma la instalaciÃ³n.']
+      ? ['Abre el menú de tu navegador.', 'Busca Añadir a pantalla de inicio o Instalar app.', 'Confirma la instalación.']
       : ['Abre WaFli en Chrome, Edge u otro navegador compatible.', 'Pulsa el icono de instalar en la barra de direcciones.', 'Confirma Instalar para abrir WaFli como app.'],
     visual: isMobile ? 'mobile-a2hs.gif' : 'desktop-install.gif',
     visualSteps: [],
     canAutoInstall: true,
-    pushNote: 'Las notificaciones dependen del navegador y de que hayas concedido permiso explÃ­cito.',
+    pushNote: 'Las notificaciones dependen del navegador y de que hayas concedido permiso explícito.',
   };
 }
 
@@ -1056,7 +1056,7 @@ function ConnectedSuccessScreen({ isNativeApp = false, onContinue, onInstall, on
           <div style={{width: 68, height: 68, borderRadius: 999, margin: '0 auto 10px', background: 'var(--success-soft)', color: 'var(--success)', display: 'grid', placeItems: 'center'}}>
             <Icons.Check size={28} sw={2.4} />
           </div>
-          <h2 className="t-h2" style={{margin: '0 0 8px'}}>Â¡Conectado!</h2>
+          <h2 className="t-h2" style={{margin: '0 0 8px'}}>¡Conectado!</h2>
           <p className="t-small" style={{color: 'var(--text-secondary)', margin: '0 0 12px'}}>
             Ya podemos leer tus chats y ayudarte a contestar.
           </p>
@@ -1064,8 +1064,8 @@ function ConnectedSuccessScreen({ isNativeApp = false, onContinue, onInstall, on
             <div className="install-help-card install-help-card--native">
               <div>
                 <span className="install-help-card__badge">App nativa</span>
-                <p className="t-small" style={{margin: '6px 0 0'}}>WaFli ya estÃ¡ instalada en tu iPhone.</p>
-                <p className="t-caption" style={{margin: '4px 0 0'}}>Puedes continuar directo a tus chats; no hace falta Safari ni aÃ±adir a pantalla de inicio.</p>
+                <p className="t-small" style={{margin: '6px 0 0'}}>WaFli ya está instalada en tu iPhone.</p>
+                <p className="t-caption" style={{margin: '4px 0 0'}}>Puedes continuar directo a tus chats; no hace falta Safari ni añadir a pantalla de inicio.</p>
               </div>
             </div>
           ) : (
@@ -1073,10 +1073,10 @@ function ConnectedSuccessScreen({ isNativeApp = false, onContinue, onInstall, on
               <div className="install-help-card">
                 <div>
                   <span className="install-help-card__badge">{install.label}</span>
-                  <p className="t-small" style={{margin: '6px 0 0'}}>AÃ±ade WaFli a tu pantalla de inicio para usarlo como una app.</p>
+                  <p className="t-small" style={{margin: '6px 0 0'}}>Añade WaFli a tu pantalla de inicio para usarlo como una app.</p>
                   <p className="t-caption" style={{margin: '4px 0 0'}}>{install.summary}</p>
                 </div>
-                <button className="btn btn--secondary btn--md" onClick={onInstall}>AÃ±adir / ver tutorial</button>
+                <button className="btn btn--secondary btn--md" onClick={onInstall}>Añadir / ver tutorial</button>
               </div>
               <p className="t-caption" style={{margin: '10px 0 0', textAlign: 'left'}}>
                 {install.pushNote}
@@ -1123,9 +1123,9 @@ function AddToHomeScreen({ onBack, onDone, onLater }) {
   return (
     <>
       <AppHeader
-        title="InstÃ¡lalo como app"
-        subtitle="Acceso rÃ¡pido y notificaciones"
-        leading={<IconButton onClick={onBack} label="AtrÃ¡s"><Icons.Back size={20} /></IconButton>}
+        title="Instálalo como app"
+        subtitle="Acceso rápido y notificaciones"
+        leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
       />
       <div className="scroll-y" style={{padding: '20px 22px 24px'}}>
         <div className="install-guide card">
@@ -1161,12 +1161,12 @@ function AddToHomeScreen({ onBack, onDone, onLater }) {
         </div>
         <div className="col gap-2" style={{marginTop: 14}}>
           {canAutoInstall && install.canAutoInstall ? (
-            <button className="btn btn--primary btn--full" onClick={installNow}>Instalar automÃ¡ticamente</button>
+            <button className="btn btn--primary btn--full" onClick={installNow}>Instalar automáticamente</button>
           ) : null}
           <button className={canAutoInstall && install.canAutoInstall ? 'btn btn--secondary btn--full' : 'btn btn--primary btn--full'} onClick={onDone}>
-            Listo, lo harÃ© ahora
+            Listo, lo haré ahora
           </button>
-          <button className="btn btn--text" onClick={onLater}>MÃ¡s tarde</button>
+          <button className="btn btn--text" onClick={onLater}>Más tarde</button>
         </div>
       </div>
     </>
@@ -1179,7 +1179,7 @@ function StaticInfoScreen({ title, subtitle, paragraphs, onBack }) {
       <AppHeader
         title={title}
         subtitle={subtitle}
-        leading={<IconButton onClick={onBack} label="AtrÃ¡s"><Icons.Back size={20} /></IconButton>}
+        leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
       />
       <div className="scroll-y" style={{padding: '20px 22px 24px'}}>
         <div className="card" style={{padding: 14}}>
@@ -1230,23 +1230,23 @@ function getLatestPairingTask(tasks = []) {
 
 function cleanPairingMessage(message) {
   return String(message || '')
-    .replace(/vinculacion/g, 'vinculaciÃ³n')
-    .replace(/codigo/g, 'cÃ³digo')
-    .replace(/Telefono/g, 'TelÃ©fono')
+    .replace(/vinculacion/g, 'vinculación')
+    .replace(/codigo/g, 'código')
+    .replace(/Telefono/g, 'Teléfono')
     .trim();
 }
 
 function taskPairingMessage(task) {
   if (!task || task.type !== 'pairing_code' || task.status !== 'failed') return '';
   const message = cleanPairingMessage(task.errorMessage);
-  if (task.errorCode === 'whatsapp_phone_already_registered') return 'Este nÃºmero de WhatsApp ya estÃ¡ asociado a otra cuenta. Inicia sesiÃ³n con el correo original o usa otro nÃºmero.';
-  if (task.errorCode === 'pairing_cooldown') return message || 'Hay demasiados intentos seguidos. Espera un momento antes de generar otro cÃ³digo.';
-  if (task.errorCode === 'pairing_proxy_ip_blacklisted') return message || 'No pudimos preparar la vinculaciÃ³n. Espera un momento antes de generar otro cÃ³digo.';
-  if (task.errorCode === 'pairing_socket_rejected') return message || 'Tu WhatsApp rechazÃ³ la conexiÃ³n antes de generar el cÃ³digo. Espera un momento y vuelve a intentarlo.';
-  if (task.errorCode === 'pairing_socket_error') return message || 'La conexiÃ³n fallÃ³ antes de generar el cÃ³digo. Reintenta despuÃ©s de limpiar la sesiÃ³n.';
-  if (task.errorCode === 'pairing_socket_timeout') return 'La conexiÃ³n tardÃ³ demasiado en prepararse. Espera unos segundos y genera un cÃ³digo nuevo.';
-  if (task.errorCode === 'pairing_socket_closed') return 'La conexiÃ³n se cerrÃ³ antes de mostrar el cÃ³digo. Genera uno nuevo.';
-  return message || 'No pudimos generar el cÃ³digo. Reintenta.';
+  if (task.errorCode === 'whatsapp_phone_already_registered') return 'Este número de WhatsApp ya está asociado a otra cuenta. Inicia sesión con el correo original o usa otro número.';
+  if (task.errorCode === 'pairing_cooldown') return message || 'Hay demasiados intentos seguidos. Espera un momento antes de generar otro código.';
+  if (task.errorCode === 'pairing_proxy_ip_blacklisted') return message || 'No pudimos preparar la vinculación. Espera un momento antes de generar otro código.';
+  if (task.errorCode === 'pairing_socket_rejected') return message || 'Tu WhatsApp rechazó la conexión antes de generar el código. Espera un momento y vuelve a intentarlo.';
+  if (task.errorCode === 'pairing_socket_error') return message || 'La conexión falló antes de generar el código. Reintenta después de limpiar la sesión.';
+  if (task.errorCode === 'pairing_socket_timeout') return 'La conexión tardó demasiado en prepararse. Espera unos segundos y genera un código nuevo.';
+  if (task.errorCode === 'pairing_socket_closed') return 'La conexión se cerró antes de mostrar el código. Genera uno nuevo.';
+  return message || 'No pudimos generar el código. Reintenta.';
 }
 
 function pairingDisconnectMessage(status, visibleCode) {
@@ -1254,13 +1254,13 @@ function pairingDisconnectMessage(status, visibleCode) {
   const reason = String(status?.disconnectReason || '').trim();
   const pauseReason = String(status?.pauseReason || '').trim();
   if (/ya esta asociado|already associated|already registered|otra cuenta|whatsapp_phone_already_registered/i.test(reason)) {
-    return 'Este nÃºmero de WhatsApp ya estÃ¡ asociado a otra cuenta. Inicia sesiÃ³n con el correo original o usa otro nÃºmero.';
+    return 'Este número de WhatsApp ya está asociado a otra cuenta. Inicia sesión con el correo original o usa otro número.';
   }
-  if (pauseReason === "pairing_resume_paused") return "La vinculaciÃ³n sigue en reintento con este mismo cÃ³digo. Si continÃºa sin avanzar, genera uno nuevo.";
+  if (pauseReason === "pairing_resume_paused") return "La vinculación sigue en reintento con este mismo código. Si continúa sin avanzar, genera uno nuevo.";
   if (!reason || ['staging_onboarding_reset', 'pairing_reset', 'manual_disconnect', 'purged'].includes(reason)) return '';
-  if (/401|logged|failure/i.test(reason)) return 'No se pudo mantener la vinculaciÃ³n. Genera un cÃ³digo nuevo e intÃ©ntalo otra vez.';
-  if (/timeout|408|tardo|terminat|closed|428/i.test(reason)) return 'La conexiÃ³n se cerrÃ³ mientras esperÃ¡bamos la vinculaciÃ³n. Prueba este cÃ³digo; si falla, genera uno nuevo.';
-  return 'La vinculaciÃ³n se interrumpiÃ³. Prueba este cÃ³digo; si falla, genera uno nuevo.';
+  if (/401|logged|failure/i.test(reason)) return 'No se pudo mantener la vinculación. Genera un código nuevo e inténtalo otra vez.';
+  if (/timeout|408|tardo|terminat|closed|428/i.test(reason)) return 'La conexión se cerró mientras esperábamos la vinculación. Prueba este código; si falla, genera uno nuevo.';
+  return 'La vinculación se interrumpió. Prueba este código; si falla, genera uno nuevo.';
 }
 
 function getPairingGuide(platform) {
@@ -1268,22 +1268,22 @@ function getPairingGuide(platform) {
     return {
       title: 'iPhone',
       steps: [
-        { src: 'pairing-ios-1.jpeg', title: 'Abre configuraciÃ³n', text: 'En tu WhatsApp, entra en ConfiguraciÃ³n.' },
+        { src: 'pairing-ios-1.jpeg', title: 'Abre configuración', text: 'En tu WhatsApp, entra en Configuración.' },
         { src: 'pairing-ios-2.jpeg', title: 'Dispositivos vinculados', text: 'Toca Dispositivos vinculados.' },
-        { src: 'pairing-ios-3.jpeg', title: 'Vincula con nÃºmero', text: 'Elige vincular con nÃºmero de telÃ©fono e introduce el cÃ³digo.' },
+        { src: 'pairing-ios-3.jpeg', title: 'Vincula con número', text: 'Elige vincular con número de teléfono e introduce el código.' },
       ],
-      checklist: ['ConfiguraciÃ³n', 'Dispositivos vinculados', 'Vincular con nÃºmero de telÃ©fono', 'Introduce el cÃ³digo ABCD-EFGH']
+      checklist: ['Configuración', 'Dispositivos vinculados', 'Vincular con número de teléfono', 'Introduce el código ABCD-EFGH']
     };
   }
   return {
     title: 'Android',
     steps: [
-      { src: 'pairing-android-1.jpeg', title: 'Abre el menÃº', text: 'Toca el menÃº de tres puntos o Ajustes.' },
+      { src: 'pairing-android-1.jpeg', title: 'Abre el menú', text: 'Toca el menú de tres puntos o Ajustes.' },
       { src: 'pairing-android-2.jpeg', title: 'Dispositivos vinculados', text: 'Entra en Dispositivos vinculados.' },
       { src: 'pairing-android-3.jpeg', title: 'Vincular dispositivo', text: 'Toca Vincular un dispositivo.' },
-      { src: 'pairing-android-4.jpeg', title: 'Usa el nÃºmero', text: 'Elige vincular con nÃºmero e introduce el cÃ³digo.' },
+      { src: 'pairing-android-4.jpeg', title: 'Usa el número', text: 'Elige vincular con número e introduce el código.' },
     ],
-    checklist: ['MenÃº o Ajustes', 'Dispositivos vinculados', 'Vincular un dispositivo', 'Vincular con nÃºmero de telÃ©fono']
+    checklist: ['Menú o Ajustes', 'Dispositivos vinculados', 'Vincular un dispositivo', 'Vincular con número de teléfono']
   };
 }
 
@@ -1459,11 +1459,11 @@ function mapApiMessage(message, chatId = '') {
   const sentAt = message.sent_at ? new Date(message.sent_at) : new Date();
   const status = message.status || message.delivery_status || (message.sender === 'me' ? 'sent' : 'received');
   const statusLabelMap = {
-    sending: ' Â· enviando',
-    sent: ' Â· enviado',
-    delivered: ' Â· entregado',
-    read: ' Â· leÃ­do',
-    failed: ' Â· fallÃ³'
+    sending: ' · enviando',
+    sent: ' · enviado',
+    delivered: ' · entregado',
+    read: ' · leído',
+    failed: ' · falló'
   };
   const statusLabel = message.sender === 'me' ? (statusLabelMap[status] || '') : '';
   const metadata = message.metadata || {};
@@ -1483,7 +1483,7 @@ function mapApiMessage(message, chatId = '') {
     contact: 'Contacto',
     poll: 'Encuesta',
     reaction: 'Reaccion',
-    unsupported: 'Mensaje no compatible. RevÃ­salo en WhatsApp.'
+    unsupported: 'Mensaje no compatible. Revísalo en WhatsApp.'
   };
   return {
     id: message.external_message_id || message.id || String(sentAt.getTime()),
@@ -1554,7 +1554,7 @@ function mediaKindLabel(kind = '') {
     video: 'video',
     audio: 'audio',
     document: 'documento',
-    location: 'ubicaciÃ³n',
+    location: 'ubicación',
     contact: 'contacto',
   }[String(kind || '').toLowerCase()] || 'archivo');
 }
@@ -1586,23 +1586,23 @@ function buildAiMediaContext(messages = [], quotedMessage = null) {
     requiresContext: video,
     labels,
     targetLabel,
-    summary: hasSticker ? `Hay ${labels} en el contexto reciente. TambiÃ©n hay stickers como seÃ±al ligera de tono/reacciÃ³n.` : `Hay ${labels} en el contexto reciente.`,
+    summary: hasSticker ? `Hay ${labels} en el contexto reciente. También hay stickers como señal ligera de tono/reacción.` : `Hay ${labels} en el contexto reciente.`,
     prompt: video
-      ? 'DetectÃ© un video en el contexto. Para evitar inventar, contame obligatoriamente quÃ© pasa o quÃ© parte importa antes de generar.'
+      ? 'Detecté un video en el contexto. Para evitar inventar, contame obligatoriamente qué pasa o qué parte importa antes de generar.'
       : audio
-        ? 'DetectÃ© audio en el contexto. Si la transcripciÃ³n no alcanza, agrega quÃ© intenciÃ³n deberÃ­a tener la respuesta.'
+        ? 'Detecté audio en el contexto. Si la transcripción no alcanza, agrega qué intención debería tener la respuesta.'
         : visual
-          ? `DetectÃ© ${targetLabel}. Si querÃ©s, contame quÃ© aparece o quÃ© detalle importa para responder mejor.`
-          : `DetectÃ© ${targetLabel}. Si querÃ©s, agrega el dato clave para que la IA no invente.`,
+          ? `Detecté ${targetLabel}. Si querés, contame qué aparece o qué detalle importa para responder mejor.`
+          : `Detecté ${targetLabel}. Si querés, agrega el dato clave para que la IA no invente.`,
     placeholder: video
-      ? 'Ej. En el video muestra el producto fallando / estÃ¡ llegando al lugar / se escucha que confirma la hora / quiero responder sobre el detalle final...'
+      ? 'Ej. En el video muestra el producto fallando / está llegando al lugar / se escucha que confirma la hora / quiero responder sobre el detalle final...'
       : visual
-        ? 'Ej. En la imagen sale el producto que pidiÃ³ / es una captura con una fecha / quiero responder algo tranquilo sobre eso...'
+        ? 'Ej. En la imagen sale el producto que pidió / es una captura con una fecha / quiero responder algo tranquilo sobre eso...'
         : audio
-          ? 'Ej. El audio suena apurado / confirmÃ³ la hora / pidiÃ³ que le pase el dato sin rodeos...'
-          : 'Ej. El documento es una factura / la ubicaciÃ³n es el punto de encuentro / solo quiero confirmar recibido...'
+          ? 'Ej. El audio suena apurado / confirmó la hora / pidió que le pase el dato sin rodeos...'
+          : 'Ej. El documento es una factura / la ubicación es el punto de encuentro / solo quiero confirmar recibido...'
   };
-}// SCREEN 2 Â· ConexiÃ³n WhatsApp con QR desktop + pairing code mobile
+}// SCREEN 2 · Conexión WhatsApp con QR desktop + pairing code mobile
 function ConnectScreen({ onBack, onConnected }) {
   const defaultMethod = React.useMemo(() => {
     const ua = navigator.userAgent || '';
@@ -1738,7 +1738,7 @@ function ConnectScreen({ onBack, onConnected }) {
     if (!expiresAt) return undefined;
     const timeoutId = setTimeout(() => {
       clearQr();
-      setBackendError('El QR caducÃ³. Genera uno nuevo para vincular este navegador.');
+      setBackendError('El QR caducó. Genera uno nuevo para vincular este navegador.');
     }, Math.max(0, expiresAt - Date.now()));
     return () => clearTimeout(timeoutId);
   }, [step, qrExpiresAt]);
@@ -1776,7 +1776,7 @@ function ConnectScreen({ onBack, onConnected }) {
           setCodeExpiresAt(taskCodeInfo.expiresAt || null);
         } else if (code && !localCodeStillFresh) {
           clearPairingCode();
-          setBackendError('El cÃ³digo caducÃ³. Genera uno nuevo antes de abrir tu WhatsApp.');
+          setBackendError('El código caducó. Genera uno nuevo antes de abrir tu WhatsApp.');
         }
         const taskMessage = taskPairingMessage(latestTask);
         if (taskMessage) {
@@ -1798,7 +1798,7 @@ function ConnectScreen({ onBack, onConnected }) {
   const generateCode = async (options = {}) => {
     const forceNew = options.forceNew === true;
     if (!isValidPhoneInput(phone, country)) {
-      setError('Revisa el nÃºmero. Parece invÃ¡lido.');
+      setError('Revisa el número. Parece inválido.');
       return;
     }
     setError('');
@@ -1817,31 +1817,31 @@ function ConnectScreen({ onBack, onConnected }) {
       if (status.status) setConnectionStatus(status.status);
       setStep('code');
     } catch (apiError) {
-      setBackendError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos generar el cÃ³digo. Reintenta.');
+      setBackendError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos generar el código. Reintenta.');
     } finally {
       setLoading(false);
     }
   };
 
   const qrInstructions = [
-    <>Abre <b>WhatsApp</b> en tu mÃ³vil.</>,
+    <>Abre <b>WhatsApp</b> en tu móvil.</>,
     <>Entra a <b>Dispositivos vinculados</b>.</>,
     <>Toca <b>Vincular un dispositivo</b>.</>,
     <>Escanea el QR de esta pantalla.</>,
   ];
 
   const codeInstructions = [
-    <>Abre <b>tu WhatsApp</b> en tu mÃ³vil.</>,
-    <>Toca <b>ConfiguraciÃ³n</b> o <b>Ajustes</b>.</>,
+    <>Abre <b>tu WhatsApp</b> en tu móvil.</>,
+    <>Toca <b>Configuración</b> o <b>Ajustes</b>.</>,
     <>Toca <b>Dispositivos vinculados</b>.</>,
     <>Toca <b>Vincular un dispositivo</b>.</>,
-    <>Toca <b>Vincular con nÃºmero de telÃ©fono</b>.</>,
-    <>Introduce el cÃ³digo de arriba.</>,
+    <>Toca <b>Vincular con número de teléfono</b>.</>,
+    <>Introduce el código de arriba.</>,
   ];
 
   const MethodToggle = ({ target }) => (
     <button className="btn btn--text" onClick={target === 'qr' ? switchToQr : switchToCode} disabled={loading}>
-      Prefiero usar {target === 'qr' ? 'QR' : 'cÃ³digo'}
+      Prefiero usar {target === 'qr' ? 'QR' : 'código'}
     </button>
   );
 
@@ -1849,7 +1849,7 @@ function ConnectScreen({ onBack, onConnected }) {
     <>
       <AppHeader
         title="Conectemos tu WhatsApp"
-        leading={<IconButton onClick={onBack} label="AtrÃ¡s"><Icons.Back size={20} /></IconButton>}
+        leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
       />
       <div className="scroll-y">
         <div style={{padding: '20px 22px 32px'}}>
@@ -1861,18 +1861,18 @@ function ConnectScreen({ onBack, onConnected }) {
           <p className="t-body" style={{color: 'var(--text-secondary)', margin: '0 0 24px', textWrap: 'pretty'}}>
             {method === 'qr'
               ? 'Escanea un QR desde WhatsApp para vincular este navegador en menos de un minuto.'
-              : 'Introduce tu nÃºmero y te damos un cÃ³digo para vincular desde el mÃ³vil.'}
+              : 'Introduce tu número y te damos un código para vincular desde el móvil.'}
           </p>
 
           {step === 'number' ? (
             <div className="card" style={{padding: 14}}>
-              <label className="t-small" style={{display: 'block', marginBottom: 8, fontWeight: 500}}>PaÃ­s</label>
+              <label className="t-small" style={{display: 'block', marginBottom: 8, fontWeight: 500}}>País</label>
               <CountryPrefixSelect value={country} onChange={setCountry} style={{width: '100%', border: '1px solid var(--border-strong)', borderRadius: 12, padding: '11px 12px', outline: 'none', fontSize: 16, marginBottom: 12, fontFamily: 'inherit'}} />
-              <label className="t-small" style={{display: 'block', marginBottom: 8, fontWeight: 500}}>NÃºmero de telÃ©fono</label>
+              <label className="t-small" style={{display: 'block', marginBottom: 8, fontWeight: 500}}>Número de teléfono</label>
               <input value={phone} onChange={(e) => setPhone(sanitizeLocalPhoneInput(e.target.value, country))} placeholder={phonePlaceholder} inputMode="tel" maxLength={16} style={{width: '100%', border: '1px solid var(--border-strong)', borderRadius: 12, padding: '11px 12px', outline: 'none', fontSize: 16, fontFamily: 'inherit'}} />
               {error ? <p className="t-caption" style={{marginTop: 8, color: 'var(--danger)'}}>{error}</p> : null}
               <button className="btn btn--primary btn--full" style={{marginTop: 12, opacity: canGenerate && !loading ? 1 : 0.55}} disabled={!canGenerate || loading} onClick={() => generateCode()}>
-                {loading ? 'Generando...' : 'Generar cÃ³digo'}
+                {loading ? 'Generando...' : 'Generar código'}
               </button>
               {canUseQrFallback ? <div style={{marginTop: 8, textAlign: 'center'}}><MethodToggle target="qr" /></div> : null}
             </div>
@@ -1881,11 +1881,11 @@ function ConnectScreen({ onBack, onConnected }) {
           {step === 'qr' ? (
             <>
               <div style={{background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 18, padding: '22px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, marginBottom: 22}}>
-                <span className="t-caption" style={{textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600}}>VinculaciÃ³n por QR</span>
+                <span className="t-caption" style={{textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600}}>Vinculación por QR</span>
                 <div style={{width: 280, maxWidth: '100%', aspectRatio: '1', borderRadius: 20, background: '#fff', border: '1px solid var(--border-strong)', display: 'grid', placeItems: 'center', padding: 12}}>
                   {qrImage ? <img src={qrImage} alt="QR para vincular WhatsApp" style={{width: '100%', height: '100%', objectFit: 'contain'}} /> : <span className="t-small" style={{display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)'}}><Spinner size={16} /> Generando QR...</span>}
                 </div>
-                <span className="t-small" style={{color: 'var(--text-secondary)', textAlign: 'center'}}>No cierres esta pantalla hasta que WhatsApp confirme la vinculaciÃ³n.</span>
+                <span className="t-small" style={{color: 'var(--text-secondary)', textAlign: 'center'}}>No cierres esta pantalla hasta que WhatsApp confirme la vinculación.</span>
               </div>
 
               <ol style={{margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 14}}>
@@ -1896,7 +1896,7 @@ function ConnectScreen({ onBack, onConnected }) {
                   </li>
                 ))}
               </ol>
-              <div style={{marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--text-secondary)', fontSize: 14}}><Spinner size={16} /><span>{connectionStatus === 'qr' ? 'QR listo. Esperando escaneo...' : 'Preparando vinculaciÃ³n...'}</span></div>
+              <div style={{marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--text-secondary)', fontSize: 14}}><Spinner size={16} /><span>{connectionStatus === 'qr' ? 'QR listo. Esperando escaneo...' : 'Preparando vinculación...'}</span></div>
               {backendError ? <p className="t-caption" style={{marginTop: 10, color: 'var(--danger)', textAlign: 'center'}}>{backendError}</p> : null}
               <div className="col gap-2" style={{marginTop: 20}}>
                 <button className="btn btn--secondary btn--full" onClick={() => generateQr({ forceNew: true })} disabled={loading}>{loading ? 'Generando...' : 'Generar QR nuevo'}</button>
@@ -1908,9 +1908,9 @@ function ConnectScreen({ onBack, onConnected }) {
           {step === 'code' ? (
             <>
               <div style={{background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 16, padding: '28px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, marginBottom: 24}}>
-                <span className="t-caption" style={{textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500}}>Tu cÃ³digo</span>
+                <span className="t-caption" style={{textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 500}}>Tu código</span>
                 <div className="row gap-3" style={{alignItems: 'center'}}>
-                  {code ? <span className="t-mono" style={{fontSize: 42, fontWeight: 600, letterSpacing: '0.03em', color: 'var(--text)'}}>{code}</span> : <span className="t-small" style={{display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)'}}><Spinner size={16} /> Generando cÃ³digo...</span>}
+                  {code ? <span className="t-mono" style={{fontSize: 42, fontWeight: 600, letterSpacing: '0.03em', color: 'var(--text)'}}>{code}</span> : <span className="t-small" style={{display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)'}}><Spinner size={16} /> Generando código...</span>}
                 </div>
                 <button className="btn btn--ghost btn--sm" onClick={copy} disabled={!code} style={{color: copied ? 'var(--success)' : 'var(--accent)', opacity: code ? 1 : 0.55}}>
                   {copied ? <><Icons.Check size={14} sw={2.5} /> Copiado</> : <><Icons.Copy size={14} /> Copiar</>}
@@ -1940,12 +1940,12 @@ function ConnectScreen({ onBack, onConnected }) {
                 </div>
                 <ol className="pairing-guide-card__steps">{getPairingGuide(guidePlatform).checklist.map((item) => <li key={item}>{item}</li>)}</ol>
               </div>
-              <div style={{marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--text-secondary)', fontSize: 14}}><Spinner size={16} /><span>{connectionStatus === 'pairing_code' ? 'CÃ³digo listo. Esperando vinculaciÃ³n...' : code ? 'CÃ³digo listo. IntrodÃºcelo en tu WhatsApp.' : 'Esperando vinculaciÃ³n...'}</span></div>
+              <div style={{marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--text-secondary)', fontSize: 14}}><Spinner size={16} /><span>{connectionStatus === 'pairing_code' ? 'Código listo. Esperando vinculación...' : code ? 'Código listo. Introdúcelo en tu WhatsApp.' : 'Esperando vinculación...'}</span></div>
               {backendError ? <p className="t-caption" style={{marginTop: 10, color: 'var(--danger)', textAlign: 'center'}}>{backendError}</p> : null}
               <div className="col gap-2" style={{marginTop: 20}}>
-                <button className="btn btn--secondary btn--full" onClick={() => generateCode({ forceNew: true })} disabled={loading || !canGenerate}>{loading ? 'Generando...' : (code || backendError ? 'Generar cÃ³digo nuevo' : 'Generar cÃ³digo')}</button>
+                <button className="btn btn--secondary btn--full" onClick={() => generateCode({ forceNew: true })} disabled={loading || !canGenerate}>{loading ? 'Generando...' : (code || backendError ? 'Generar código nuevo' : 'Generar código')}</button>
                 {canUseQrFallback ? <MethodToggle target="qr" /> : null}
-                <button className="btn btn--text" onClick={() => { setBackendError(''); clearPairingCode(); setStep('number'); }}>Cambiar nÃºmero</button>
+                <button className="btn btn--text" onClick={() => { setBackendError(''); clearPairingCode(); setStep('number'); }}>Cambiar número</button>
               </div>
             </>
           ) : null}
@@ -1954,10 +1954,10 @@ function ConnectScreen({ onBack, onConnected }) {
       {modal === 'timeout' ? (
         <div style={{position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(15,20,30,0.35)', display: 'grid', placeItems: 'center', padding: 20}}>
           <div className="card" style={{width: '100%', maxWidth: 360, padding: 16}}>
-            <p style={{margin: '0 0 12px', fontWeight: 600}}>El cÃ³digo ha caducado</p>
-            <p className="t-small" style={{margin: '0 0 14px', color: 'var(--text-secondary)'}}>Â¿Quieres generar uno nuevo?</p>
+            <p style={{margin: '0 0 12px', fontWeight: 600}}>El código ha caducado</p>
+            <p className="t-small" style={{margin: '0 0 14px', color: 'var(--text-secondary)'}}>¿Quieres generar uno nuevo?</p>
             <div className="col gap-2">
-              <button className="btn btn--primary btn--full" onClick={() => { setModal(null); generateCode({ forceNew: true }); }}>Generar nuevo cÃ³digo</button>
+              <button className="btn btn--primary btn--full" onClick={() => { setModal(null); generateCode({ forceNew: true }); }}>Generar nuevo código</button>
               <button className="btn btn--secondary btn--full" onClick={() => setModal(null)}>Cancelar</button>
             </div>
           </div>
@@ -1976,7 +1976,7 @@ function Spinner({ size = 18 }) {
   );
 }
 
-// SCREEN 3 Â· Lista de conversaciones (Chats)
+// SCREEN 3 · Lista de conversaciones (Chats)
 function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, whatsappInterrupted = false, offline = false, onReconnectWhatsApp }) {
   const [searching, setSearching] = React.useState(false);
   const [q, setQ] = React.useState('');
@@ -1994,7 +1994,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
   const filterOptions = [
     ['all', 'Todos'],
     ['favorites', 'Favoritas'],
-    ['unread', 'No leÃ­dos'],
+    ['unread', 'No leídos'],
   ];
   const [contacts, setContacts] = React.useState([]);
   const [loadingChats, setLoadingChats] = React.useState(false);
@@ -2170,7 +2170,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
       setMenuOpen(false);
       onOpenChat(result?.chat ? mapApiChat(result.chat).id : contactId);
     } catch (error) {
-      setApiError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos iniciar la conversaciÃ³n.');
+      setApiError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos iniciar la conversación.');
     }
   };
   const createContact = async () => {
@@ -2221,12 +2221,12 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
           trailing={<>
             <IconButton onClick={() => setSearching(true)} label="Buscar"><Icons.Search size={20} /></IconButton>
             <div style={{position: 'relative'}}>
-              <IconButton onClick={() => setMenuOpen(v => !v)} label="MÃ¡s"><Icons.More size={20} /></IconButton>
+              <IconButton onClick={() => setMenuOpen(v => !v)} label="Más"><Icons.More size={20} /></IconButton>
               {menuOpen && (
                 <>
                   <button
                     onClick={() => setMenuOpen(false)}
-                    aria-label="Cerrar menÃº"
+                    aria-label="Cerrar menú"
                     style={{position: 'fixed', inset: 0, background: 'transparent', border: 'none', zIndex: 29}}
                   />
                   <div style={{
@@ -2238,13 +2238,13 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
                       <Icons.Refresh size={16} /> Refrescar
                     </button>
                     <button onClick={markAllRead} style={{...menuActionStyle, borderTop: '1px solid var(--border)'}}>
-                      <Icons.Check size={16} /> Marcar todo leÃ­do
+                      <Icons.Check size={16} /> Marcar todo leído
                     </button>
                     <button
                       onClick={() => { setSheet('new-chat'); setContactSearch(''); setContactSuggestions([]); setMenuOpen(false); }}
                       style={{...menuActionStyle, borderTop: '1px solid var(--border)'}}
                     >
-                      <Icons.Chats size={16} /> Nueva conversaciÃ³n
+                      <Icons.Chats size={16} /> Nueva conversación
                     </button>
                     <button
                       onClick={() => { setSheet('new-contact'); setMenuOpen(false); }}
@@ -2289,7 +2289,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
           background: '#fff7e8',
           padding: '9px 10px',
         }}>
-          <span className="t-small" style={{color: '#7a4d0b'}}>Sin conexiÃ³n a internet. No podemos actualizar tus chats.</span>
+          <span className="t-small" style={{color: '#7a4d0b'}}>Sin conexión a internet. No podemos actualizar tus chats.</span>
         </div>
       )}
       <div className="chat-toolbar">
@@ -2327,8 +2327,8 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
         {empty ? (
           <EmptyState
             icon={<Icons.Empty size={32} sw={1.4} />}
-            title="AÃºn no tienes chats activos"
-            subtitle="Cuando hables con alguien desde tu WhatsApp aparecerÃ¡n aquÃ­."
+            title="Aún no tienes chats activos"
+            subtitle="Cuando hables con alguien desde tu WhatsApp aparecerán aquí."
           />
         ) : (
           <div>
@@ -2343,7 +2343,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
             {filteredForList.length === 0 && (
               <div style={{padding: '40px 24px', textAlign: 'center'}}>
                 <span className="t-small" style={{color: 'var(--text-secondary)'}}>
-                  {q ? `NingÃºn chat con "${q}".` : 'No hay chats para ese filtro.'}
+                  {q ? `Ningún chat con "${q}".` : 'No hay chats para ese filtro.'}
                 </span>
               </div>
             )}
@@ -2355,7 +2355,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
         <div style={{display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%', padding: '4px 18px 0'}}>
           <div className="row gap-2" style={{alignItems: 'center', marginBottom: 10}}>
             <Icons.Chats size={18} style={{color: 'var(--accent)'}} />
-            <span className="t-h3">Nueva conversaciÃ³n</span>
+            <span className="t-h3">Nueva conversación</span>
           </div>
           <div style={{display: 'flex', gap: 8, alignItems: 'stretch', marginBottom: 12}}>
             <div style={{display: 'flex', alignItems: 'center', gap: 8, background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 12px', flex: 1, minWidth: 0}}>
@@ -2415,12 +2415,12 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
             <Icons.User size={18} style={{color: 'var(--accent)'}} />
             <span className="t-h3">Crear contacto</span>
           </div>
-          <p className="t-small" style={{color: 'var(--text-secondary)', margin: '0 0 14px'}}>AÃ±Ã¡delo aquÃ­ y empieza una conversaciÃ³n al momento.</p>
+          <p className="t-small" style={{color: 'var(--text-secondary)', margin: '0 0 14px'}}>Añádelo aquí y empieza una conversación al momento.</p>
           <label className="t-small" style={{marginBottom: 6, fontWeight: 500}}>Nombre del contacto</label>
           <input
             value={newContactName}
             onChange={e => setNewContactName(e.target.value)}
-            placeholder="Ej. SofÃ­a RamÃ­rez"
+            placeholder="Ej. Sofía Ramírez"
             autoComplete="off"
             autoCorrect="off"
             enterKeyHint="next"
@@ -2435,7 +2435,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
               fontFamily: 'inherit',
             }}
           />
-          <label className="t-small" style={{marginBottom: 6, fontWeight: 500}}>NÃºmero de contacto</label>
+          <label className="t-small" style={{marginBottom: 6, fontWeight: 500}}>Número de contacto</label>
           <CountryPrefixSelect
             value={newContactCountry}
             onChange={setNewContactCountry}
@@ -2511,8 +2511,8 @@ function MessageStatus({ status }) {
     sending: 'enviando',
     sent: 'enviado',
     delivered: 'entregado',
-    read: 'leÃ­do',
-    failed: 'fallÃ³'
+    read: 'leído',
+    failed: 'falló'
   };
   const label = labels[status];
   if (!label) return null;
@@ -2554,7 +2554,7 @@ function ConvCard({ match, onClick, onToggleFavorite, onLongPress }) {
         <div className="row" style={{justifyContent: 'space-between', gap: 8, marginBottom: 2}}>
           <div className="row gap-1" style={{minWidth: 0}}>
             <span className="conv-card__name" style={{fontWeight: match.unread ? 600 : 500, fontSize: 14.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{match.name}</span>
-            {match.favorite && <span style={{fontSize: 12, lineHeight: 1, color: 'var(--warning)'}}>â˜…</span>}
+            {match.favorite && <span style={{fontSize: 12, lineHeight: 1, color: 'var(--warning)'}}>?</span>}
             {match.stale && <Icons.Hourglass size={13} sw={1.75} style={{color: 'var(--warning)', flexShrink: 0}} />}
           </div>
           <span className="t-caption" style={{fontSize: 12, color: match.unread ? 'var(--accent)' : 'var(--text-tertiary)', flexShrink: 0, fontVariantNumeric: 'tabular-nums'}}>{match.time}</span>
@@ -2565,7 +2565,7 @@ function ConvCard({ match, onClick, onToggleFavorite, onLongPress }) {
             fontWeight: match.unread ? 500 : 400,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1,
           }}>
-            {match.mine && <span>TÃº: </span>}{match.last}
+            {match.mine && <span>Tú: </span>}{match.last}
           </span>
           {match.unread > 0 && (
             <span style={{
@@ -2588,13 +2588,13 @@ function ConvCard({ match, onClick, onToggleFavorite, onLongPress }) {
           fontSize: 18, lineHeight: 1, padding: '4px 2px',
         }}
       >
-        {match.favorite ? 'â˜…' : 'â˜†'}
+        {match.favorite ? '?' : '?'}
       </button>
     </div>
   );
 }
 
-// SCREEN 4 Â· Vista de conversaciÃ³n
+// SCREEN 4 · Vista de conversación
 function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactivate, onAnalyze, composerSeed = '', offline = false, showInstallShortcut = false, onInstallApp, aiSheetOpen = false }) {
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -2901,7 +2901,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         setChatError('');
         return;
       }
-      setChatError('Tu dispositivo no habilitÃ³ el grabador de audio. Revisa permisos de micrÃ³fono e intenta de nuevo.');
+      setChatError('Tu dispositivo no habilitó el grabador de audio. Revisa permisos de micrófono e intenta de nuevo.');
       return;
     }
     try {
@@ -3020,7 +3020,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         status: 'sending',
         quotedMessage,
         text,
-        t: `hoy ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} Â· enviando`
+        t: `hoy ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · enviando`
       };
       setRemoteMessages((prev) => {
         const base = prev || messages;
@@ -3047,12 +3047,12 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
     const mimeType = file.type || 'application/octet-stream';
     const mediaType = inferUploadMediaType(file, options.mediaType);
     if (!mediaType) {
-      setChatError('Por ahora puedes adjuntar imÃ¡genes, videos, stickers webp o audios.');
+      setChatError('Por ahora puedes adjuntar imágenes, videos, stickers webp o audios.');
       return;
     }
     const maxBytes = 12 * 1024 * 1024;
     if (file.size > maxBytes) {
-      setChatError('El archivo es demasiado pesado para esta versiÃ³n.');
+      setChatError('El archivo es demasiado pesado para esta versión.');
       return;
     }
     clearPresenceIdleTimer();
@@ -3087,7 +3087,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         text: caption || options.label || ({ image: 'Imagen', video: 'Video', audio: 'Audio', sticker: 'Sticker' }[mediaType] || 'Archivo'),
         fileName: file.name || '',
         sizeBytes: file.size || 0,
-        t: `hoy ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} Â· enviando`
+        t: `hoy ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · enviando`
       };
       setRemoteMessages((prev) => {
         const base = prev || messages;
@@ -3116,17 +3116,17 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
     }
     const resolvedFiles = selectedFiles.map((file) => ({ file, mediaType: inferUploadMediaType(file) }));
     if (resolvedFiles.some((item) => !item.mediaType)) {
-      setChatError('Hay un archivo no compatible. Puedes adjuntar imÃ¡genes, videos, stickers webp o audios.');
+      setChatError('Hay un archivo no compatible. Puedes adjuntar imágenes, videos, stickers webp o audios.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     if (resolvedFiles.some((item) => item.mediaType !== 'image')) {
-      setChatError('Para enviar varios archivos a la vez, selecciona solo imÃ¡genes. Videos, audios y stickers se envÃ­an de a uno.');
+      setChatError('Para enviar varios archivos a la vez, selecciona solo imágenes. Videos, audios y stickers se envían de a uno.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     if (resolvedFiles.length > 10) {
-      setChatError('Puedes enviar hasta 10 imÃ¡genes por vez.');
+      setChatError('Puedes enviar hasta 10 imágenes por vez.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -3156,7 +3156,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
     const gallery = imageMessages.map((message) => {
       const cacheKey = `${message?.chatId || ''}:${message?.id || ''}`;
       const cachedUrl = mediaObjectUrlCache.get(cacheKey);
-      const caption = [message.fileName, formatMediaSize(message.sizeBytes)].filter(Boolean).join(' Â· ');
+      const caption = [message.fileName, formatMediaSize(message.sizeBytes)].filter(Boolean).join(' · ');
       const url = message?.id === payload?.message?.id ? (cachedUrl || payload?.url || '') : (cachedUrl || '');
       return { message, url, caption };
     });
@@ -3270,13 +3270,13 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         text: nextText,
         edited: true,
         editedAt: new Date().toISOString(),
-        t: editingMessage.t?.replace('fallÃ³', 'enviado') || editingMessage.t,
+        t: editingMessage.t?.replace('falló', 'enviado') || editingMessage.t,
       };
       patchMessageInThread(editingMessage.id, patched);
       setEditingMessage(null);
       setEditMessageText('');
     } catch (error) {
-      setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'WhatsApp no permitiÃ³ editar este mensaje.');
+      setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'WhatsApp no permitió editar este mensaje.');
     } finally {
       setMessageActionLoading('');
     }
@@ -3285,7 +3285,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
     const sourceText = editMessageText.trim();
     if (!editingMessage || !sourceText) return;
     if (!WaFliAPI?.ai?.rewrite || !WaFliAPI?.client?.isAuthenticated?.()) {
-      setChatError('Inicia sesiÃ³n y conecta tu WhatsApp para reescribir con IA.');
+      setChatError('Inicia sesión y conecta tu WhatsApp para reescribir con IA.');
       return;
     }
     setMessageActionLoading('rewrite-edit');
@@ -3298,7 +3298,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         editingMessage: true,
         contextMode: 'edit_message',
         tone: 'Desenfadado',
-        notes: 'La persona usuaria estÃ¡ editando un mensaje propio ya enviado. Reescribe solo ese mensaje para que suene natural, fiel al contexto y listo para guardar como ediciÃ³n.'
+        notes: 'La persona usuaria está editando un mensaje propio ya enviado. Reescribe solo ese mensaje para que suene natural, fiel al contexto y listo para guardar como edición.'
       });
       if (result?.text) setEditMessageText(result.text);
       emitQuotaUsage(result);
@@ -3328,7 +3328,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       setSelectedMessage(null);
       if (replyTo?.id === target.id) setReplyTo(null);
     } catch (error) {
-      setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'WhatsApp no permitiÃ³ eliminar este mensaje.');
+      setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'WhatsApp no permitió eliminar este mensaje.');
     } finally {
       setMessageActionLoading('');
     }
@@ -3342,7 +3342,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         showQuota
         subtitle={String(match.id || '').endsWith('@g.us') ? 'Grupo de tu WhatsApp' : (match.phone || 'tu WhatsApp')}
         leading={<>
-          <IconButton onClick={onBack} label="AtrÃ¡s"><Icons.Back size={20} /></IconButton>
+          <IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>
           <Avatar name={match.name} src={match.avatar} size={32} />
         </>}
         trailing={
@@ -3353,12 +3353,12 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
                 <span>Instalar</span>
               </button>
             ) : null}
-            <IconButton onClick={() => setMenuOpen(v => !v)} label="MÃ¡s"><Icons.More size={20} /></IconButton>
+            <IconButton onClick={() => setMenuOpen(v => !v)} label="Más"><Icons.More size={20} /></IconButton>
             {menuOpen && (
               <>
                 <button
                   onClick={() => setMenuOpen(false)}
-                  aria-label="Cerrar menÃº"
+                  aria-label="Cerrar menú"
                   style={{position: 'fixed', inset: 0, background: 'transparent', border: 'none', zIndex: 29}}
                 />
                 <div style={{
@@ -3367,7 +3367,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
                   borderRadius: 12, boxShadow: 'var(--sh-card)', overflow: 'hidden',
                 }}>
                   <button onClick={() => { setEditOpen(true); setMenuOpen(false); }} style={menuActionStyle}>
-                    <Icons.Edit size={16} /> Editar nombre y nÃºmero
+                    <Icons.Edit size={16} /> Editar nombre y número
                   </button>
                   <button onClick={toggleMuted} style={{...menuActionStyle, borderTop: '1px solid var(--border)'}}>
                     <Icons.Bell size={16} /> {muted ? 'Activar notificaciones' : 'Silenciar notificaciones'}
@@ -3396,7 +3396,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
             background: '#fff7e8',
             padding: '8px 10px',
           }}>
-            <span className="t-small" style={{color: '#7a4d0b'}}>Sin conexiÃ³n a internet.</span>
+            <span className="t-small" style={{color: '#7a4d0b'}}>Sin conexión a internet.</span>
           </div>
         )}
         {loadingMessages && <div className="t-caption" style={{marginBottom: 10}}>Cargando mensajes...</div>}
@@ -3412,9 +3412,9 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
               background: 'var(--accent-soft)', color: 'var(--accent)',
               fontSize: 12, fontWeight: 500, marginBottom: 14,
             }}>Match nuevo</div>
-            <div className="t-h3" style={{margin: '0 0 6px'}}>AÃºn no habÃ©is hablado</div>
+            <div className="t-h3" style={{margin: '0 0 6px'}}>Aún no habéis hablado</div>
             <div className="t-small" style={{color: 'var(--text-secondary)', maxWidth: 260, margin: '0 auto 18px'}}>
-              PÃ­dele a WaFli una apertura que no suene a copia-pega.
+              Pídele a WaFli una apertura que no suene a copia-pega.
             </div>
             <button className="btn btn--secondary btn--md" onClick={onOpener}>
               <Icons.Sparkles size={16} /> Necesito abrir
@@ -3564,7 +3564,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
                 aria-label={recordingAudio ? 'Detener nota de voz' : 'Grabar nota de voz'}
               >
                 {recordingAudio ? (
-                  <span style={{fontSize: 15, lineHeight: 1}}>â– </span>
+                  <span style={{fontSize: 15, lineHeight: 1}}>¦</span>
                 ) : (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z" />
@@ -3617,7 +3617,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
                 }}
                 aria-label="Imagen anterior"
               >
-                â€¹
+                ‹
               </button>
               <button
                 type="button"
@@ -3628,7 +3628,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
                 }}
                 aria-label="Imagen siguiente"
               >
-                â€º
+                ›
               </button>
             </>
           ) : null}
@@ -3676,7 +3676,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
           ) : null}
           {!selectedMessage?.deleted ? (
             <button style={menuActionStyle} disabled={Boolean(messageActionLoading)} onClick={() => deleteSelectedMessage('me')}>
-              <Icons.Close size={16} /> {messageActionLoading === 'delete-me' ? 'Eliminando...' : 'Eliminar para mÃ­'}
+              <Icons.Close size={16} /> {messageActionLoading === 'delete-me' ? 'Eliminando...' : 'Eliminar para mí'}
             </button>
           ) : null}
           {selectedMessage?.from === 'me' && !selectedMessage?.deleted ? (
@@ -3732,7 +3732,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         <div style={{padding: '8px 18px 18px'}}>
           <div className="t-h3" style={{marginBottom: 12}}>Acciones IA</div>
           <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onSuggest && onSuggest(buildAiContext(replyTo ? { quotedMessage: quotedMessagePayload(replyTo, match) } : {})); }}><Icons.Sparkles size={16} /> {replyTo ? 'Sugerir respuesta al mensaje' : 'Sugerir respuesta'}</button>
-          <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onReactivate && onReactivate(buildAiContext()); }}><Icons.Refresh size={16} /> Reactivar hilo frÃ­o</button>
+          <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onReactivate && onReactivate(buildAiContext()); }}><Icons.Refresh size={16} /> Reactivar hilo frío</button>
         </div>
       </BottomSheet>
       <BottomSheet open={editOpen} onClose={() => setEditOpen(false)} height="88%">
@@ -3760,7 +3760,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
               fontFamily: 'inherit',
             }}
           />
-          <label className="t-small" style={{marginBottom: 6, fontWeight: 500}}>NÃºmero de contacto</label>
+          <label className="t-small" style={{marginBottom: 6, fontWeight: 500}}>Número de contacto</label>
           <CountryPrefixSelect
             value={editPhoneCountry}
             onChange={setEditPhoneCountry}
@@ -3878,7 +3878,7 @@ function MessageMediaPreview({ message, onOpenImage }) {
 
   if (!message?.hasMedia || message?.viewOnce || message?.deleted) return null;
   const type = message.mediaType || message.type;
-  const caption = [message.fileName, formatMediaSize(message.sizeBytes)].filter(Boolean).join(' Â· ');
+  const caption = [message.fileName, formatMediaSize(message.sizeBytes)].filter(Boolean).join(' · ');
   if (!shouldLoad) {
     return (
       <button
@@ -3950,7 +3950,7 @@ function MessageMediaPreview({ message, onOpenImage }) {
   return (
     <a href={url} download={message.fileName || 'archivo'} className="chat-media-document-card" style={{marginBottom: message.text ? 7 : 0}}>
       <span className="chat-media-document-card__icon">DOC</span>
-      <span>Abrir archivo{caption ? ` Â· ${caption}` : ''}</span>
+      <span>Abrir archivo{caption ? ` · ${caption}` : ''}</span>
     </a>
   );
 }
@@ -3969,8 +3969,8 @@ function MessageStructuredPreview({ message }) {
   if (message.viewOnce) {
     return (
       <div style={cardStyle}>
-        <div style={titleStyle}>Una sola visualizaciÃ³n</div>
-        <div style={bodyStyle}>Este contenido solo se puede ver una vez. RevÃ­salo directamente en tu WhatsApp.</div>
+        <div style={titleStyle}>Una sola visualización</div>
+        <div style={bodyStyle}>Este contenido solo se puede ver una vez. Revísalo directamente en tu WhatsApp.</div>
       </div>
     );
   }
@@ -3984,7 +3984,7 @@ function MessageStructuredPreview({ message }) {
           <div className="col gap-1">
             {options.map((option, index) => (
               <div key={`${option}-${index}`} style={{...bodyStyle, display: 'flex', gap: 6}}>
-                <span style={{color: 'var(--accent)', fontWeight: 700}}>â€¢</span>
+                <span style={{color: 'var(--accent)', fontWeight: 700}}>•</span>
                 <span>{option}</span>
               </div>
             ))}
@@ -4182,7 +4182,7 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
             </div>
             {(messageError === m.id || m.status === 'failed') && mine && (
               <button className="btn btn--text" onClick={onRetry} style={{fontSize: 11, color: 'var(--danger)', marginLeft: 8}}>
-                Error Â· Reintentar
+                Error · Reintentar
               </button>
             )}
           </div>
@@ -4192,7 +4192,7 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
   );
 }
 
-// SCREEN 5 Â· Sugerir respuesta (bottom sheet content)
+// SCREEN 5 · Sugerir respuesta (bottom sheet content)
 const TONES = ['Relajado', 'Desenfadado', 'Picante', 'Intelectual'];
 
 function emitQuotaUsage(result = {}) {
@@ -4249,11 +4249,11 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerencia', captio
 
   const generateRemote = async (action = 'suggest', payload = {}) => {
     if (!WaFliAPI?.ai?.[action] || !WaFliAPI?.client?.isAuthenticated?.()) {
-      setError('Inicia sesiÃ³n y conecta tu WhatsApp para generar mensajes IA.');
+      setError('Inicia sesión y conecta tu WhatsApp para generar mensajes IA.');
       return true;
     }
     if (mediaContext?.requiresContext && !mediaNotes.trim()) {
-      setError('Para videos necesito que agregues contexto: quÃ© pasa, quÃ© se escucha o quÃ© parte importa.');
+      setError('Para videos necesito que agregues contexto: qué pasa, qué se escucha o qué parte importa.');
       return true;
     }
     setRegenerating(true);
@@ -4263,8 +4263,8 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerencia', captio
       const supportNotes = [
         notes.trim(),
         requestedAction === 'reactivate'
-          ? 'La persona usuaria quiere retomar un hilo frÃ­o sin presionar.'
-          : 'La persona usuaria quiere una respuesta sugerida Ãºtil, natural y lista para enviar.'
+          ? 'La persona usuaria quiere retomar un hilo frío sin presionar.'
+          : 'La persona usuaria quiere una respuesta sugerida útil, natural y lista para enviar.'
       ].filter(Boolean).join(' | ');
       const result = await WaFliAPI.ai[action]({
         chatId,
@@ -4321,7 +4321,7 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerencia', captio
       </div>
       <p className="t-caption" style={{margin: '0 0 10px'}}>{caption}</p>
       <p className="t-caption" style={{margin: '0 0 14px', color: 'var(--text-secondary)'}}>
-        ElegÃ­ el tono y, si querÃ©s, dale una idea base o una instrucciÃ³n de apoyo. La cuota se consume reciÃ©n cuando generÃ¡s.
+        Elegí el tono y, si querés, dale una idea base o una instrucción de apoyo. La cuota se consume recién cuando generás.
       </p>
       {mediaContext?.hasMedia ? (
         <div className="card" style={{padding: 10, marginBottom: 12, background: 'var(--accent-soft)', borderColor: 'rgba(14, 165, 143, 0.18)'}}>
@@ -4329,7 +4329,7 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerencia', captio
             Contexto multimedia
           </div>
           <div className="t-small" style={{color: 'var(--text-secondary)', marginBottom: 8}}>
-            {mediaContext.prompt || mediaContext.summary || 'Hay contenido multimedia reciente. Agrega contexto si querÃ©s una respuesta mÃ¡s precisa.'}
+            {mediaContext.prompt || mediaContext.summary || 'Hay contenido multimedia reciente. Agrega contexto si querés una respuesta más precisa.'}
           </div>
           <textarea
             className="textarea"
@@ -4363,7 +4363,7 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerencia', captio
         className="textarea"
         value={userDraft}
         onChange={e => setUserDraft(e.target.value)}
-        placeholder={action === 'reactivate' ? 'Opcional: idea base para retomar, ej. vi esto y me acordÃ© de vos...' : 'Opcional: posible respuesta que escribirÃ­as vos...'}
+        placeholder={action === 'reactivate' ? 'Opcional: idea base para retomar, ej. vi esto y me acordé de vos...' : 'Opcional: posible respuesta que escribirías vos...'}
         style={{minHeight: 72, marginBottom: 10, fontSize: 16, lineHeight: 1.45}}
       />
 
@@ -4371,7 +4371,7 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerencia', captio
         className="textarea"
         value={notes}
         onChange={e => setNotes(e.target.value)}
-        placeholder="Opcional: apoyo para la IA, ej. sin sonar intenso, sin parecer raro, mÃ¡s seguro..."
+        placeholder="Opcional: apoyo para la IA, ej. sin sonar intenso, sin parecer raro, más seguro..."
         style={{minHeight: 72, marginBottom: 12, fontSize: 16, lineHeight: 1.45}}
       />
 
@@ -4381,7 +4381,7 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerencia', captio
           className="textarea"
           value={text}
           onChange={e => setText(e.target.value)}
-          placeholder="La sugerencia aparecerÃ¡ acÃ¡ y la podÃ©s editar antes de enviarla."
+          placeholder="La sugerencia aparecerá acá y la podés editar antes de enviarla."
           style={{
             height: '100%', width: '100%', fontSize: 16, lineHeight: 1.5, minHeight: 120,
             opacity: regenerating ? 0.4 : 1, transition: 'opacity 150ms',
@@ -4470,7 +4470,7 @@ function RewriteSheet({ chatId, sourceText = '', onUse, onQuota }) {
       }
       return;
     }
-    setError('Inicia sesiÃ³n y conecta tu WhatsApp para reescribir con IA.');
+    setError('Inicia sesión y conecta tu WhatsApp para reescribir con IA.');
   };
   React.useEffect(() => {
     const key = `${chatId || ''}:${sourceText || ''}`;
@@ -4485,7 +4485,7 @@ function RewriteSheet({ chatId, sourceText = '', onUse, onQuota }) {
       <div className="t-caption" style={{marginBottom: 6}}>Original</div>
       <div className="card" style={{padding: 10, marginBottom: 10, fontSize: 13.5}}>{sourceText || 'Escribe algo en el composer para reescribir.'}</div>
       <div className="t-caption" style={{marginBottom: 6}}>Reescrito</div>
-      <textarea className="textarea" rows={6} value={rewritten} onChange={e => setRewritten(e.target.value)} placeholder="Tu mensaje reescrito aparecerÃ¡ aquÃ­." style={{fontSize: 16, marginBottom: 12}} />
+      <textarea className="textarea" rows={6} value={rewritten} onChange={e => setRewritten(e.target.value)} placeholder="Tu mensaje reescrito aparecerá aquí." style={{fontSize: 16, marginBottom: 12}} />
       <AiReportButton chatId={chatId} action="rewrite" text={rewritten} metadata={{ source: 'rewrite', originalLength: String(sourceText || '').length }} />
       {error ? <p className="t-caption" style={{margin: '0 0 8px', color: 'var(--danger)'}}>{error}</p> : null}
       <button className="btn btn--ghost btn--md" style={{marginBottom: 10}} disabled={loading} onClick={regen}><Icons.Refresh size={16} /> {loading ? 'Generando...' : 'Regenerar'}</button>
@@ -4520,12 +4520,12 @@ function AnalysisSheet({ chatId, message = '', onSuggest, onQuota }) {
   }, [chatId, message]);
   return (
     <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '4px 18px 18px'}}>
-      <div className="row gap-2" style={{marginBottom: 8, alignItems: 'center'}}><Icons.Search size={18} style={{color: 'var(--accent)'}} /><span className="t-h3">AnÃ¡lisis</span></div>
+      <div className="row gap-2" style={{marginBottom: 8, alignItems: 'center'}}><Icons.Search size={18} style={{color: 'var(--accent)'}} /><span className="t-h3">Análisis</span></div>
       <div className="t-caption" style={{marginBottom: 6}}>Mensaje analizado</div>
       <div className="card" style={{padding: 10, marginBottom: 12, fontSize: 13.5}}>{message || 'No hay mensaje seleccionado.'}</div>
       <div className="card" style={{padding: 12, marginBottom: 12}}>
         {loading ? <p style={{margin: 0}}>Analizando...</p> : analysis ? <p style={{margin: 0, whiteSpace: 'pre-wrap'}}>{analysis}</p> : (
-          <p style={{margin: 0, color: 'var(--text-secondary)'}}>El anÃ¡lisis aparecerÃ¡ cuando la IA devuelva una respuesta.</p>
+          <p style={{margin: 0, color: 'var(--text-secondary)'}}>El análisis aparecerá cuando la IA devuelva una respuesta.</p>
         )}
       </div>
       <AiReportButton chatId={chatId} action="analyze" text={analysis} metadata={{ source: 'analysis' }} />
@@ -4535,7 +4535,7 @@ function AnalysisSheet({ chatId, message = '', onSuggest, onQuota }) {
   );
 }
 
-// SCREEN 6 Â· Necesito abrir (apertura para match nuevo)
+// SCREEN 6 · Necesito abrir (apertura para match nuevo)
 function OpenerSheet({ chatId, matchName = 'Chat', onClose, onUse, onQuota }) {
   const [tone, setTone] = React.useState('Desenfadado');
   const [context, setContext] = React.useState('');
@@ -4548,7 +4548,7 @@ function OpenerSheet({ chatId, matchName = 'Chat', onClose, onUse, onQuota }) {
   const options = remoteOptions.map((text) => ({ kind: 'IA', text }));
   const generateOpener = async () => {
     if (!WaFliAPI?.ai?.opener || !WaFliAPI?.client?.isAuthenticated?.()) {
-      setError('Inicia sesiÃ³n y conecta tu WhatsApp para generar aperturas con IA.');
+      setError('Inicia sesión y conecta tu WhatsApp para generar aperturas con IA.');
       return;
     }
     setLoading(true);
@@ -4588,7 +4588,7 @@ function OpenerSheet({ chatId, matchName = 'Chat', onClose, onUse, onQuota }) {
       <div className="scroll-y" style={{margin: '0 -18px', padding: '0 18px'}}>
         {/* Context input */}
         <div style={{marginBottom: 14}}>
-          <label className="t-small" style={{display: 'block', marginBottom: 6, fontWeight: 500}}>Â¿QuÃ© sabes de {matchName}? <span style={{color: 'var(--text-tertiary)', fontWeight: 400}}>(opcional)</span></label>
+          <label className="t-small" style={{display: 'block', marginBottom: 6, fontWeight: 500}}>¿Qué sabes de {matchName}? <span style={{color: 'var(--text-tertiary)', fontWeight: 400}}>(opcional)</span></label>
           <textarea
             className="textarea"
             rows={2}
@@ -4667,10 +4667,10 @@ function usageActionLabel(action = '') {
   return {
     suggest: 'Sugerencia de respuesta',
     rewrite: 'Reescritura de texto',
-    opener: 'Apertura de conversaciÃ³n',
-    reactivate: 'ReactivaciÃ³n de hilo',
-    analyze: 'AnÃ¡lisis de mensaje'
-  }[key] || 'GeneraciÃ³n IA';
+    opener: 'Apertura de conversación',
+    reactivate: 'Reactivación de hilo',
+    analyze: 'Análisis de mensaje'
+  }[key] || 'Generación IA';
 }
 
 function usageTargetLabel(row = {}) {
@@ -4694,19 +4694,19 @@ function formatUsageRow(row = {}) {
     ? 'En proceso'
     : status === 'failed'
       ? 'No cobrado'
-      : `${cost || 1} generaciÃ³n${cost === 1 ? '' : 'es'} usada${cost === 1 ? '' : 's'}`;
+      : `${cost || 1} generación${cost === 1 ? '' : 'es'} usada${cost === 1 ? '' : 's'}`;
   const detail = target ? `${action} con ${target}` : action;
   const reason = {
-    suggest: 'Se gastÃ³ al pedir una respuesta sugerida.',
-    rewrite: 'Se gastÃ³ al reescribir un texto.',
-    opener: 'Se gastÃ³ al pedir una apertura.',
-    reactivate: 'Se gastÃ³ al reactivar un hilo frÃ­o.',
-    analyze: 'Se gastÃ³ al analizar un mensaje.'
-  }[String(row.action || '').toLowerCase()] || 'Se gastÃ³ al usar una acciÃ³n de IA.';
+    suggest: 'Se gastó al pedir una respuesta sugerida.',
+    rewrite: 'Se gastó al reescribir un texto.',
+    opener: 'Se gastó al pedir una apertura.',
+    reactivate: 'Se gastó al reactivar un hilo frío.',
+    analyze: 'Se gastó al analizar un mensaje.'
+  }[String(row.action || '').toLowerCase()] || 'Se gastó al usar una acción de IA.';
   return { detail, reason, statusLabel };
 }
 
-// SCREEN 7 Â· PestaÃ±a Plan
+// SCREEN 7 · Pestaña Plan
 function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
   const [remoteUsage, setRemoteUsage] = React.useState(null);
   const [planName, setPlanName] = React.useState('');
@@ -4742,9 +4742,9 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
   const remaining = hasBalance ? Number(summary.totalAvailable ?? Math.max(0, Number(balance?.included_limit || 0) - used) + Number(balance?.pack_balance || 0)) : 0;
   const periodLabel = summary.periodType === 'month' ? 'este mes' : summary.periodType === 'trial' ? 'en tu trial' : 'hoy';
   const renewLabel = summary.periodType === 'month'
-    ? 'Se renueva al empezar el prÃ³ximo mes.'
+    ? 'Se renueva al empezar el próximo mes.'
     : summary.periodType === 'trial'
-      ? 'Tu periodo actual se mantiene hasta su vencimiento. DespuÃ©s vuelves a Gratis si no renuevas.'
+      ? 'Tu periodo actual se mantiene hasta su vencimiento. Después vuelves a Gratis si no renuevas.'
       : 'Se renueva a las 00:00.';
   const pct = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
   const gaugeColor = pct > 0.25 ? 'var(--success)' : pct > 0.1 ? 'var(--warning)' : 'var(--danger)';
@@ -4764,13 +4764,13 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
       const result = await WaFliAPI.billing.customerPortal();
       const url = result?.url || result?.managementUrl;
       if (!url) {
-        setRestoreMsg('No encontramos una suscripciÃ³n activa para gestionar.');
+        setRestoreMsg('No encontramos una suscripción activa para gestionar.');
         return;
       }
       window.location.href = url;
-      setRestoreMsg('Abrimos la tienda para gestionar tu suscripciÃ³n.');
+      setRestoreMsg('Abrimos la tienda para gestionar tu suscripción.');
     } catch (error) {
-      setRestoreMsg(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos abrir la gestiÃ³n de suscripciÃ³n.');
+      setRestoreMsg(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos abrir la gestión de suscripción.');
     }
   };
   const restoreNativePurchases = async () => {
@@ -4804,7 +4804,7 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
               </div>
             </button>
             <p className="t-caption" style={{textAlign: 'center', margin: 0}}>
-              {hasBalance ? renewLabel : 'Sin datos de uso todavÃ­a'}
+              {hasBalance ? renewLabel : 'Sin datos de uso todavía'}
             </p>
           </div>
 
@@ -4813,7 +4813,7 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
           <button className="btn btn--secondary btn--full" onClick={onOpenPacks}>Comprar pack de 50 generaciones</button>
           {nativePurchaseCaps?.nativePurchasePlatform ? (
             <>
-              <button className="btn btn--secondary btn--full" onClick={openNativeSubscriptionManagement}>Gestionar suscripciÃ³n / volver a Gratis</button>
+              <button className="btn btn--secondary btn--full" onClick={openNativeSubscriptionManagement}>Gestionar suscripción / volver a Gratis</button>
               <button className="btn btn--text" style={{height: 40}} onClick={restoreNativePurchases}>Restaurar compras</button>
             </>
           ) : null}
@@ -4837,7 +4837,7 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
                     <span className="t-caption" style={{fontWeight: 700, color: 'var(--accent)', whiteSpace: 'nowrap'}}>{h.statusLabel}</span>
                   </div>
                 )) : (
-                  <div style={{padding: '12px 14px'}}><span className="t-small" style={{color: 'var(--text-secondary)'}}>TodavÃ­a no hay uso registrado.</span></div>
+                  <div style={{padding: '12px 14px'}}><span className="t-small" style={{color: 'var(--text-secondary)'}}>Todavía no hay uso registrado.</span></div>
                 )}
                 <button className="btn btn--text" style={{width: '100%', height: 38}} onClick={onOpenHistory}>Ver detalle completo</button>
               </div>
@@ -4850,7 +4850,7 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
   );
 }
 
-// SCREEN 8 Â· Cuota agotada (modal full-screen)
+// SCREEN 8 · Cuota agotada (modal full-screen)
 function QuotaExhausted({ onClose, onOpenPlans, onOpenPacks }) {
   return (
     <div style={{flex: 1, display: 'flex', flexDirection: 'column', padding: '20px 22px'}}>
@@ -4873,11 +4873,11 @@ function QuotaExhausted({ onClose, onOpenPlans, onOpenPacks }) {
         </div>
         <h1 className="t-h1" style={{margin: '0 0 8px', maxWidth: 320, textWrap: 'balance'}}>Has agotado tus mensajes IA de hoy</h1>
         <p style={{margin: '0 0 32px', color: 'var(--text-secondary)', fontSize: 15, maxWidth: 280, textWrap: 'pretty'}}>
-          Para seguir, elige una opciÃ³n. Tu prÃ³xima recarga llega a las 00:00.
+          Para seguir, elige una opción. Tu próxima recarga llega a las 00:00.
         </p>
         <div className="col gap-2" style={{width: '100%', maxWidth: 320}}>
           <button className="btn btn--primary btn--full" onClick={onOpenPlans}>Ver Plus y Pro</button>
-          <button className="btn btn--secondary btn--full" onClick={onOpenPacks}>Comprar 50 extra por â‚¬2.99</button>
+          <button className="btn btn--secondary btn--full" onClick={onOpenPacks}>Comprar 50 extra por €2.99</button>
           <button className="btn btn--text" style={{height: 44, marginTop: 4}} onClick={onClose}>Esperar a 00:00</button>
         </div>
       </div>
@@ -4885,7 +4885,7 @@ function QuotaExhausted({ onClose, onOpenPlans, onOpenPacks }) {
   );
 }
 
-// SCREEN 9 Â· PestaÃ±a Ajustes
+// SCREEN 9 · Pestaña Ajustes
 function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notificationPrefs, onToggleNotification, onRequestNotificationPrompt, theme = 'system', onThemeChange, isNativeApp = false }) {
   const SUPPORT_EMAIL = 'soporte@wafli.ai';
   const SUPPORT_URL = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Soporte WaFli')}`;
@@ -4980,7 +4980,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
     setPrivacyLoading(id);
     setActionMsg('');
     try {
-      if (typeof action !== 'function') throw new Error('AcciÃ³n no disponible');
+      if (typeof action !== 'function') throw new Error('Acción no disponible');
       await action();
       setActionMsg(success);
       if (success) onShowToast && onShowToast(success);
@@ -4988,7 +4988,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
       setSheet(null);
       if (typeof afterSuccess === 'function') await afterSuccess();
     } catch (apiError) {
-      setActionMsg(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos completar la acciÃ³n.');
+      setActionMsg(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos completar la acción.');
     } finally {
       setPrivacyLoading('');
     }
@@ -5024,8 +5024,8 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
   const disconnectWhatsApp = () => askPrivacyAction({
     id: 'disconnect',
     title: 'Desconectar tu WhatsApp?',
-    body: 'WaFli dejarÃ¡ de recibir y enviar mensajes hasta que vuelvas a conectar tu WhatsApp.',
-    confirmLabel: 'SÃ­, desconectar',
+    body: 'WaFli dejará de recibir y enviar mensajes hasta que vuelvas a conectar tu WhatsApp.',
+    confirmLabel: 'Sí, desconectar',
     loadingLabel: 'Desconectando...',
     action: () => WaFliAPI?.whatsapp?.disconnect?.(true),
     success: 'Tu WhatsApp fue desconectado de WaFli',
@@ -5034,8 +5034,8 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
   const deletePrivacyHistory = () => askPrivacyAction({
     id: 'history',
     title: 'Borrar historial cacheado?',
-    body: 'Se eliminarÃ¡ el historial temporal que WaFli usa para mostrar chats recientes y contexto IA. No borra tus chats originales.',
-    confirmLabel: 'SÃ­, borrar historial',
+    body: 'Se eliminará el historial temporal que WaFli usa para mostrar chats recientes y contexto IA. No borra tus chats originales.',
+    confirmLabel: 'Sí, borrar historial',
     loadingLabel: 'Borrando...',
     action: () => WaFliAPI?.privacy?.deleteHistory?.(),
     success: 'Historial borrado'
@@ -5043,12 +5043,12 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
   const requestAccountDelete = () => askPrivacyAction({
     id: 'delete-account',
     title: 'Eliminar tu cuenta?',
-    body: 'Vamos a programar la eliminaciÃ³n de tu cuenta. TendrÃ¡s margen para cancelarla si fue un error.',
-    confirmLabel: 'SÃ­, eliminar cuenta',
+    body: 'Vamos a programar la eliminación de tu cuenta. Tendrás margen para cancelarla si fue un error.',
+    confirmLabel: 'Sí, eliminar cuenta',
     loadingLabel: 'Solicitando...',
     danger: true,
     action: () => WaFliAPI?.privacy?.requestDelete?.(),
-    success: 'EliminaciÃ³n solicitada',
+    success: 'Eliminación solicitada',
     afterSuccess: () => {
       WaFliAPI?.client?.clearSession?.();
       onNavigate && onNavigate('landing');
@@ -5092,7 +5092,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
             <div className="row" style={{justifyContent: 'space-between', gap: 12, alignItems: 'center'}}>
               <div className="col" style={{gap: 2}}>
                 <span style={{fontSize: 15, fontWeight: 700}}>Modo de color</span>
-                <span className="t-caption">Claro, oscuro o automÃ¡tico segÃºn tu dispositivo.</span>
+                <span className="t-caption">Claro, oscuro o automático según tu dispositivo.</span>
               </div>
               <span style={{
                 width: 34,
@@ -5125,14 +5125,14 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
             </div>
           </div>
           <div className="card" style={{padding: 0, overflow: 'hidden'}}>
-            {item(<Icons.User size={17} />, 'Perfil', `${spanishVariant} Â· ${toneBase}`, () => setSheet('profile'))}
-            {item(<Icons.Card size={17} />, 'Plan y facturaciÃ³n', 'Atajo a plan + pago + facturas', () => setSheet('billing'))}
-            {item(<Icons.Lock size={17} />, 'Privacidad', 'Datos, exportaciÃ³n y eliminaciÃ³n', () => setSheet('privacy'))}
+            {item(<Icons.User size={17} />, 'Perfil', `${spanishVariant} · ${toneBase}`, () => setSheet('profile'))}
+            {item(<Icons.Card size={17} />, 'Plan y facturación', 'Atajo a plan + pago + facturas', () => setSheet('billing'))}
+            {item(<Icons.Lock size={17} />, 'Privacidad', 'Datos, exportación y eliminación', () => setSheet('privacy'))}
             {item(<Icons.Bell size={17} />, 'Notificaciones', notifications.global ? 'Encendidas' : 'Apagadas', () => setSheet('notifications'))}
             {item(<Icons.Settings size={17} />, 'Apariencia', theme === 'dark' ? 'Oscuro' : theme === 'light' ? 'Claro' : 'Sistema', () => setSheet('appearance'))}
             {showLanguageSelector ? item(<Icons.Globe size={17} />, 'Idioma de la app', language, () => setSheet('language')) : null}
             {item(<Icons.Help size={17} />, 'Soporte', 'FAQ, contacto y estado del servicio', () => setSheet('support'))}
-            {item(<Icons.Doc size={17} />, 'TÃ©rminos legales', 'T&C, privacidad, cookies y soporte', () => setSheet('terms'), true)}
+            {item(<Icons.Doc size={17} />, 'Términos legales', 'T&C, privacidad, cookies y soporte', () => setSheet('terms'), true)}
           </div>
 
           <div className="card" style={{marginTop: 16, padding: 0, overflow: 'hidden'}}>
@@ -5147,7 +5147,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
                 width: 32, height: 32, borderRadius: 8, background: 'var(--danger-soft)', color: 'var(--danger)',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}><Icons.Logout size={17} /></span>
-              <span style={{fontSize: 15, fontWeight: 500}}>Cerrar sesiÃ³n</span>
+              <span style={{fontSize: 15, fontWeight: 500}}>Cerrar sesión</span>
             </button>
           </div>
         </div>
@@ -5159,7 +5159,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
           <span className="t-h3" style={{marginBottom: 10}}>Perfil</span>
           <label className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Email</label>
           <div className="card" style={{padding: '10px 12px', marginBottom: 12, background: 'var(--gray-50)'}}>{email}</div>
-          <label className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Variante de espaÃ±ol</label>
+          <label className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Variante de español</label>
           <div className="row gap-2" style={{flexWrap: 'wrap', marginBottom: 12}}>
             {SPANISH_VARIANT_OPTIONS.map(option => option.id).map((v) => (
               <button key={v} className={'chip ' + (spanishVariant === v ? 'chip--active' : '')} onClick={() => setSpanishVariant(v)}>{v}</button>
@@ -5181,14 +5181,14 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
 
       <BottomSheet open={sheet === 'billing'} onClose={() => setSheet(null)} height="90%">
         <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
-          <span className="t-h3" style={{marginBottom: 10}}>Plan y facturaciÃ³n</span>
+          <span className="t-h3" style={{marginBottom: 10}}>Plan y facturación</span>
           <button className="btn btn--primary btn--md" style={{marginBottom: 10}} onClick={() => onNavigate('plan')}>Ir a mi plan</button>
           <div className="card" style={{padding: 12, marginBottom: 14}}>
             <div className="t-small" style={{fontWeight: 600, marginBottom: 8}}>Pagos y facturas</div>
             <p className="t-caption" style={{margin: 0, color: 'var(--text-secondary)'}}>
               {WaFliAPI?.billing?.capabilities?.().nativePurchases?.nativePurchasePlatform
-                ? 'En iOS y Android, las suscripciones se compran, cancelan o cambian desde App Store o Google Play. En Plan puedes restaurar compras o abrir la gestiÃ³n de suscripciÃ³n.'
-                : 'En web, la gestiÃ³n de pagos se realiza desde el portal de facturaciÃ³n.'}
+                ? 'En iOS y Android, las suscripciones se compran, cancelan o cambian desde App Store o Google Play. En Plan puedes restaurar compras o abrir la gestión de suscripción.'
+                : 'En web, la gestión de pagos se realiza desde el portal de facturación.'}
             </p>
           </div>
         </div>
@@ -5199,12 +5199,12 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
           <span className="t-h3" style={{marginBottom: 10}}>Privacidad</span>
           <div className="card" style={{padding: 12, marginBottom: 12}}>
             <div className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Datos almacenados</div>
-            <p className="t-caption" style={{margin: 0, color: 'var(--text-secondary)'}}>Usamos un cache temporal de conversaciones recientes para mostrar tus chats y generar respuestas. Puedes borrar ese historial desde aquÃ­.</p>
+            <p className="t-caption" style={{margin: 0, color: 'var(--text-secondary)'}}>Usamos un cache temporal de conversaciones recientes para mostrar tus chats y generar respuestas. Puedes borrar ese historial desde aquí.</p>
           </div>
           <div className="card" style={{padding: 12, marginBottom: 12, background: 'var(--gray-50)'}}>
             <div className="t-small" style={{fontWeight: 700, marginBottom: 4}}>Mejora de modelo desactivada en V0</div>
             <p className="t-caption" style={{margin: 0}}>
-              Tus conversaciones se usan solo para mostrar la app y generar respuestas cuando lo pides. La anonimizaciÃ³n tÃ©cnica del servidor estÃ¡ siempre activa.
+              Tus conversaciones se usan solo para mostrar la app y generar respuestas cuando lo pides. La anonimización técnica del servidor está siempre activa.
             </p>
           </div>
           <div className="col gap-2">
@@ -5222,7 +5222,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
             </button>
           </div>
           <p className="t-caption" style={{margin: '12px 0 0', color: 'var(--text-secondary)'}}>
-            La eliminaciÃ³n de cuenta queda programada para darte margen de cancelar si fue un error.
+            La eliminación de cuenta queda programada para darte margen de cancelar si fue un error.
           </p>
         </div>
       </BottomSheet>
@@ -5246,9 +5246,9 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
             }}>
               <Icons.Lock size={26} />
             </div>
-            <h1 className="t-h2" style={{margin: 0}}>{privacyConfirm?.title || 'Confirmar acciÃ³n'}</h1>
+            <h1 className="t-h2" style={{margin: 0}}>{privacyConfirm?.title || 'Confirmar acción'}</h1>
             <p style={{margin: '0 auto 24px', color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.5, maxWidth: 320}}>
-              {privacyConfirm?.body || 'Esta acciÃ³n requiere confirmaciÃ³n.'}
+              {privacyConfirm?.body || 'Esta acción requiere confirmación.'}
             </p>
             <div className="col gap-2" style={{width: '100%', maxWidth: 320, margin: '0 auto'}}>
               <button
@@ -5259,7 +5259,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
               >
                 {privacyLoading === privacyConfirm?.id
                   ? <><Spinner size={14} /> {privacyConfirm?.loadingLabel || 'Procesando...'}</>
-                  : (privacyConfirm?.confirmLabel || 'SÃ­, continuar')}
+                  : (privacyConfirm?.confirmLabel || 'Sí, continuar')}
               </button>
               <button className="btn btn--text" disabled={Boolean(privacyLoading)} onClick={() => setPrivacyConfirm(null)}>
                 Cancelar
@@ -5277,8 +5277,8 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
           </p>
           <div className="pwa-limit-note">
             {isNativeApp
-              ? 'En Android WaFli usa Firebase Cloud Messaging para avisarte aunque la app estÃ© en segundo plano.'
-              : 'En iPhone las notificaciones web requieren iOS 16.4 o superior y que WaFli estÃ© aÃ±adida a pantalla de inicio.'}
+              ? 'En Android WaFli usa Firebase Cloud Messaging para avisarte aunque la app esté en segundo plano.'
+              : 'En iPhone las notificaciones web requieren iOS 16.4 o superior y que WaFli esté añadida a pantalla de inicio.'}
           </div>
           {notificationPermission !== 'granted' ? (
             <button className="btn btn--secondary btn--md" onClick={onRequestNotificationPrompt}>Activar permisos</button>
@@ -5312,7 +5312,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
       <BottomSheet open={sheet === 'appearance'} onClose={() => setSheet(null)} height="58%">
         <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
           <span className="t-h3" style={{marginBottom: 10}}>Apariencia</span>
-          <p className="t-caption" style={{margin: '0 0 12px'}}>Elige cÃ³mo se ve WaFli en este dispositivo.</p>
+          <p className="t-caption" style={{margin: '0 0 12px'}}>Elige cómo se ve WaFli en este dispositivo.</p>
           <div className="theme-segment" style={{marginTop: 0, marginBottom: 12}}>
             {[
               ['system', 'Sistema'],
@@ -5343,7 +5343,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
         <div style={{padding: '8px 18px 18px', display: 'flex', flexDirection: 'column', gap: 10}}>
           <span className="t-h3" style={{marginBottom: 2}}>Soporte y FAQs</span>
           <p className="t-caption" style={{margin: '0 0 6px', color: 'var(--text-secondary)', textWrap: 'pretty'}}>
-            Respuestas rÃ¡pidas sobre uso, privacidad, IA, notificaciones, pagos, cuenta y soluciÃ³n de problemas.
+            Respuestas rápidas sobre uso, privacidad, IA, notificaciones, pagos, cuenta y solución de problemas.
           </p>
           <div className="card" style={{padding: 12, display: 'flex', flexDirection: 'column', gap: 10}}>
             {LEGAL_DOCUMENTS.support.sections.map(([heading, text]) => (
@@ -5356,7 +5356,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
           <div className="card" style={{padding: 12}}>
             <div className="t-small" style={{fontWeight: 800, marginBottom: 6}}>Contacto humano</div>
             <div className="t-caption" style={{marginBottom: 8, color: 'var(--text-secondary)'}}>
-              Si el problema persiste, escribe con tu email de cuenta, dispositivo, sistema operativo y una descripciÃ³n breve.
+              Si el problema persiste, escribe con tu email de cuenta, dispositivo, sistema operativo y una descripción breve.
             </div>
             <div className="t-caption" style={{marginBottom: 8}}>{SUPPORT_EMAIL}</div>
             <button className="btn btn--secondary btn--md" style={{marginBottom: 8}} onClick={openSupport}>Enviar email a soporte</button>
@@ -5365,10 +5365,10 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
         </div>
       </BottomSheet>      <BottomSheet open={sheet === 'terms'} onClose={() => setSheet(null)} height="76%">
         <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px', gap: 8}}>
-          <span className="t-h3">TÃ©rminos legales</span>
-          <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('terms'); }}>TÃ©rminos y Condiciones</button>
-          <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('privacy'); }}>PolÃ­tica de Privacidad</button>
-          <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('cookies'); }}>PolÃ­tica de Cookies</button>
+          <span className="t-h3">Términos legales</span>
+          <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('terms'); }}>Términos y Condiciones</button>
+          <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('privacy'); }}>Política de Privacidad</button>
+          <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('cookies'); }}>Política de Cookies</button>
           <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('support'); }}>FAQs y soporte</button>
         </div>
       </BottomSheet>
@@ -5385,10 +5385,10 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
 
       <BottomSheet open={sheet === 'logout'} onClose={() => setSheet(null)} height="42%">
         <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
-          <span className="t-h3" style={{marginBottom: 6}}>Cerrar sesiÃ³n</span>
-          <p className="t-small" style={{margin: '0 0 14px', color: 'var(--text-secondary)'}}>Â¿Seguro que quieres cerrar sesiÃ³n en este dispositivo?</p>
+          <span className="t-h3" style={{marginBottom: 6}}>Cerrar sesión</span>
+          <p className="t-small" style={{margin: '0 0 14px', color: 'var(--text-secondary)'}}>¿Seguro que quieres cerrar sesión en este dispositivo?</p>
           <div className="col gap-2" style={{marginTop: 'auto'}}>
-            <button className="btn btn--primary btn--md" onClick={async () => { await WaFliAPI?.auth?.logout?.().catch(() => {}); setSheet(null); onNavigate('landing'); }}>SÃ­, cerrar sesiÃ³n</button>
+            <button className="btn btn--primary btn--md" onClick={async () => { await WaFliAPI?.auth?.logout?.().catch(() => {}); setSheet(null); onNavigate('landing'); }}>Sí, cerrar sesión</button>
             <button className="btn btn--secondary btn--md" onClick={() => setSheet(null)}>Cancelar</button>
           </div>
         </div>
@@ -5427,14 +5427,14 @@ function PlanSelectorSheet({ onChoose }) {
   const blocked = androidBillingBlocked();
   const { storeName } = nativeBillingStoreCopy();
   const plans = [
-    { id: 'free', name: 'Gratis', price: 'â‚¬0', quota: '5 generaciones IA/dia', features: ['Plan bÃ¡sico incluido', 'Sugerir y reescribir', 'Vuelve a Gratis cancelando Plus/Pro desde la tienda'] },
-    { id: 'plus', name: 'Plus', price: 'â‚¬4.99/mes', quota: '150 generaciones IA/mes', features: ['MÃ¡s generaciones mensuales', 'Sugerir, reescribir y abrir'] },
-    { id: 'pro', name: 'Pro', price: 'â‚¬9.99/mes', quota: '500 generaciones IA/mes', features: ['Mayor cupo mensual', 'Pensado para uso intensivo', 'Packs extra compatibles'] },
+    { id: 'free', name: 'Gratis', price: '€0', quota: '5 generaciones IA/dia', features: ['Plan básico incluido', 'Sugerir y reescribir', 'Vuelve a Gratis cancelando Plus/Pro desde la tienda'] },
+    { id: 'plus', name: 'Plus', price: '€4.99/mes', quota: '150 generaciones IA/mes', features: ['Más generaciones mensuales', 'Sugerir, reescribir y abrir'] },
+    { id: 'pro', name: 'Pro', price: '€9.99/mes', quota: '500 generaciones IA/mes', features: ['Mayor cupo mensual', 'Pensado para uso intensivo', 'Packs extra compatibles'] },
   ];
   return (
     <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
       <span className="t-h3" style={{marginBottom: 10}}>Ver planes</span>
-      <span className="t-caption" style={{color: 'var(--text-secondary)', marginBottom: 12}}>Planes mensuales y gestiÃ³n desde la tienda correspondiente.</span>
+      <span className="t-caption" style={{color: 'var(--text-secondary)', marginBottom: 12}}>Planes mensuales y gestión desde la tienda correspondiente.</span>
       <AndroidBillingNotice />
       <div className="col gap-2" style={{overflow: 'auto'}}>
         {plans.map((p) => (
@@ -5487,7 +5487,7 @@ function PackSelectorSheet({ onBuy }) {
           <div key={p.id} className="card" style={{padding: 12}}>
             <div className="row" style={{justifyContent: 'space-between'}}>
               <span style={{fontSize: 15, fontWeight: 600}}>{p.qty} mensajes IA</span>
-              <span className="t-mono" style={{fontWeight: 700}}>â‚¬{p.price.toFixed(2)}</span>
+              <span className="t-mono" style={{fontWeight: 700}}>€{p.price.toFixed(2)}</span>
             </div>
             <div className="t-caption" style={{marginTop: 4}}>No caducan nunca.</div>
             <button className={'btn btn--md ' + (blocked ? 'btn--secondary' : 'btn--primary')} style={{width: '100%', marginTop: 10}} disabled={blocked} onClick={() => !blocked && onBuy && onBuy(p.qty)}>
@@ -5531,7 +5531,7 @@ function UsageHistorySheet() {
   return (
     <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
       <span className="t-h3" style={{marginBottom: 4}}>Historial de uso</span>
-      <p className="t-caption" style={{margin: '0 0 12px', color: 'var(--text-secondary)'}}>Cada fila indica quÃ© acciÃ³n de IA consumiÃ³ cuota y en quÃ© chat ocurriÃ³.</p>
+      <p className="t-caption" style={{margin: '0 0 12px', color: 'var(--text-secondary)'}}>Cada fila indica qué acción de IA consumió cuota y en qué chat ocurrió.</p>
       <div className="card" style={{padding: 0, overflow: 'hidden'}}>
         {loading ? (
           <div style={{padding: '12px'}}><span className="t-small">Cargando historial...</span></div>
@@ -5547,7 +5547,7 @@ function UsageHistorySheet() {
             <span className="t-caption" style={{color: 'var(--accent)', fontWeight: 700, whiteSpace: 'nowrap'}}>{r.statusLabel}</span>
           </div>
         )) : (
-          <div style={{padding: '12px'}}><span className="t-small" style={{color: 'var(--text-secondary)'}}>TodavÃ­a no hay uso registrado.</span></div>
+          <div style={{padding: '12px'}}><span className="t-small" style={{color: 'var(--text-secondary)'}}>Todavía no hay uso registrado.</span></div>
         )}
       </div>
     </div>
@@ -5561,7 +5561,7 @@ function PaymentSuccessSheet({ onBack }) {
         <Icons.Check size={36} />
       </div>
       <h3 className="t-h3" style={{margin: '0 0 8px'}}>Pago confirmado</h3>
-      <p className="t-small" style={{color: 'var(--text-secondary)', margin: '0 0 16px'}}>Tu cuota ya estÃ¡ actualizada.</p>
+      <p className="t-small" style={{color: 'var(--text-secondary)', margin: '0 0 16px'}}>Tu cuota ya está actualizada.</p>
       <button className="btn btn--primary btn--full" onClick={onBack}>Volver a chats</button>
     </div>
   );

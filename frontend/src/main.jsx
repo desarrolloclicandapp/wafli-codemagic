@@ -1,6 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { SocialLogin } from '@capgo/capacitor-social-login';
+import { Keyboard } from '@capacitor/keyboard';
 
 import './styles.css';
 import './api/index.js';      // window.WaFliAPI
@@ -22,6 +23,8 @@ const KEYBOARD_FOCUS_SELECTOR = 'input, textarea, select, [contenteditable="true
 let stableViewportHeight = 0;
 let stableViewportWidth = 0;
 let viewportFrame = 0;
+let nativeKeyboardHeight = 0;
+let nativeKeyboardVisible = false;
 
 const detectMobilePlatform = () => {
   const ua = navigator.userAgent || '';
@@ -70,12 +73,18 @@ const applyViewportBounds = () => {
 
   const baseHeight = stableViewportHeight || layoutHeight || visualHeight;
   const rawKeyboardOffset = Math.max(0, baseHeight - visualHeight - visualOffsetTop);
-  const keyboardOffset = focused && rawKeyboardOffset > KEYBOARD_OFFSET_THRESHOLD ? Math.ceil(rawKeyboardOffset) : 0;
+  const viewportKeyboardOffset = focused && rawKeyboardOffset > KEYBOARD_OFFSET_THRESHOLD ? Math.ceil(rawKeyboardOffset) : 0;
+  const pluginKeyboardOffset = nativeKeyboardVisible ? Math.max(0, Math.ceil(nativeKeyboardHeight || 0)) : 0;
+  const keyboardOffset = (focused || nativeKeyboardVisible) ? Math.max(viewportKeyboardOffset, pluginKeyboardOffset) : 0;
+  const visibleHeight = keyboardOffset > 0
+    ? Math.max(320, baseHeight - keyboardOffset)
+    : (visualHeight || baseHeight);
 
   root.style.setProperty('--viewport-width', `${stableViewportWidth || layoutWidth || visualWidth}px`);
   root.style.setProperty('--viewport-height', `${baseHeight}px`);
   root.style.setProperty('--visual-viewport-width', `${visualWidth || stableViewportWidth || layoutWidth}px`);
   root.style.setProperty('--visual-viewport-height', `${visualHeight || baseHeight}px`);
+  root.style.setProperty('--keyboard-visible-height', `${visibleHeight}px`);
   root.style.setProperty('--keyboard-offset', `${keyboardOffset}px`);
   const keyboardOpen = keyboardOffset > 0;
   root.classList.toggle('keyboard-open', keyboardOpen);
@@ -103,6 +112,29 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('scroll', syncViewportBounds, { passive: true });
 }
 window.addEventListener('orientationchange', resetStableViewportBounds, { passive: true });
+if (window.WaFliAPI?.client?.IS_CAPACITOR_NATIVE) {
+  Keyboard.setAccessoryBarVisible?.({ isVisible: false }).catch(() => {});
+  Keyboard.addListener('keyboardWillShow', (info) => {
+    nativeKeyboardVisible = true;
+    nativeKeyboardHeight = Number(info?.keyboardHeight || 0);
+    syncViewportBounds();
+  }).catch(() => {});
+  Keyboard.addListener('keyboardDidShow', (info) => {
+    nativeKeyboardVisible = true;
+    nativeKeyboardHeight = Number(info?.keyboardHeight || nativeKeyboardHeight || 0);
+    syncViewportBounds();
+  }).catch(() => {});
+  Keyboard.addListener('keyboardWillHide', () => {
+    nativeKeyboardVisible = false;
+    nativeKeyboardHeight = 0;
+    syncViewportBounds();
+  }).catch(() => {});
+  Keyboard.addListener('keyboardDidHide', () => {
+    nativeKeyboardVisible = false;
+    nativeKeyboardHeight = 0;
+    window.setTimeout(syncViewportBounds, 60);
+  }).catch(() => {});
+}
 
 detectMobilePlatform();
 syncViewportBounds();

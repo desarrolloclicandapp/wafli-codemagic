@@ -1098,6 +1098,74 @@ input[type="radio"] {
   font-size: 13px;
 }
 
+.public-legal-shell {
+  width: 100%;
+  min-height: var(--viewport-height);
+  height: var(--viewport-height);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 34rem),
+    radial-gradient(circle at 100% 22%, color-mix(in srgb, var(--success) 9%, transparent), transparent 30rem),
+    var(--gray-50);
+  padding: calc(clamp(22px, 5vw, 64px) + var(--safe-top)) calc(clamp(16px, 5vw, 72px) + var(--safe-right)) calc(clamp(28px, 6vw, 72px) + var(--safe-bottom)) calc(clamp(16px, 5vw, 72px) + var(--safe-left));
+}
+
+.public-legal-route #root {
+  display: block;
+  align-items: initial;
+  justify-content: initial;
+  width: 100%;
+  min-height: var(--viewport-height);
+  height: var(--viewport-height);
+  padding: 0;
+}
+
+body.public-legal-route {
+  background: var(--gray-50);
+  overflow: hidden;
+}
+
+.public-legal-shell .scroll-y {
+  min-height: 100%;
+  overflow: visible;
+}
+
+.public-legal-shell .legal-doc {
+  width: min(100%, 1080px);
+}
+
+.public-legal-shell .legal-doc__hero {
+  padding: clamp(26px, 5vw, 54px);
+}
+
+.public-legal-shell .legal-doc h1 {
+  font-size: clamp(40px, 7vw, 76px);
+  max-width: 860px;
+}
+
+.public-legal-shell .legal-doc__intro {
+  max-width: 780px;
+  font-size: clamp(16px, 1.8vw, 20px);
+}
+
+.public-legal-shell .legal-doc__section {
+  padding: clamp(18px, 2.4vw, 26px);
+}
+
+.public-legal-shell .legal-doc__section h2 {
+  font-size: clamp(16px, 1.6vw, 20px);
+}
+
+.public-legal-shell .legal-doc__section p {
+  font-size: clamp(14.5px, 1.3vw, 16.5px);
+}
+
+.phone--public-legal-native .phone__content {
+  flex-direction: column;
+}
+
 .install-help-card {
   display: flex;
   flex-direction: column;
@@ -3444,4 +3512,184 @@ body.cap-ios {
 .cap-ios.cap-native.keyboard-open select {
   transform: translateZ(0);
   scroll-margin-bottom: 128px !important;
+}
+
+.cap-native.cap-android .phone.phone--public-legal-native .phone__content,
+.cap-ios .phone.phone--public-legal-native .phone__content {
+  flex-direction: column;
+}
+
+.cap-native.cap-android .phone.phone--public-legal-native .scroll-y,
+.cap-ios .phone.phone--public-legal-native .scroll-y {
+  width: 100%;
+  padding-inline: max(18px, var(--safe-left)) max(18px, var(--safe-right));
+  padding-bottom: max(24px, var(--safe-bottom));
+}
+
+/* iOS native sheet focus mode.
+   When an input inside a sheet opens the keyboard, the sheet becomes the only
+   scrollable surface. This prevents the chat header/background from moving with
+   AI sheets and removes the large empty footer space iOS was creating. */
+.cap-ios.cap-native.sheet-open,
+.cap-ios.cap-native.sheet-open body,
+.cap-ios.cap-native.sheet-open #root {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .phone__content,
+.cap-ios.cap-native.keyboard-open.sheet-open .app-main,
+.cap-ios.cap-native.keyboard-open.sheet-open .screen,
+.cap-ios.cap-native.keyboard-open.sheet-open .chat-thread-scroll {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: var(--visual-viewport-height) !important;
+  max-height: var(--visual-viewport-height) !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__backdrop {
+  inset: 0 !important;
+  background: var(--bg) !important;
+  opacity: 1 !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__panel {
+  top: 0 !important;
+  bottom: auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: var(--visual-viewport-height) !important;
+  max-height: var(--visual-viewport-height) !important;
+  border-radius: 0 !important;
+  padding-bottom: 0 !important;
+  transform: none !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__handle {
+  flex: 0 0 28px !important;
+  padding: 7px 0 3px !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__body {
+  flex: 1 1 auto !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  padding-bottom: 10px !important;
+  scroll-padding-bottom: 92px !important;
+  touch-action: pan-y !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__body > div {
+  min-height: 0 !important;
+  max-height: none !important;
+  padding-bottom: 10px !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .ai-sheet,
+.cap-ios.cap-native.keyboard-open.sheet-open .ai-sheet__scroll {
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .ai-sheet {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .ai-sheet__scroll {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  padding-bottom: 8px !important;
+  scroll-padding-bottom: 92px !important;
+}
+
+.cap-ios.cap-native .ai-sheet__scroll > .t-caption:nth-of-type(2) {
+  display: none !important;
+}
+
+.cap-ios.cap-native .ai-sheet__footer {
+  gap: 8px !important;
+  padding-top: 8px !important;
+  margin-top: 8px !important;
+}
+
+.cap-ios.cap-native .ai-sheet__footer .btn,
+.cap-ios.cap-native.keyboard-open.sheet-open .ai-sheet__footer .btn,
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__body .btn--primary,
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__body .btn--secondary {
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 0 12px !important;
+  border-radius: 12px !important;
+  font-size: 13px !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .ai-sheet textarea,
+.cap-ios.cap-native.keyboard-open.sheet-open .ai-sheet input,
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__body input,
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__body textarea {
+  max-height: 112px !important;
+  scroll-margin-bottom: 104px !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__body [style*="position: sticky"] {
+  position: static !important;
+  inset: auto !important;
+  bottom: auto !important;
+  margin-top: 10px !important;
+  padding-bottom: 0 !important;
+}
+
+/* Capacitor Keyboard plugin alignment for iPhone.
+   The native plugin provides keyboard height; use it instead of relying only on
+   visualViewport, which is known to drift in WKWebView/Safari on iOS. */
+:root {
+  --keyboard-visible-height: var(--visual-viewport-height);
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet,
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__panel {
+  height: var(--keyboard-visible-height) !important;
+  max-height: var(--keyboard-visible-height) !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .bottom-sheet__body {
+  height: calc(var(--keyboard-visible-height) - 28px) !important;
+  max-height: calc(var(--keyboard-visible-height) - 28px) !important;
+  padding-bottom: max(10px, var(--safe-bottom)) !important;
+  scroll-padding-bottom: 72px !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .ai-sheet__scroll {
+  max-height: calc(var(--keyboard-visible-height) - 96px) !important;
+  padding-bottom: 6px !important;
+  scroll-padding-bottom: 72px !important;
+}
+
+.cap-ios.cap-native.keyboard-open.sheet-open .ai-sheet__footer {
+  flex: 0 0 auto !important;
+  position: static !important;
+  padding-bottom: 0 !important;
 }
