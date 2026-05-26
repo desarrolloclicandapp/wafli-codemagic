@@ -67,10 +67,9 @@ workflows:
       - name: Prepare Capacitor iOS project
         script: |
           cd frontend
-          bash scripts/prepare-ios-codemagic.sh
           npm run build
           npx cap sync ios
-          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" ios/App/App/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist
+          bash scripts/prepare-ios-codemagic.sh
 
       - name: Fetch iOS signing files
         script: |
@@ -90,6 +89,8 @@ workflows:
       - name: Build IPA
         script: |
           cd frontend/ios/App
+          xcodebuild -workspace "$XCODE_WORKSPACE" -list
+          xcodebuild -workspace "$XCODE_WORKSPACE" -scheme "$XCODE_SCHEME" -showBuildSettings
           xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
 
     artifacts:
@@ -140,10 +141,9 @@ workflows:
       - name: Prepare Capacitor iOS project
         script: |
           cd frontend
-          bash scripts/prepare-ios-codemagic.sh
           npm run build
           npx cap sync ios
-          /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" ios/App/App/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist
+          bash scripts/prepare-ios-codemagic.sh
 
       - name: Build for iOS simulator
         script: |

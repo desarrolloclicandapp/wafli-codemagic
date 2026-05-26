@@ -25,6 +25,7 @@ fi
 
 if ! grep -q "CapacitorFirebaseAnalytics/Analytics" "$PODFILE"; then
   ruby -0pi -e "sub(/# Add your Pods here\\n/, \"# Add your Pods here\\n  pod 'CapacitorFirebaseAnalytics\\/AnalyticsWithoutAdIdSupport', :path => '..\\/..\\/node_modules\\/@capacitor-firebase\\/analytics'\\n\")" "$PODFILE"
+  (cd "$IOS_DIR/App" && pod install)
 fi
 
 if [ -f "$ICON_SOURCE" ]; then
