@@ -6,12 +6,18 @@ IOS_DIR="$ROOT_DIR/ios"
 PODFILE="$IOS_DIR/App/Podfile"
 ICON_SOURCE="$ROOT_DIR/resources/icon.png"
 APPICON_DIR="$IOS_DIR/App/App/Assets.xcassets/AppIcon.appiconset"
+APP_DIR="$IOS_DIR/App/App"
+DIST_DIR="$ROOT_DIR/dist"
+PUBLIC_DIR="$APP_DIR/public"
 INFO_PLIST="$IOS_DIR/App/App/Info.plist"
 GOOGLE_SERVICE_PLIST="$IOS_DIR/App/App/GoogleService-Info.plist"
 PRIVACY_MANIFEST_SOURCE="$ROOT_DIR/native-templates/ios/PrivacyInfo.xcprivacy"
 PRIVACY_MANIFEST_PLIST="$IOS_DIR/App/App/PrivacyInfo.xcprivacy"
 ENTITLEMENTS_PLIST="$IOS_DIR/App/App/App.entitlements"
 XCODEPROJ="$IOS_DIR/App/App.xcodeproj"
+CAP_CONFIG_SOURCE="$ROOT_DIR/capacitor.config.json"
+CAP_CONFIG_TARGET="$APP_DIR/capacitor.config.json"
+CONFIG_XML_TARGET="$APP_DIR/config.xml"
 
 if [ ! -d "$IOS_DIR" ]; then
   echo "Missing frontend/ios. Run: npx cap add ios"
@@ -23,9 +29,33 @@ if [ ! -f "$PODFILE" ]; then
   exit 1
 fi
 
+mkdir -p "$APP_DIR"
+
+if [ ! -d "$PUBLIC_DIR" ]; then
+  if [ ! -d "$DIST_DIR" ]; then
+    echo "Missing $PUBLIC_DIR and $DIST_DIR. Run npm run build before preparing iOS."
+    exit 1
+  fi
+  mkdir -p "$PUBLIC_DIR"
+  rsync -a --delete "$DIST_DIR"/ "$PUBLIC_DIR"/
+fi
+
+if [ ! -f "$CAP_CONFIG_TARGET" ]; then
+  cp "$CAP_CONFIG_SOURCE" "$CAP_CONFIG_TARGET"
+fi
+
+if [ ! -f "$CONFIG_XML_TARGET" ]; then
+  cat > "$CONFIG_XML_TARGET" <<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" id="com.wafli.app" version="1.0.0">
+  <name>WaFli</name>
+  <access origin="*" />
+</widget>
+XML
+fi
+
 if ! grep -q "CapacitorFirebaseAnalytics/Analytics" "$PODFILE"; then
   ruby -0pi -e "sub(/# Add your Pods here\\n/, \"# Add your Pods here\\n  pod 'CapacitorFirebaseAnalytics\\/AnalyticsWithoutAdIdSupport', :path => '..\\/..\\/node_modules\\/@capacitor-firebase\\/analytics'\\n\")" "$PODFILE"
-  (cd "$IOS_DIR/App" && pod install)
 fi
 
 if [ -f "$ICON_SOURCE" ]; then
