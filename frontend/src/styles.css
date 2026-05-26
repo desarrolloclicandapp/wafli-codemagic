@@ -1617,6 +1617,105 @@ body {
 .cap-ios .toast {
   bottom: calc(var(--safe-bottom) + 76px);
 }
+
+/* iOS keyboard/layout hardening
+ * WKWebView reports viewport/keyboard changes differently from Safari. Keep
+ * native sheets and chat composer pinned to the visual viewport, prevent any
+ * horizontal pan, and make sticky form footers flow normally while typing.
+ */
+.cap-ios,
+.cap-ios body,
+.cap-ios #root,
+.cap-ios .phone,
+.cap-ios .phone__content,
+.cap-ios .app-main {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+.cap-ios * {
+  max-width: 100%;
+}
+
+.cap-ios .bottom-sheet__backdrop,
+.cap-ios .bottom-sheet__panel,
+.cap-ios .legal-modal,
+.cap-ios [role="dialog"][aria-modal="true"] {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  transform: none !important;
+  overflow-x: hidden !important;
+}
+
+.cap-ios .bottom-sheet__panel {
+  height: auto !important;
+  max-height: min(var(--visual-viewport-height), calc(100svh - var(--safe-top))) !important;
+}
+
+.cap-ios .bottom-sheet__body,
+.cap-ios .bottom-sheet__body > div,
+.cap-ios .scroll-y,
+.cap-ios .chat-thread-scroll,
+.cap-ios .ai-sheet,
+.cap-ios .ai-sheet__scroll {
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none !important;
+}
+
+.cap-ios.keyboard-open .bottom-sheet__panel {
+  top: auto !important;
+  bottom: 0 !important;
+  max-height: var(--visual-viewport-height) !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.cap-ios.keyboard-open .bottom-sheet__body {
+  max-height: calc(var(--visual-viewport-height) - 38px) !important;
+  padding-bottom: 12px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.cap-ios.keyboard-open .bottom-sheet__body [style*="position: sticky"] {
+  position: static !important;
+  bottom: auto !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-top: 14px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  border-top: 0 !important;
+}
+
+.cap-ios.keyboard-open .chat-thread-scroll {
+  padding-bottom: 12px !important;
+}
+
+.cap-ios.keyboard-open .chat-fixed-composer {
+  flex: 0 0 auto !important;
+  max-height: min(168px, calc(var(--visual-viewport-height) * 0.32)) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding-bottom: 0 !important;
+}
+
+.cap-ios.keyboard-open .chat-composer-wrap {
+  padding-bottom: 6px !important;
+}
+
+.cap-ios.keyboard-open .chat-composer-input {
+  max-height: 84px !important;
+}
+
+.cap-ios input:focus,
+.cap-ios textarea:focus,
+.cap-ios select:focus {
+  scroll-margin-bottom: calc(116px + var(--safe-bottom)) !important;
+}
 @media (min-width: 769px) {
   .chat-fixed-composer {
     border-bottom-left-radius: 0;
@@ -1814,7 +1913,7 @@ html, body, #root {
     overscroll-behavior: contain;
   }
 
-  .cap-native.cap-android .bottom-sheet__panel {
+.cap-native.cap-android .bottom-sheet__panel {
     width: min(760px, calc(100vw - 56px));
     max-width: min(760px, calc(100vw - 56px));
     margin-inline: auto;
@@ -2768,4 +2867,581 @@ button:disabled,
     width: min(920px, calc(100vw - var(--tablet-sidebar-w) - 96px));
     max-width: 920px;
   }
+}
+
+/* WaFli chat experience v1 */
+.conv-card {
+  position: relative;
+  isolation: isolate;
+  border-radius: 18px !important;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent) !important;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--bg) 94%, white), color-mix(in srgb, var(--gray-50) 82%, var(--bg))) !important;
+  box-shadow: 0 10px 28px -24px rgba(15, 23, 42, .42) !important;
+  transition: transform 140ms var(--ease-standard), border-color 160ms var(--ease-standard), background 160ms var(--ease-standard), box-shadow 160ms var(--ease-standard);
+}
+.conv-card:active {
+  transform: scale(.992);
+}
+.conv-card::after {
+  content: '';
+  position: absolute;
+  inset: auto 14px 0 68px;
+  height: 1px;
+  background: color-mix(in srgb, var(--border) 62%, transparent);
+  opacity: .65;
+}
+.conv-card__name {
+  letter-spacing: -.01em;
+}
+.conv-card .avatar,
+.chat-header .avatar {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), 0 12px 24px -18px rgba(15, 23, 42, .75);
+}
+.chat-thread-scroll {
+  background:
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--accent-soft) 18%, transparent), transparent 24rem),
+    linear-gradient(180deg, color-mix(in srgb, var(--gray-50) 64%, var(--bg)), var(--bg));
+}
+.chat-message-row {
+  position: relative;
+  padding-inline: 2px;
+}
+.chat-message-row--mine {
+  padding-left: 34px;
+}
+.chat-message-row--theirs {
+  padding-right: 34px;
+}
+.chat-message-bubble {
+  position: relative;
+  user-select: text;
+  transition: transform 120ms var(--ease-standard), filter 140ms var(--ease-standard), box-shadow 160ms var(--ease-standard);
+}
+.chat-message-bubble:active {
+  transform: scale(.992);
+  filter: brightness(.985);
+}
+.chat-message-bubble--mine {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 86%, white), color-mix(in srgb, var(--accent-soft) 72%, var(--bg))) !important;
+  box-shadow: 0 8px 22px -18px color-mix(in srgb, var(--accent) 52%, transparent) !important;
+}
+.chat-message-bubble--theirs {
+  background: color-mix(in srgb, var(--bg) 96%, white) !important;
+  border-color: color-mix(in srgb, var(--border) 76%, transparent) !important;
+}
+.chat-message-bubble--stacked {
+  margin-top: -1px;
+}
+.chat-message-quote {
+  border-left-color: color-mix(in srgb, var(--accent) 82%, var(--text-secondary)) !important;
+  background: color-mix(in srgb, var(--bg) 70%, var(--accent-soft)) !important;
+}
+.chat-message-meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  float: right;
+  margin: 5px 0 0 10px;
+  min-height: 14px;
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.chat-message-reply {
+  opacity: .68;
+}
+.chat-message-bubble:hover .chat-message-reply,
+.chat-message-bubble:focus-within .chat-message-reply {
+  opacity: 1;
+}
+.chat-new-messages {
+  position: sticky;
+  z-index: 80;
+  bottom: calc(16px + var(--keyboard-offset));
+  align-self: center;
+  margin: 8px auto 2px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: color-mix(in srgb, var(--bg) 88%, var(--accent-soft));
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 8px 13px;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 12px 30px -18px rgba(15, 23, 42, .48);
+}
+.chat-media-placeholder,
+.chat-media-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border: 1px dashed color-mix(in srgb, var(--border) 78%, var(--accent-soft));
+  border-radius: 13px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--gray-50) 80%, transparent);
+  font-size: 12px;
+  font-weight: 650;
+}
+.chat-media-error {
+  flex-direction: column;
+  align-items: flex-start;
+  color: var(--danger);
+}
+.chat-media-placeholder__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-soft) 70%, transparent);
+}
+.chat-media-card,
+.chat-media-video-card,
+.chat-media-audio-card,
+.chat-media-document-card {
+  overflow: hidden;
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--bg) 80%, var(--gray-50));
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+}
+.chat-media-sticker {
+  width: fit-content;
+  background: transparent;
+  border: 0;
+}
+.chat-media-preview-video {
+  display: block;
+  max-width: 280px;
+  width: 100%;
+  border-radius: 15px;
+  background: #000;
+}
+.chat-media-audio-card {
+  padding: 9px 10px;
+}
+.chat-media-audio-card__bar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 7px;
+}
+.chat-media-audio-card__play {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  font-size: 9px;
+  font-weight: 900;
+}
+.chat-media-audio-card__wave {
+  flex: 1;
+  height: 18px;
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(90deg,
+      color-mix(in srgb, var(--accent) 45%, transparent) 0 3px,
+      transparent 3px 8px);
+  opacity: .78;
+}
+.chat-media-document-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.chat-media-document-card__icon {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 900;
+}
+.chat-composer-wrap {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--bg) 92%, transparent), var(--bg));
+}
+.chat-composer-input {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border) 70%, transparent);
+}
+.chat-composer-input:focus {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, var(--border)), 0 0 0 4px color-mix(in srgb, var(--accent-soft) 55%, transparent);
+}
+@media (max-width: 768px) {
+  .chat-new-messages {
+    bottom: calc(10px + var(--keyboard-offset));
+  }
+  .chat-message-row--mine {
+    padding-left: 22px;
+  }
+  .chat-message-row--theirs {
+    padding-right: 22px;
+  }
+  .chat-message-meta {
+    font-size: 10px;
+  }
+}
+
+.chat-message-link {
+  color: #075e54;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+.chat-message-bubble--mine .chat-message-link {
+  color: #064c45;
+}
+
+.chat-system-message {
+  align-self: center;
+  max-width: min(82%, 520px);
+  margin: 8px auto;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255, 252, 228, 0.92);
+  border: 1px solid rgba(198, 174, 95, 0.32);
+  color: #6f6030;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(35, 28, 12, 0.08);
+}
+
+/* Native iOS keyboard/layout hardening.
+   Keep native sheets and chat composer inside the visual viewport when the
+   iOS keyboard is open, and prevent accidental horizontal panning. */
+.cap-ios,
+.cap-ios body,
+.cap-ios #root,
+.cap-ios .phone,
+.cap-ios .phone__content,
+.cap-ios .app-main {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+.cap-ios .bottom-sheet__backdrop,
+.cap-ios .bottom-sheet__panel,
+.cap-ios .bottom-sheet__body {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+.cap-ios .bottom-sheet__panel {
+  left: 0 !important;
+  right: 0 !important;
+  transform: none !important;
+}
+
+.cap-ios.keyboard-open .bottom-sheet__panel {
+  height: min(var(--visual-viewport-height), calc(var(--viewport-height) - var(--safe-top))) !important;
+  max-height: min(var(--visual-viewport-height), calc(var(--viewport-height) - var(--safe-top))) !important;
+  border-radius: 24px 24px 0 0 !important;
+}
+
+.cap-ios.keyboard-open .bottom-sheet__body {
+  height: calc(100% - 38px) !important;
+  max-height: calc(100% - 38px) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-bottom: 16px !important;
+}
+
+.cap-ios.keyboard-open .bottom-sheet__body [style*="position: sticky"] {
+  position: static !important;
+  bottom: auto !important;
+  margin-bottom: 0 !important;
+}
+
+.cap-ios .bottom-sheet__body > div,
+.cap-ios .scroll-y > div,
+.cap-ios .row,
+.cap-ios .card,
+.cap-ios .chat-fixed-composer,
+.cap-ios .chat-composer-wrap {
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.cap-ios.keyboard-open .chat-fixed-composer {
+  max-height: min(calc(var(--visual-viewport-height) - 96px), 260px) !important;
+  overflow-x: hidden !important;
+}
+
+.cap-ios.keyboard-open .chat-thread-scroll {
+  overflow-x: hidden !important;
+  padding-bottom: 12px !important;
+}
+
+.cap-ios.keyboard-open .chat-composer-input {
+  max-height: 96px !important;
+}
+
+.cap-ios .chip {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.chat-media-placeholder--button {
+  width: 100%;
+  appearance: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.chat-media-placeholder--button:hover,
+.chat-media-placeholder--button:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(7, 94, 84, 0.26);
+  background: rgba(238, 248, 244, 0.95);
+  outline: none;
+}
+
+.chat-image-viewer__counter {
+  margin-right: auto;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.chat-image-viewer__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  width: 44px;
+  height: 58px;
+  border: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 42px;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(-50%);
+  backdrop-filter: blur(10px);
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.chat-image-viewer__nav:hover,
+.chat-image-viewer__nav:focus-visible {
+  background: rgba(255, 255, 255, 0.24);
+  transform: translateY(-50%) scale(1.04);
+  outline: none;
+}
+
+.chat-image-viewer__nav--prev {
+  left: max(14px, env(safe-area-inset-left));
+}
+
+.chat-image-viewer__nav--next {
+  right: max(14px, env(safe-area-inset-right));
+}
+
+@media (max-width: 640px) {
+  .chat-image-viewer__nav {
+    display: none;
+  }
+}
+
+/* Extra iOS guardrails against keyboard-induced horizontal drift. */
+html.cap-ios,
+body.cap-ios,
+.cap-ios #root,
+.cap-ios .app-shell,
+.cap-ios .phone,
+.cap-ios .phone__content,
+.cap-ios .app-main,
+.cap-ios .screen,
+.cap-ios .bottom-sheet__backdrop,
+.cap-ios .bottom-sheet__panel,
+.cap-ios .bottom-sheet__body,
+.cap-ios .chat-thread-scroll,
+.cap-ios .chat-fixed-composer,
+.cap-ios .chat-composer-wrap {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none !important;
+}
+
+html.cap-ios,
+body.cap-ios {
+  position: relative;
+  touch-action: pan-y;
+}
+
+.cap-ios.keyboard-open,
+.cap-ios.keyboard-open body,
+.cap-ios.keyboard-open #root {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+.cap-ios.keyboard-open .phone__content,
+.cap-ios.keyboard-open .app-main,
+.cap-ios.keyboard-open .screen {
+  transform: translate3d(0, 0, 0) !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+}
+
+.cap-ios.keyboard-open input,
+.cap-ios.keyboard-open textarea,
+.cap-ios.keyboard-open select,
+.cap-ios.keyboard-open button {
+  max-width: 100% !important;
+}
+
+.cap-ios .bottom-sheet__body * {
+  max-width: 100%;
+}
+
+.cap-ios .chip,
+.cap-ios .pill,
+.cap-ios .tag,
+.cap-ios .segmented,
+.cap-ios .profile-chip,
+.cap-ios .tone-chip {
+  flex-shrink: 1 !important;
+  white-space: normal;
+}
+
+.cap-ios.keyboard-open .bottom-sheet__body [style*="overflow-x"],
+.cap-ios.keyboard-open .bottom-sheet__body [style*="white-space: nowrap"] {
+  overflow-x: hidden !important;
+  white-space: normal !important;
+}
+
+.chat-image-viewer__loading {
+  min-width: min(78vw, 360px);
+  min-height: 150px;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  backdrop-filter: blur(14px);
+}
+
+.chat-image-viewer__loading--button {
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Final iPhone native viewport lock for next TestFlight build.
+   This is intentionally scoped to native iOS classes only. */
+.cap-ios.cap-native,
+.cap-ios.cap-native body,
+.cap-ios.cap-native #root {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none !important;
+}
+
+.cap-ios.cap-native.keyboard-open .bottom-sheet,
+.cap-ios.cap-native.keyboard-open .bottom-sheet__backdrop,
+.cap-ios.cap-native.keyboard-open .bottom-sheet__panel {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  transform: none !important;
+  overflow-x: hidden !important;
+}
+
+.cap-ios.cap-native.keyboard-open .bottom-sheet__panel {
+  top: auto !important;
+  bottom: 0 !important;
+  height: min(var(--visual-viewport-height), calc(var(--viewport-height) - var(--safe-top))) !important;
+  max-height: min(var(--visual-viewport-height), calc(var(--viewport-height) - var(--safe-top))) !important;
+  padding-bottom: 0 !important;
+}
+
+.cap-ios.cap-native.keyboard-open .bottom-sheet__body {
+  height: calc(100% - 38px) !important;
+  max-height: calc(100% - 38px) !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding-bottom: max(18px, var(--safe-bottom)) !important;
+  scroll-padding-bottom: max(96px, calc(72px + var(--safe-bottom))) !important;
+}
+
+.cap-ios.cap-native.keyboard-open .bottom-sheet__body [style*="position: sticky"] {
+  position: static !important;
+  inset: auto !important;
+  bottom: auto !important;
+  margin-top: 14px !important;
+  margin-bottom: 0 !important;
+}
+
+.cap-ios.cap-native.keyboard-open .chat-thread-scroll,
+.cap-ios.cap-native.keyboard-open .chat-fixed-composer,
+.cap-ios.cap-native.keyboard-open .chat-composer-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+  transform: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.cap-ios.cap-native.keyboard-open .chat-fixed-composer {
+  flex: 0 0 auto !important;
+  max-height: min(220px, calc(var(--visual-viewport-height) * 0.38)) !important;
+  padding-bottom: 0 !important;
+}
+
+.cap-ios.cap-native.keyboard-open .chat-composer-wrap {
+  padding-bottom: max(8px, var(--safe-bottom)) !important;
+}
+
+.cap-ios.cap-native.keyboard-open input,
+.cap-ios.cap-native.keyboard-open textarea,
+.cap-ios.cap-native.keyboard-open select {
+  transform: translateZ(0);
+  scroll-margin-bottom: 128px !important;
 }

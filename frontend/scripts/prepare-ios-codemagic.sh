@@ -8,6 +8,8 @@ ICON_SOURCE="$ROOT_DIR/resources/icon.png"
 APPICON_DIR="$IOS_DIR/App/App/Assets.xcassets/AppIcon.appiconset"
 INFO_PLIST="$IOS_DIR/App/App/Info.plist"
 GOOGLE_SERVICE_PLIST="$IOS_DIR/App/App/GoogleService-Info.plist"
+PRIVACY_MANIFEST_SOURCE="$ROOT_DIR/native-templates/ios/PrivacyInfo.xcprivacy"
+PRIVACY_MANIFEST_PLIST="$IOS_DIR/App/App/PrivacyInfo.xcprivacy"
 ENTITLEMENTS_PLIST="$IOS_DIR/App/App/App.entitlements"
 XCODEPROJ="$IOS_DIR/App/App.xcodeproj"
 
@@ -119,21 +121,29 @@ cat > "$ENTITLEMENTS_PLIST" <<'PLIST'
 </plist>
 PLIST
 
-if [ -f "$GOOGLE_SERVICE_PLIST" ] && [ -d "$XCODEPROJ" ]; then
+if [ -f "$PRIVACY_MANIFEST_SOURCE" ]; then
+  cp "$PRIVACY_MANIFEST_SOURCE" "$PRIVACY_MANIFEST_PLIST"
+fi
+
+if [ -d "$XCODEPROJ" ]; then
   XCODEPROJ_PATH="$XCODEPROJ" ruby <<'RUBY'
 require 'xcodeproj'
 
 project_path = ENV.fetch('XCODEPROJ_PATH')
 project = Xcodeproj::Project.open(project_path)
 target = project.targets.find { |candidate| candidate.name == 'App' } || project.targets.first
-raise 'Could not find an Xcode target to attach GoogleService-Info.plist' unless target
+raise 'Could not find an Xcode target to attach iOS resources' unless target
 
 app_group = project.main_group.find_subpath('App', true)
-file_ref = app_group.files.find { |file| file.path == 'GoogleService-Info.plist' } ||
-           app_group.new_file('GoogleService-Info.plist')
 
-unless target.resources_build_phase.files_references.any? { |file| file.path == 'GoogleService-Info.plist' }
-  target.resources_build_phase.add_file_reference(file_ref)
+['GoogleService-Info.plist', 'PrivacyInfo.xcprivacy'].each do |resource_name|
+  next unless File.exist?(File.join(File.dirname(project_path), 'App', resource_name))
+  file_ref = app_group.files.find { |file| file.path == resource_name } ||
+             app_group.new_file(resource_name)
+
+  unless target.resources_build_phase.files_references.any? { |file| file.path == resource_name }
+    target.resources_build_phase.add_file_reference(file_ref)
+  end
 end
 
 target.build_configurations.each do |config|

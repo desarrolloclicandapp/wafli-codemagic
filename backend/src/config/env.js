@@ -44,11 +44,13 @@ function normalizeOrigin(value) {
 
 const appPublicUrl = normalizeOrigin(process.env.APP_PUBLIC_URL || "http://localhost:5173");
 const apiPublicUrl = normalizeOrigin(process.env.API_PUBLIC_URL || "http://localhost:3001");
+const nativeAppOrigins = ["capacitor://localhost", "ionic://localhost", "http://localhost"].map(normalizeOrigin);
 const corsOrigins = Array.from(new Set([
   ...String(process.env.CORS_ORIGINS || "http://localhost:5173,http://127.0.0.1:5173")
     .split(",")
     .map(normalizeOrigin)
     .filter(Boolean),
+  ...nativeAppOrigins,
   appPublicUrl
 ]));
 
@@ -126,26 +128,26 @@ const config = {
   },
   ai: {
     provider: process.env.AI_PROVIDER || "openai",
-    promptVersion: process.env.AI_PROMPT_VERSION || "wafli-es-v0.9.4",
+    promptVersion: process.env.AI_PROMPT_VERSION || "wafli-es-wingman-v1.0.0",
     costDiagnosticsEnabled: readBool("AI_COST_DIAGNOSTICS_ENABLED", false)
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY || "",
-    model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+    model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
     models: {
       suggest: process.env.OPENAI_MODEL_SUGGEST || process.env.OPENAI_MODEL || "gpt-4.1-mini",
       rewrite: process.env.OPENAI_MODEL_REWRITE || process.env.OPENAI_MODEL || "gpt-4.1-mini",
       opener: process.env.OPENAI_MODEL_OPENER || process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      reactivate: process.env.OPENAI_MODEL_REACTIVATE || "gpt-4.1-mini",
-      analyze: process.env.OPENAI_MODEL_ANALYZE || "gpt-4.1-mini",
-      recommend: process.env.OPENAI_MODEL_RECOMMEND || "gpt-4.1-mini"
+      reactivate: process.env.OPENAI_MODEL_REACTIVATE || process.env.OPENAI_MODEL || "gpt-4.1-mini",
+      analyze: process.env.OPENAI_MODEL_ANALYZE || process.env.OPENAI_MODEL || "gpt-4.1-mini",
+      recommend: process.env.OPENAI_MODEL_RECOMMEND || process.env.OPENAI_MODEL || "gpt-4.1-mini"
     },
     contextMessageLimit: readInt("AI_CONTEXT_MESSAGE_LIMIT", 20),
     contextLimits: {
       suggest: readInt("AI_CONTEXT_LIMIT_SUGGEST", 12),
       rewrite: readInt("AI_CONTEXT_LIMIT_REWRITE", 8),
       opener: readInt("AI_CONTEXT_LIMIT_OPENER", 6),
-      reactivate: readInt("AI_CONTEXT_LIMIT_REACTIVATE", 20),
+      reactivate: readInt("AI_CONTEXT_LIMIT_REACTIVATE", 8),
       analyze: readInt("AI_CONTEXT_LIMIT_ANALYZE", 10),
       recommend: readInt("AI_CONTEXT_LIMIT_RECOMMEND", 14)
     },
@@ -160,7 +162,7 @@ const config = {
     plusMonthlyMessages: readInt("WFL_PLUS_MONTHLY_MESSAGES", 150),
     trialDays: readInt("WFL_PLUS_TRIAL_DAYS", 7),
     topUpPackSize: readInt("WFL_TOPUP_PACK_SIZE", 50),
-    proMonthlyMessages: readInt("WFL_PRO_MONTHLY_MESSAGES", 0)
+    proMonthlyMessages: readInt("WFL_PRO_MONTHLY_MESSAGES", 500)
   },
   features: {},
   stripe: {

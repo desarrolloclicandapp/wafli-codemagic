@@ -35,12 +35,17 @@ const detectMobilePlatform = () => {
     window.matchMedia?.('(display-mode: fullscreen)')?.matches
   );
   const root = document.documentElement;
+  const body = document.body;
+  const classTargets = [root, body].filter(Boolean);
 
-  root.classList.toggle('cap-ios', isIOS);
-  root.classList.toggle('cap-android', isAndroid);
-  root.classList.toggle('cap-native', Boolean(window.WaFliAPI?.client?.IS_CAPACITOR_NATIVE));
-  root.classList.toggle('pwa-standalone', isStandalone);
+  classTargets.forEach((target) => {
+    target.classList.toggle('cap-ios', isIOS);
+    target.classList.toggle('cap-android', isAndroid);
+    target.classList.toggle('cap-native', Boolean(window.WaFliAPI?.client?.IS_CAPACITOR_NATIVE));
+    target.classList.toggle('pwa-standalone', isStandalone);
+  });
   root.dataset.mobilePlatform = isIOS ? 'ios' : isAndroid ? 'android' : 'web';
+  if (body) body.dataset.mobilePlatform = root.dataset.mobilePlatform;
 };
 
 const hasKeyboardFocus = () => {
@@ -72,7 +77,9 @@ const applyViewportBounds = () => {
   root.style.setProperty('--visual-viewport-width', `${visualWidth || stableViewportWidth || layoutWidth}px`);
   root.style.setProperty('--visual-viewport-height', `${visualHeight || baseHeight}px`);
   root.style.setProperty('--keyboard-offset', `${keyboardOffset}px`);
-  root.classList.toggle('keyboard-open', keyboardOffset > 0);
+  const keyboardOpen = keyboardOffset > 0;
+  root.classList.toggle('keyboard-open', keyboardOpen);
+  document.body?.classList.toggle('keyboard-open', keyboardOpen);
 };
 
 const syncViewportBounds = () => {

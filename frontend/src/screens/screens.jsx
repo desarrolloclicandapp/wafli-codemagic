@@ -2,6 +2,7 @@
 import QRCode from 'qrcode';
 const { Icons, WaFliAPI, Avatar, AppHeader, IconButton, BottomNav, QuotaPill, BottomSheet, FullModal, EmptyState, Toast, StatusBar } = window;
 const LOCAL_CONVERSATIONS = [];
+const SHOW_SETTINGS_LANGUAGE_SELECTOR = true;
 const COUNTRY_PREFIX_OPTIONS = [
   ['+595 PY', 'Paraguay (+595)'],
   ['+54 AR', 'Argentina (+54)'],
@@ -317,6 +318,7 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
         <div className="row gap-4">
           <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('terms')}>Términos</button>
           <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('privacy')}>Privacidad</button>
+          <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('deletion')}>Eliminar datos</button>
           <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('cookies')}>Cookies</button>
           <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('support')}>Soporte</button>
         </div>
@@ -332,6 +334,13 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
         <LegalFullscreen
           title={LEGAL_DOCUMENTS.privacy.title}
           body={[LEGAL_DOCUMENTS.privacy.intro, ...LEGAL_DOCUMENTS.privacy.sections.map(([heading, text]) => `${heading}\n${text}`)]}
+          onClose={() => setDoc(null)}
+        />
+      ) : null}
+      {doc === 'deletion' ? (
+        <LegalFullscreen
+          title={LEGAL_DOCUMENTS.deletion.title}
+          body={[LEGAL_DOCUMENTS.deletion.intro, ...LEGAL_DOCUMENTS.deletion.sections.map(([heading, text]) => `${heading}\n${text}`)]}
           onClose={() => setDoc(null)}
         />
       ) : null}
@@ -393,6 +402,22 @@ const LEGAL_DOCUMENTS = {
       ['11. Seguridad', 'Usamos medidas razonables como HTTPS, control de acceso, minimización y separación de secretos. Ningún sistema es perfecto; si detectamos una incidencia relevante, actuaremos conforme a la ley aplicable.'],
       ['12. Edad e información sensible', 'WaFli está pensada para personas adultas. No debes usar la app para tratar información de terceros sin una base legítima.'],
       ['13. Transferencias internacionales', 'WaFli y sus proveedores pueden procesar datos en Estados Unidos y otros países. Cuando sea necesario, usaremos mecanismos legales adecuados para transferencias internacionales.'],
+    ],
+  },
+  deletion: {
+    title: 'Eliminación de cuenta y datos',
+    eyebrow: 'Control de privacidad',
+    updated: 'Última actualización: mayo 2026',
+    intro: 'Puedes solicitar la eliminación de tu cuenta de WaFli y de los datos asociados desde la app o desde el recurso público disponible sin iniciar sesión.',
+    sections: [
+      ['1. Solicitud desde la app', 'Abre Ajustes, entra en Privacidad y datos y solicita la eliminación de cuenta. La app revoca sesiones, desconecta servicios vinculados, borra cachés de conversación y elimina tokens de notificación.'],
+      ['2. Solicitud sin acceso a la app', 'Si ya desinstalaste WaFli o no puedes iniciar sesión, escribe desde el email asociado a tu cuenta a soporte@wafli.ai con el asunto “Solicitud de eliminación de cuenta WaFli”.'],
+      ['3. Eliminación parcial de datos', 'Puedes solicitar borrar historial cacheado, desconectar servicios vinculados o eliminar datos concretos sin cerrar tu cuenta. Indica qué datos quieres eliminar al contactar con soporte.'],
+      ['4. Datos eliminados', 'Eliminamos o anonimizamos sesiones, identidades de acceso, perfil, preferencias, conversaciones cacheadas, contactos cacheados, medios temporales, datos técnicos de conexión, tokens push y datos de uso que no deban conservarse.'],
+      ['5. Datos retenidos', 'Podemos conservar registros mínimos por seguridad, prevención de fraude, soporte, impuestos, pagos, cumplimiento legal, disputas, políticas de tienda o backups durante un periodo limitado.'],
+      ['6. Plazos', 'La solicitud desde la app inicia limpieza inmediata y deja la cuenta en periodo de gracia de 7 días. Después, la cuenta se elimina o anonimiza definitivamente. Las solicitudes por email pueden requerir verificación y normalmente se procesan en un máximo de 30 días.'],
+      ['7. Suscripciones', 'Si tienes una suscripción gestionada por Google Play u otro proveedor, cancélala desde el proveedor correspondiente. La eliminación de cuenta no siempre cancela automáticamente cobros gestionados fuera de WaFli.'],
+      ['8. Página pública', 'El recurso público para Play Console y App Store es /account-deletion.html y no requiere iniciar sesión. La política de privacidad pública está disponible en /privacy.html.'],
     ],
   },
   cookies: {
@@ -489,6 +514,34 @@ function LegalFullscreen({ title, body, onClose }) {
           ) : null}
         </article>
       </div>
+    </div>
+  );
+}
+
+function PublicLegalPage({ type = 'privacy' }) {
+  const normalized = String(type || 'privacy').toLowerCase();
+  const doc = LEGAL_DOCUMENTS[normalized] || LEGAL_DOCUMENTS.privacy;
+  return (
+    <div className="scroll-y" style={{background: 'var(--bg)', minHeight: '100%'}}>
+      <article className="legal-doc" style={{padding: '24px 18px 34px'}}>
+        <header className="legal-doc__hero">
+          <span className="legal-doc__eyebrow">{doc.eyebrow}</span>
+          <h1>{doc.title}</h1>
+          {doc.updated ? <p className="legal-doc__updated">{doc.updated}</p> : null}
+          {doc.intro ? <p className="legal-doc__intro">{doc.intro}</p> : null}
+        </header>
+        <div className="legal-doc__grid">
+          {doc.sections.map(([heading, text]) => (
+            <section key={heading} className="legal-doc__section">
+              <h2>{heading}</h2>
+              <p>{text}</p>
+            </section>
+          ))}
+        </div>
+        <div className="legal-doc__notice">
+          Página pública de WaFli. Para privacidad, eliminación de cuenta o soporte, escribe a soporte@wafli.ai.
+        </div>
+      </article>
     </div>
   );
 }
@@ -1326,11 +1379,80 @@ function mapApiChat(chat) {
     excluded: Boolean(chat.excluded),
     unread: Number(chat.unread || chat.unread_count || 0),
     stale: Boolean(chat.stale),
-    last: chat.last || chat.last_message_preview || '',
+    last: cleanTechnicalMessageText(chat.last || chat.last_message_preview || '') || '',
     time: chat.last_at ? new Date(chat.last_at).toLocaleString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '',
     mine: false,
     hasConversation: chat.has_conversation === undefined ? true : Boolean(chat.has_conversation),
   };
+}
+
+const TECHNICAL_MESSAGE_VALUES = new Set([
+  'unknown',
+  'technical',
+  'messagecontextinfo',
+  'messagecontext',
+  'senderkeydistribution',
+  'senderkeydistributionmessage',
+  'protocol',
+  'protocolmessage',
+  'devicesent',
+  'devicesentmessage',
+  'keepinchat',
+  'keepinchatmessage'
+]);
+
+const PRESENTABLE_MESSAGE_TYPES = new Set([
+  'text',
+  'system',
+  'image',
+  'sticker',
+  'audio',
+  'video',
+  'document',
+  'location',
+  'contact',
+  'poll',
+  'interactive',
+  'unsupported'
+]);
+
+function normalizeApiMessageType(value = '') {
+  const raw = String(value || '').trim();
+  const key = raw.replace(/Message$/i, '').toLowerCase();
+  if (!raw || TECHNICAL_MESSAGE_VALUES.has(key)) return 'text';
+  return PRESENTABLE_MESSAGE_TYPES.has(key) ? key : 'unsupported';
+}
+
+function cleanTechnicalMessageText(value = '') {
+  const raw = String(value || '').trim();
+  const key = raw.replace(/Message$/i, '').toLowerCase();
+  return TECHNICAL_MESSAGE_VALUES.has(key) ? '' : raw;
+}
+
+function displayTextForQuotedMessage(quotedMessage = {}) {
+  const cleanText = cleanTechnicalMessageText(quotedMessage.text || '');
+  if (cleanText) return cleanText;
+  const normalizedType = normalizeApiMessageType(quotedMessage.messageType || quotedMessage.type || '');
+  return ({
+    image: 'Imagen',
+    sticker: 'Sticker',
+    audio: 'Audio',
+    video: 'Video',
+    document: 'Documento',
+    location: 'Ubicacion',
+    contact: 'Contacto',
+    poll: 'Encuesta',
+    unsupported: 'Mensaje no compatible'
+  })[normalizedType] || 'Mensaje';
+}
+
+function shouldDisplayChatMessage(message = {}) {
+  if (!message) return false;
+  if (message.deleted) return true;
+  if (message.hasMedia || message.viewOnce || message.location || message.contactNames?.length || message.pollName) return true;
+  if (message.type === 'system') return Boolean(cleanTechnicalMessageText(message.text));
+  if (message.type === 'unsupported') return true;
+  return Boolean(cleanTechnicalMessageText(message.text));
 }
 
 function mapApiMessage(message, chatId = '') {
@@ -1345,8 +1467,8 @@ function mapApiMessage(message, chatId = '') {
   };
   const statusLabel = message.sender === 'me' ? (statusLabelMap[status] || '') : '';
   const metadata = message.metadata || {};
-  const type = message.message_type || 'text';
-  const mediaType = message.media_type || metadata.mediaType || type;
+  const type = normalizeApiMessageType(message.message_type || 'text');
+  const mediaType = normalizeApiMessageType(message.media_type || metadata.mediaType || type);
   const editedAt = message.edited_at || metadata.editedAt || null;
   const deletedAt = message.deleted_at || metadata.deletedAt || null;
   const deletedScope = message.deleted_scope || metadata.deletedScope || '';
@@ -1360,7 +1482,8 @@ function mapApiMessage(message, chatId = '') {
     location: 'Ubicacion',
     contact: 'Contacto',
     poll: 'Encuesta',
-    reaction: 'Reaccion'
+    reaction: 'Reaccion',
+    unsupported: 'Mensaje no compatible. Revísalo en WhatsApp.'
   };
   return {
     id: message.external_message_id || message.id || String(sentAt.getTime()),
@@ -1384,7 +1507,7 @@ function mapApiMessage(message, chatId = '') {
     location: metadata.location || null,
     liveLocation: Boolean(metadata.liveLocation),
     contactNames: Array.isArray(metadata.contactNames) ? metadata.contactNames : [],
-    text: isDeleted ? 'Mensaje eliminado' : (message.body || mediaLabels[mediaType] || mediaLabels[type] || ''),
+    text: isDeleted ? 'Mensaje eliminado' : (cleanTechnicalMessageText(message.body) || mediaLabels[mediaType] || mediaLabels[type] || ''),
     edited: Boolean(editedAt),
     editedAt,
     deleted: isDeleted,
@@ -2495,6 +2618,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
   const [editMessageText, setEditMessageText] = React.useState('');
   const [messageActionLoading, setMessageActionLoading] = React.useState('');
   const [imageViewer, setImageViewer] = React.useState(null);
+  const imageViewerTouchStartRef = React.useRef(null);
   const scrollRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
   const audioCaptureInputRef = React.useRef(null);
@@ -2509,6 +2633,9 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
   const presenceStateRef = React.useRef('paused');
   const presenceIdleTimerRef = React.useRef(null);
   const presenceCooldownUntilRef = React.useRef(0);
+  const [newMessagesBelow, setNewMessagesBelow] = React.useState(false);
+  const lastSeenMessageCountRef = React.useRef(0);
+  const wasNearBottomRef = React.useRef(true);
 
   const match = remoteChat || LOCAL_CONVERSATIONS.find(m => m.id === matchId) || { id: matchId, name: 'Chat', phone: '', messages: [] };
   const activeChatId = match.canonicalChatId || match.id || canonicalChatIdRef.current || matchId;
@@ -2519,6 +2646,16 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
   });
   const isEmpty = messages.length === 0;
   const canRecordInlineAudio = Boolean(navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined');
+  const isThreadNearBottom = React.useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return true;
+    return node.scrollHeight - node.scrollTop - node.clientHeight < 96;
+  }, []);
+  const scrollToThreadBottom = React.useCallback((behavior = 'auto') => {
+    const node = scrollRef.current;
+    if (!node) return;
+    node.scrollTo({ top: node.scrollHeight, behavior });
+  }, []);
   const dismissComposerKeyboard = React.useCallback(() => {
     const active = document.activeElement;
     if (active && active !== document.body && typeof active.blur === 'function') active.blur();
@@ -2531,13 +2668,37 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
   const showContextualCta = ctaMode !== 'suggest' && !aiMenuOpen && !aiSheetOpen;
 
   React.useEffect(() => {
-    const scrollToBottom = () => {
-      if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    };
-    scrollToBottom();
-    const frame = window.requestAnimationFrame(scrollToBottom);
-    return () => window.cancelAnimationFrame(frame);
-  }, [matchId, refreshKey, messages.length, replyTo?.id, Boolean(audioDraft), recordingAudio, showContextualCta]);
+    lastSeenMessageCountRef.current = 0;
+    wasNearBottomRef.current = true;
+    setNewMessagesBelow(false);
+  }, [matchId]);
+
+  React.useEffect(() => {
+    const previousCount = lastSeenMessageCountRef.current;
+    const grew = messages.length > previousCount;
+    const shouldStick = !grew || wasNearBottomRef.current || lastMessage?.from === 'me';
+    if (shouldStick) {
+      scrollToThreadBottom('auto');
+      const frame = window.requestAnimationFrame(() => scrollToThreadBottom('auto'));
+      setNewMessagesBelow(false);
+      lastSeenMessageCountRef.current = messages.length;
+      return () => window.cancelAnimationFrame(frame);
+    }
+    if (grew) setNewMessagesBelow(true);
+    lastSeenMessageCountRef.current = messages.length;
+    return undefined;
+  }, [matchId, refreshKey, messages.length, lastMessage?.id, lastMessage?.from, replyTo?.id, Boolean(audioDraft), recordingAudio, showContextualCta, scrollToThreadBottom]);
+
+  const handleThreadScroll = React.useCallback(() => {
+    const nearBottom = isThreadNearBottom();
+    wasNearBottomRef.current = nearBottom;
+    if (nearBottom) {
+      if (newMessagesBelow && WaFliAPI?.chats?.markRead && WaFliAPI?.client?.isAuthenticated?.()) {
+        WaFliAPI.chats.markRead(canonicalChatIdRef.current || activeChatId || matchId).catch(() => {});
+      }
+      setNewMessagesBelow(false);
+    }
+  }, [activeChatId, isThreadNearBottom, matchId, newMessagesBelow]);
 
   React.useEffect(() => {
     if (composerSeed) setDraft(composerSeed);
@@ -2568,7 +2729,8 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         if (mappedChat) setRemoteChat(mappedChat);
         setRemoteMessages((messagesResult.messages || [])
           .filter((message) => message.message_type !== 'reaction')
-          .map((message) => mapApiMessage(message, canonicalChatId)));
+          .map((message) => mapApiMessage(message, canonicalChatId))
+          .filter(shouldDisplayChatMessage));
         if (options.markRead && WaFliAPI.chats.markRead) {
           WaFliAPI.chats.markRead(canonicalChatId)
             .then((result) => {
@@ -2609,6 +2771,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
             if (event === 'message.created' && data?.message) {
               const realtimeChatId = data?.canonicalChatId || data?.chatId || canonicalChatIdRef.current || matchId;
               const realtimeMessage = mapApiMessage(data.message, realtimeChatId);
+              if (!shouldDisplayChatMessage(realtimeMessage)) return;
               setRemoteMessages((prev) => {
                 const base = prev || messages;
                 if (base.some(item => item.id === realtimeMessage.id)) {
@@ -2617,7 +2780,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
                 return [...base, realtimeMessage];
               });
             }
-            scheduleConversationLoad(event === 'message.created' || event === 'message.deleted', event === 'message.created' ? 80 : 180);
+            scheduleConversationLoad((event === 'message.created' && wasNearBottomRef.current) || event === 'message.deleted', event === 'message.created' ? 80 : 180);
           }
         }, () => {})
       : null;
@@ -2874,10 +3037,15 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       setSending(false);
     }
   };
+  const inferUploadMediaType = (file, forcedType = '') => {
+    if (forcedType) return forcedType;
+    const mimeType = file?.type || 'application/octet-stream';
+    return mimeType === 'image/webp' ? 'sticker' : mimeType.startsWith('audio/') ? 'audio' : mimeType.startsWith('image/') ? 'image' : mimeType.startsWith('video/') ? 'video' : '';
+  };
   const sendMediaFile = async (file, options = {}) => {
     if (!file || offline || sending) return;
     const mimeType = file.type || 'application/octet-stream';
-    const mediaType = options.mediaType || (mimeType === 'image/webp' ? 'sticker' : mimeType.startsWith('audio/') ? 'audio' : mimeType.startsWith('image/') ? 'image' : mimeType.startsWith('video/') ? 'video' : '');
+    const mediaType = inferUploadMediaType(file, options.mediaType);
     if (!mediaType) {
       setChatError('Por ahora puedes adjuntar imágenes, videos, stickers webp o audios.');
       return;
@@ -2891,7 +3059,8 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
     sendPresenceUpdate('paused');
     setSending(true);
     setChatError('');
-    const caption = mediaType === 'image' || mediaType === 'video' ? draft.trim() : '';
+    const captionText = options.captionOverride !== undefined ? String(options.captionOverride || '').trim() : draft.trim();
+    const caption = mediaType === 'image' || mediaType === 'video' ? captionText : '';
     const quotedMessage = replyTo ? quotedMessagePayload(replyTo, match) : null;
     try {
       let nextMessage = null;
@@ -2927,8 +3096,8 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         }
         return [...base, sent];
       });
-      if (caption) setDraft('');
-      setReplyTo(null);
+      if (caption && options.clearDraft !== false) setDraft('');
+      if (options.clearReply !== false) setReplyTo(null);
       return true;
     } catch (error) {
       setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos enviar el archivo.');
@@ -2938,6 +3107,132 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
+  const sendMediaFiles = async (fileList) => {
+    const selectedFiles = Array.from(fileList || []).filter(Boolean);
+    if (!selectedFiles.length || offline || sending) return;
+    if (selectedFiles.length === 1) {
+      await sendMediaFile(selectedFiles[0]);
+      return;
+    }
+    const resolvedFiles = selectedFiles.map((file) => ({ file, mediaType: inferUploadMediaType(file) }));
+    if (resolvedFiles.some((item) => !item.mediaType)) {
+      setChatError('Hay un archivo no compatible. Puedes adjuntar imágenes, videos, stickers webp o audios.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    if (resolvedFiles.some((item) => item.mediaType !== 'image')) {
+      setChatError('Para enviar varios archivos a la vez, selecciona solo imágenes. Videos, audios y stickers se envían de a uno.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    if (resolvedFiles.length > 10) {
+      setChatError('Puedes enviar hasta 10 imágenes por vez.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    const batchCaption = draft.trim();
+    let sentAny = false;
+    for (let index = 0; index < resolvedFiles.length; index += 1) {
+      const item = resolvedFiles[index];
+      const sent = await sendMediaFile(item.file, {
+        mediaType: 'image',
+        captionOverride: index === 0 ? batchCaption : '',
+        clearDraft: false,
+        clearReply: false,
+        label: 'Imagen'
+      });
+      if (!sent) break;
+      sentAny = true;
+    }
+    if (sentAny && batchCaption) setDraft('');
+    if (sentAny) setReplyTo(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+  const openImageViewer = React.useCallback((payload) => {
+    const imageMessages = (messages || []).filter((message) => {
+      const type = message?.mediaType || message?.type;
+      return !message?.deleted && !message?.viewOnce && message?.hasMedia && (type === 'image' || type === 'sticker');
+    });
+    const gallery = imageMessages.map((message) => {
+      const cacheKey = `${message?.chatId || ''}:${message?.id || ''}`;
+      const cachedUrl = mediaObjectUrlCache.get(cacheKey);
+      const caption = [message.fileName, formatMediaSize(message.sizeBytes)].filter(Boolean).join(' · ');
+      const url = message?.id === payload?.message?.id ? (cachedUrl || payload?.url || '') : (cachedUrl || '');
+      return { message, url, caption };
+    });
+    const foundIndex = gallery.findIndex((item) => item.message?.id === payload?.message?.id);
+    const index = foundIndex >= 0 ? foundIndex : 0;
+    const selected = gallery[index] || payload;
+    setImageViewer({
+      ...payload,
+      ...selected,
+      gallery,
+      loading: false,
+      error: '',
+      index,
+      total: gallery.length || 1
+    });
+  }, [messages]);
+  const moveImageViewer = React.useCallback((direction) => {
+    setImageViewer((current) => {
+      if (!current?.gallery?.length || current.gallery.length < 2) return current;
+      const nextIndex = (Number(current.index || 0) + direction + current.gallery.length) % current.gallery.length;
+      const nextItem = current.gallery[nextIndex];
+      return {
+        ...current,
+        ...nextItem,
+        loading: false,
+        error: '',
+        index: nextIndex,
+        total: current.gallery.length
+      };
+    });
+  }, []);
+  React.useEffect(() => {
+    if (!imageViewer || imageViewer.url || !imageViewer.message?.chatId || !imageViewer.message?.id || !WaFliAPI?.chats?.media) return undefined;
+    const cacheKey = `${imageViewer.message.chatId}:${imageViewer.message.id}`;
+    const cachedUrl = mediaObjectUrlCache.get(cacheKey);
+    if (cachedUrl) {
+      setImageViewer((current) => {
+        if (!current || current.message?.id !== imageViewer.message.id) return current;
+        const gallery = (current.gallery || []).map((item) => item.message?.id === current.message?.id ? { ...item, url: cachedUrl } : item);
+        return { ...current, url: cachedUrl, loading: false, error: '', gallery };
+      });
+      return undefined;
+    }
+    let alive = true;
+    setImageViewer((current) => current && current.message?.id === imageViewer.message.id ? { ...current, loading: true, error: '' } : current);
+    WaFliAPI.chats.media(imageViewer.message.chatId, imageViewer.message.id)
+      .then((blob) => {
+        if (!alive) return;
+        const objectUrl = URL.createObjectURL(blob);
+        rememberMediaObjectUrl(cacheKey, objectUrl);
+        setImageViewer((current) => {
+          if (!current || current.message?.id !== imageViewer.message.id) return current;
+          const gallery = (current.gallery || []).map((item) => item.message?.id === current.message?.id ? { ...item, url: objectUrl } : item);
+          return { ...current, url: objectUrl, loading: false, error: '', gallery };
+        });
+      })
+      .catch(() => {
+        if (!alive) return;
+        setImageViewer((current) => current && current.message?.id === imageViewer.message.id ? { ...current, loading: false, error: 'No pudimos cargar esta imagen.' } : current);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [imageViewer?.message?.chatId, imageViewer?.message?.id, imageViewer?.url, imageViewer?.retryKey]);
+  const handleImageViewerTouchStart = React.useCallback((event) => {
+    imageViewerTouchStartRef.current = event.touches?.[0]?.clientX ?? event.clientX ?? null;
+  }, []);
+  const handleImageViewerTouchEnd = React.useCallback((event) => {
+    const start = imageViewerTouchStartRef.current;
+    imageViewerTouchStartRef.current = null;
+    if (start == null) return;
+    const end = event.changedTouches?.[0]?.clientX ?? event.clientX ?? start;
+    const delta = end - start;
+    if (Math.abs(delta) < 48) return;
+    moveImageViewer(delta < 0 ? 1 : -1);
+  }, [moveImageViewer]);
   const patchMessageInThread = (messageId, patch) => {
     setRemoteMessages((prev) => {
       const base = prev || messages;
@@ -3087,7 +3382,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         }
       />
 
-      <div ref={scrollRef} className="scroll-y chat-thread-scroll" style={{
+      <div ref={scrollRef} className="scroll-y chat-thread-scroll" onScroll={handleThreadScroll} style={{
         background: 'var(--gray-50)',
         padding: '16px 14px max(20px, calc(12px + var(--mobile-bottom-guard, var(--safe-bottom))))',
         scrollPaddingBottom: 'calc(112px + var(--keyboard-offset))',
@@ -3126,12 +3421,27 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
             </button>
           </div>
         ) : (
-          <ChatMessages
-            messages={messages}
-            onLongPressMessage={openMessageActions}
-            onReplyMessage={(message) => setReplyTo(message)}
-            onOpenImage={setImageViewer}
-          />
+          <>
+            <ChatMessages
+              messages={messages}
+              onLongPressMessage={openMessageActions}
+              onReplyMessage={(message) => setReplyTo(message)}
+              onOpenImage={openImageViewer}
+            />
+          {newMessagesBelow ? (
+            <button
+              type="button"
+              className="chat-new-messages"
+              onClick={() => {
+                scrollToThreadBottom('smooth');
+                wasNearBottomRef.current = true;
+                setNewMessagesBelow(false);
+              }}
+            >
+              Nuevos mensajes
+            </button>
+          ) : null}
+          </>
         )}
       </div>
 
@@ -3179,9 +3489,10 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
             <input
               ref={fileInputRef}
               type="file"
+              multiple
               accept="image/*,video/*,audio/*,.webp"
               style={{display: 'none'}}
-              onChange={(event) => sendMediaFile(event.target.files?.[0])}
+              onChange={(event) => sendMediaFiles(event.target.files)}
             />
             <input
               ref={audioCaptureInputRef}
@@ -3268,11 +3579,24 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       </div>
       ) : null}
       {imageViewer ? (
-        <div className="chat-image-viewer" role="dialog" aria-modal="true" aria-label="Imagen en pantalla completa" onClick={() => setImageViewer(null)}>
+        <div
+          className="chat-image-viewer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Imagen en pantalla completa"
+          onClick={() => setImageViewer(null)}
+          onTouchStart={handleImageViewerTouchStart}
+          onTouchEnd={handleImageViewerTouchEnd}
+          onMouseDown={handleImageViewerTouchStart}
+          onMouseUp={handleImageViewerTouchEnd}
+        >
           <div className="chat-image-viewer__topbar" onClick={(event) => event.stopPropagation()}>
             <button className="chat-image-viewer__icon" onClick={() => setImageViewer(null)} aria-label="Cerrar imagen">
               <Icons.Close size={22} />
             </button>
+            {imageViewer.total > 1 ? (
+              <span className="chat-image-viewer__counter">{Number(imageViewer.index || 0) + 1} / {imageViewer.total}</span>
+            ) : null}
             <a
               className="chat-image-viewer__download"
               href={imageViewer.url}
@@ -3282,12 +3606,55 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
               Descargar
             </a>
           </div>
-          <img
-            src={imageViewer.url}
-            alt={imageViewer.message?.fileName || 'Imagen'}
-            className="chat-image-viewer__image"
-            onClick={(event) => event.stopPropagation()}
-          />
+          {imageViewer.total > 1 ? (
+            <>
+              <button
+                type="button"
+                className="chat-image-viewer__nav chat-image-viewer__nav--prev"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  moveImageViewer(-1);
+                }}
+                aria-label="Imagen anterior"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="chat-image-viewer__nav chat-image-viewer__nav--next"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  moveImageViewer(1);
+                }}
+                aria-label="Imagen siguiente"
+              >
+                ›
+              </button>
+            </>
+          ) : null}
+          {imageViewer.loading ? (
+            <div className="chat-image-viewer__loading" onClick={(event) => event.stopPropagation()}>
+              Cargando imagen...
+            </div>
+          ) : imageViewer.error ? (
+            <button
+              type="button"
+              className="chat-image-viewer__loading chat-image-viewer__loading--button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setImageViewer((current) => current ? { ...current, url: '', error: '', loading: false, retryKey: Date.now() } : current);
+              }}
+            >
+              {imageViewer.error} Toca para reintentar.
+            </button>
+          ) : (
+            <img
+              src={imageViewer.url}
+              alt={imageViewer.message?.fileName || 'Imagen'}
+              className="chat-image-viewer__image"
+              onClick={(event) => event.stopPropagation()}
+            />
+          )}
           {imageViewer.caption ? (
             <div className="chat-image-viewer__caption" onClick={(event) => event.stopPropagation()}>{imageViewer.caption}</div>
           ) : null}
@@ -3446,8 +3813,19 @@ function formatMediaSize(bytes) {
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const MEDIA_OBJECT_URL_CACHE_LIMIT = 80;
+const MEDIA_OBJECT_URL_CACHE_LIMIT = 30;
 const mediaObjectUrlCache = new Map();
+
+function rememberMediaObjectUrl(cacheKey, objectUrl) {
+  if (!cacheKey || !objectUrl) return;
+  mediaObjectUrlCache.set(cacheKey, objectUrl);
+  while (mediaObjectUrlCache.size > MEDIA_OBJECT_URL_CACHE_LIMIT) {
+    const oldestKey = mediaObjectUrlCache.keys().next().value;
+    const oldestUrl = mediaObjectUrlCache.get(oldestKey);
+    mediaObjectUrlCache.delete(oldestKey);
+    if (oldestUrl) URL.revokeObjectURL(oldestUrl);
+  }
+}
 
 function MessageMediaPreview({ message, onOpenImage }) {
   const [url, setUrl] = React.useState('');
@@ -3459,19 +3837,10 @@ function MessageMediaPreview({ message, onOpenImage }) {
 
   React.useEffect(() => {
     setShouldLoad(false);
-    if (!message?.hasMedia || message?.viewOnce || message?.deleted) return () => {};
-    if (typeof IntersectionObserver === 'undefined' || !hostRef.current) {
-      setShouldLoad(true);
-      return () => {};
-    }
-    const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
-        setShouldLoad(true);
-        observer.disconnect();
-      }
-    }, { rootMargin: '160px 0px' });
-    observer.observe(hostRef.current);
-    return () => observer.disconnect();
+    setRetryKey(0);
+    setUrl('');
+    setError('');
+    return () => {};
   }, [cacheKey, message?.hasMedia, message?.viewOnce, message?.deleted]);
 
   React.useEffect(() => {
@@ -3487,13 +3856,7 @@ function MessageMediaPreview({ message, onOpenImage }) {
     WaFliAPI.chats.media(message.chatId, message.id)
       .then((blob) => {
         const objectUrl = URL.createObjectURL(blob);
-        mediaObjectUrlCache.set(cacheKey, objectUrl);
-        while (mediaObjectUrlCache.size > MEDIA_OBJECT_URL_CACHE_LIMIT) {
-          const oldestKey = mediaObjectUrlCache.keys().next().value;
-          const oldestUrl = mediaObjectUrlCache.get(oldestKey);
-          mediaObjectUrlCache.delete(oldestKey);
-          if (oldestUrl) URL.revokeObjectURL(oldestUrl);
-        }
+        rememberMediaObjectUrl(cacheKey, objectUrl);
         if (alive) setUrl(objectUrl);
       })
       .catch((mediaError) => {
@@ -3518,25 +3881,34 @@ function MessageMediaPreview({ message, onOpenImage }) {
   const caption = [message.fileName, formatMediaSize(message.sizeBytes)].filter(Boolean).join(' · ');
   if (!shouldLoad) {
     return (
-      <div ref={hostRef} className="t-caption" style={{color: 'var(--text-secondary)', marginBottom: 6}}>
-        Archivo listo para cargar.
-      </div>
+      <button
+        ref={hostRef}
+        type="button"
+        className="chat-media-placeholder chat-media-placeholder--button"
+        onClick={(event) => {
+          event.stopPropagation();
+          setShouldLoad(true);
+        }}
+      >
+        <span className="chat-media-placeholder__dot" />
+        Toca para cargar archivo
+      </button>
     );
   }
   if (error) {
     return (
-      <div style={{marginBottom: 6}}>
-        <div className="t-caption" style={{color: 'var(--danger)', marginBottom: 4}}>{error}</div>
-        <button className="btn btn--text" style={{height: 26, padding: '0 6px'}} onClick={() => setRetryKey(key => key + 1)}>
-          Toca para reintentar
+      <div className="chat-media-error">
+        <div className="t-caption">{error}</div>
+        <button className="btn btn--text" onClick={() => setRetryKey(key => key + 1)}>
+          Reintentar
         </button>
       </div>
     );
   }
-  if (!url) return <div className="t-caption" style={{color: 'var(--text-secondary)', marginBottom: 6}}>Cargando archivo...</div>;
+  if (!url) return <div className="chat-media-placeholder"><span className="chat-media-placeholder__dot" />Cargando archivo...</div>;
   if (type === 'image' || type === 'sticker') {
     return (
-      <div style={{marginBottom: message.text ? 7 : 0}}>
+      <div className={type === 'sticker' ? 'chat-media-sticker' : 'chat-media-card'} style={{marginBottom: message.text ? 7 : 0}}>
         <button
           type="button"
           className="chat-media-image-button"
@@ -3554,7 +3926,11 @@ function MessageMediaPreview({ message, onOpenImage }) {
   }
   if (type === 'audio') {
     return (
-      <div style={{marginBottom: message.text ? 7 : 0}}>
+      <div className="chat-media-audio-card" style={{marginBottom: message.text ? 7 : 0}}>
+        <div className="chat-media-audio-card__bar">
+          <span className="chat-media-audio-card__play">Play</span>
+          <span className="chat-media-audio-card__wave" />
+        </div>
         <audio controls src={url} className="chat-media-preview-audio" />
         {caption ? <div className="t-caption" style={{marginTop: 4, color: 'var(--text-secondary)'}}>{caption}</div> : null}
       </div>
@@ -3562,8 +3938,8 @@ function MessageMediaPreview({ message, onOpenImage }) {
   }
   if (type === 'video') {
     return (
-      <div style={{marginBottom: message.text ? 7 : 0}}>
-        <video controls playsInline preload="metadata" src={url} style={{display: 'block', maxWidth: 280, width: '100%', borderRadius: 12, background: '#000'}} />
+      <div className="chat-media-video-card" style={{marginBottom: message.text ? 7 : 0}}>
+        <video controls playsInline preload="metadata" src={url} className="chat-media-preview-video" />
         {caption ? <div className="t-caption" style={{marginTop: 4, color: 'var(--text-secondary)'}}>{caption}</div> : null}
         <a href={url} download={message.fileName || 'video.mp4'} className="t-caption" style={{display: 'inline-flex', marginTop: 6, color: 'var(--accent)', fontWeight: 700}}>
           Descargar video
@@ -3572,8 +3948,9 @@ function MessageMediaPreview({ message, onOpenImage }) {
     );
   }
   return (
-    <a href={url} download={message.fileName || 'archivo'} className="btn btn--ghost" style={{marginBottom: message.text ? 7 : 0}}>
-      Abrir archivo{caption ? ` · ${caption}` : ''}
+    <a href={url} download={message.fileName || 'archivo'} className="chat-media-document-card" style={{marginBottom: message.text ? 7 : 0}}>
+      <span className="chat-media-document-card__icon">DOC</span>
+      <span>Abrir archivo{caption ? ` · ${caption}` : ''}</span>
     </a>
   );
 }
@@ -3592,8 +3969,8 @@ function MessageStructuredPreview({ message }) {
   if (message.viewOnce) {
     return (
       <div style={cardStyle}>
-        <div style={titleStyle}>Una sola visualizacion</div>
-        <div style={bodyStyle}>Este contenido se ve desde tu WhatsApp. WaFli no lo guarda ni lo usa para IA.</div>
+        <div style={titleStyle}>Una sola visualización</div>
+        <div style={bodyStyle}>Este contenido solo se puede ver una vez. Revísalo directamente en tu WhatsApp.</div>
       </div>
     );
   }
@@ -3645,6 +4022,37 @@ function MessageStructuredPreview({ message }) {
   return null;
 }
 
+function LinkifiedText({ text = '' }) {
+  const value = String(text || '');
+  if (!value) return null;
+  const pattern = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+  const nodes = [];
+  let lastIndex = 0;
+  let match;
+  while ((match = pattern.exec(value)) !== null) {
+    if (match.index > lastIndex) nodes.push(value.slice(lastIndex, match.index));
+    const rawUrl = match[0].replace(/[),.;!?]+$/g, '');
+    const trailing = match[0].slice(rawUrl.length);
+    const href = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
+    nodes.push(
+      <a
+        key={`${rawUrl}-${match.index}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="chat-message-link"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {rawUrl}
+      </a>
+    );
+    if (trailing) nodes.push(trailing);
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < value.length) nodes.push(value.slice(lastIndex));
+  return <>{nodes}</>;
+}
+
 function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImage, messageError, onRetry }) {
   // Group by day separator
   const grouped = [];
@@ -3672,6 +4080,13 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
             </div>
           );
         }
+        if (m.type === 'system') {
+          return (
+            <div key={m.id} className="chat-system-message">
+              <span>{m.text || 'Aviso de WhatsApp'}</span>
+            </div>
+          );
+        }
         const mine = m.from === 'me';
         const prev = grouped[i - 1];
         const grouped_with_prev = prev && !prev.separator && prev.from === m.from && (prev.senderName || '') === (m.senderName || '');
@@ -3686,6 +4101,7 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
         }[m.mediaType || m.type];
         const visibleText = isDeleted ? 'Mensaje eliminado' : (m.hasMedia && mediaFallbackText && m.text === mediaFallbackText ? '' : m.text);
         const hasStructuredPreview = !isDeleted && Boolean(m.viewOnce || m.type === 'poll' || m.type === 'location' || m.type === 'contact');
+        const messageTime = m.time || (m.t ? String(m.t).split(' ').slice(1).join(' ') : '');
         const holdRef = { current: null };
         const startHold = () => {
           if (!onLongPressMessage) return;
@@ -3696,13 +4112,13 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
           holdRef.current = null;
         };
         return (
-          <div key={m.id} style={{
+          <div key={m.id} className={'chat-message-row ' + (mine ? 'chat-message-row--mine' : 'chat-message-row--theirs')} style={{
             display: 'flex',
             justifyContent: mine ? 'flex-end' : 'flex-start',
             marginTop: grouped_with_prev ? 0 : 4,
           }}>
             <div
-              className="chat-message-bubble"
+              className={'chat-message-bubble ' + (mine ? 'chat-message-bubble--mine' : 'chat-message-bubble--theirs') + (grouped_with_prev ? ' chat-message-bubble--stacked' : '')}
               onClick={() => onLongPressMessage && onLongPressMessage(m)}
               onMouseDown={startHold}
               onMouseUp={clearHold}
@@ -3734,30 +4150,20 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
               ) : null}
               {!isDeleted ? <MessageStructuredPreview message={m} /> : null}
               {!isDeleted ? <MessageMediaPreview message={m} onOpenImage={onOpenImage} /> : null}
-              {m.type && m.type !== 'text' && !m.hasMedia && !hasStructuredPreview && !isDeleted ? (
-                <div className="t-caption" style={{fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 3, textTransform: 'uppercase'}}>
-                  {m.type}
-                </div>
-              ) : null}
               {m.quotedMessage && !isDeleted ? (
-                <div style={{borderLeft: '3px solid var(--accent)', background: 'rgba(255,255,255,0.45)', borderRadius: 8, padding: '5px 7px', marginBottom: 6}}>
+                <div className="chat-message-quote" style={{borderLeft: '3px solid var(--accent)', background: 'rgba(255,255,255,0.45)', borderRadius: 8, padding: '5px 7px', marginBottom: 6}}>
                   <div className="t-caption" style={{fontWeight: 700, color: 'var(--accent)'}}>
                     {m.quotedMessage.authorName || (m.quotedMessage.sender === 'me' ? 'yo' : 'contacto')}
                   </div>
                   <div className="t-caption" style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                    {m.quotedMessage.text || m.quotedMessage.messageType || 'Mensaje'}
+                    {displayTextForQuotedMessage(m.quotedMessage)}
                   </div>
                 </div>
               ) : null}
               {!hasStructuredPreview ? (
                 <span className="chat-message-text" style={{fontStyle: isDeleted ? 'italic' : 'normal', color: isDeleted ? 'var(--text-secondary)' : 'inherit'}}>
-                  {visibleText}
+                  <LinkifiedText text={visibleText} />
                 </span>
-              ) : null}
-              {m.edited && !isDeleted ? (
-                <div className="t-caption" style={{fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 3}}>
-                  editado
-                </div>
               ) : null}
               <div style={{display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginTop: 4}}>
                 <button
@@ -3768,7 +4174,11 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
                   Responder
                 </button>
               </div>
-              {mine ? <MessageStatus status={m.status} /> : null}
+              <div className="chat-message-meta">
+                {messageTime ? <span>{messageTime}</span> : null}
+                {m.edited && !isDeleted ? <span>editado</span> : null}
+                {mine ? <MessageStatus status={m.status} /> : null}
+              </div>
             </div>
             {(messageError === m.id || m.status === 'failed') && mine && (
               <button className="btn btn--text" onClick={onRetry} style={{fontSize: 11, color: 'var(--danger)', marginLeft: 8}}>
@@ -3937,7 +4347,7 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerencia', captio
             Respondiendo a {quotedMessage.authorName || 'contacto'}
           </div>
           <div className="t-small" style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-            {quotedMessage.text || quotedMessage.messageType || 'Mensaje'}
+            {displayTextForQuotedMessage(quotedMessage)}
           </div>
         </div>
       ) : null}
@@ -4479,6 +4889,8 @@ function QuotaExhausted({ onClose, onOpenPlans, onOpenPacks }) {
 function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notificationPrefs, onToggleNotification, onRequestNotificationPrompt, theme = 'system', onThemeChange, isNativeApp = false }) {
   const SUPPORT_EMAIL = 'soporte@wafli.ai';
   const SUPPORT_URL = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Soporte WaFli')}`;
+  const isNativeIOS = Boolean(isNativeApp && window.Capacitor?.getPlatform?.() === 'ios');
+  const showLanguageSelector = Boolean(SHOW_SETTINGS_LANGUAGE_SELECTOR && !isNativeIOS);
   const [sheet, setSheet] = React.useState(null);
   const [legalDoc, setLegalDoc] = React.useState(null);
   const [email, setEmail] = React.useState('');
@@ -4718,7 +5130,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
             {item(<Icons.Lock size={17} />, 'Privacidad', 'Datos, exportación y eliminación', () => setSheet('privacy'))}
             {item(<Icons.Bell size={17} />, 'Notificaciones', notifications.global ? 'Encendidas' : 'Apagadas', () => setSheet('notifications'))}
             {item(<Icons.Settings size={17} />, 'Apariencia', theme === 'dark' ? 'Oscuro' : theme === 'light' ? 'Claro' : 'Sistema', () => setSheet('appearance'))}
-            {item(<Icons.Globe size={17} />, 'Idioma de la app', language, () => setSheet('language'))}
+            {showLanguageSelector ? item(<Icons.Globe size={17} />, 'Idioma de la app', language, () => setSheet('language')) : null}
             {item(<Icons.Help size={17} />, 'Soporte', 'FAQ, contacto y estado del servicio', () => setSheet('support'))}
             {item(<Icons.Doc size={17} />, 'Términos legales', 'T&C, privacidad, cookies y soporte', () => setSheet('terms'), true)}
           </div>
@@ -4888,7 +5300,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
         </div>
       </BottomSheet>
 
-      <BottomSheet open={sheet === 'language'} onClose={() => setSheet(null)} height="60%">
+      <BottomSheet open={showLanguageSelector && sheet === 'language'} onClose={() => setSheet(null)} height="60%">
         <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
           <span className="t-h3" style={{marginBottom: 10}}>Idioma de la app</span>
           {['ES', 'EN', 'PT'].map((opt) => (
@@ -5156,6 +5568,7 @@ function PaymentSuccessSheet({ onBack }) {
 }
 
 Object.assign(window, {
+  LEGAL_DOCUMENTS, PublicLegalPage,
   LandingScreen, AuthScreen, LegalAcceptanceScreen, SpanishVariantScreen, ToneBaseScreen, ConnectScreen, ConnectedSuccessScreen, AddToHomeScreen, StaticInfoScreen, ChatsListScreen, ChatScreen,
   SuggestSheet, RewriteSheet, AnalysisSheet, OpenerSheet, PlanScreen, QuotaExhausted, SettingsScreen,
   PlanSelectorSheet, PackSelectorSheet, UsageHistorySheet, PaymentSuccessSheet,

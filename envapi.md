@@ -9,7 +9,7 @@ REFRESH_TOKEN_DAYS=30
 
 APP_PUBLIC_URL=https://app.wafli.ai
 API_PUBLIC_URL=https://whatsapp-baileys-wafli-back-api.vz0kcp.easypanel.host
-CORS_ORIGINS=https://app.wafli.ai,capacitor://localhost,ionic://localhost
+CORS_ORIGINS=https://app.wafli.ai,capacitor://localhost,ionic://localhost,http://localhost
 
 WA_RUNTIME_MODE=api
 WA_WORKER_HEALTH_ENABLED=true
