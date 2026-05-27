@@ -68,6 +68,7 @@ workflows:
         script: |
           cd frontend
           npm run build
+          bash scripts/prepare-ios-codemagic.sh
           npx cap sync ios
           bash scripts/prepare-ios-codemagic.sh
 
@@ -142,6 +143,7 @@ workflows:
         script: |
           cd frontend
           npm run build
+          bash scripts/prepare-ios-codemagic.sh
           npx cap sync ios
           bash scripts/prepare-ios-codemagic.sh
 

@@ -61,53 +61,14 @@ if [ -f "$ANALYTICS_SWIFT" ] && grep -q "Analytics.initiateOnDeviceConversionMea
 path = ENV.fetch('ANALYTICS_SWIFT_PATH')
 source = File.read(path)
 
-replacements = {
-  <<~'SWIFT' => <<~'SWIFT'
-    @objc public func initiateOnDeviceConversionMeasurement(email: String) {
-        Analytics.initiateOnDeviceConversionMeasurement(emailAddress: email)
-    }
-  SWIFT
-    @objc public func initiateOnDeviceConversionMeasurement(email: String) {
-        // WaFli uses Firebase Analytics without IDFA support. On-device conversion
-        // APIs require an extra Google measurement module that is intentionally not
-        // included in the no-IDFA pod variant, so keep this optional API as a no-op.
-    }
-  SWIFT
-  ,
-  <<~'SWIFT' => <<~'SWIFT'
-    @objc public func initiateOnDeviceConversionMeasurement(phone: String) {
-        Analytics.initiateOnDeviceConversionMeasurement(phoneNumber: phone)
-    }
-  SWIFT
-    @objc public func initiateOnDeviceConversionMeasurement(phone: String) {
-        // No-op for the no-IDFA Analytics pod variant.
-    }
-  SWIFT
-  ,
-  <<~'SWIFT' => <<~'SWIFT'
-    @objc public func initiateOnDeviceConversionMeasurement(hashedEmail: Data) {
-        Analytics.initiateOnDeviceConversionMeasurement(hashedEmailAddress: hashedEmail)
-    }
-  SWIFT
-    @objc public func initiateOnDeviceConversionMeasurement(hashedEmail: Data) {
-        // No-op for the no-IDFA Analytics pod variant.
-    }
-  SWIFT
-  ,
-  <<~'SWIFT' => <<~'SWIFT'
-    @objc public func initiateOnDeviceConversionMeasurement(hashedPhone: Data) {
-        Analytics.initiateOnDeviceConversionMeasurement(hashedPhoneNumber: hashedPhone)
-    }
-  SWIFT
-    @objc public func initiateOnDeviceConversionMeasurement(hashedPhone: Data) {
-        // No-op for the no-IDFA Analytics pod variant.
-    }
-  SWIFT
-}
-
-replacements.each do |from, to|
-  source = source.sub(from, to)
-end
+source.gsub!(/    @objc public func initiateOnDeviceConversionMeasurement\(email: String\) \{\n        Analytics\.initiateOnDeviceConversionMeasurement\(emailAddress: email\)\n    \}/,
+             "    @objc public func initiateOnDeviceConversionMeasurement(email: String) {\n        // WaFli uses Firebase Analytics without IDFA support. On-device conversion\n        // APIs require an extra Google measurement module that is intentionally not\n        // included in the no-IDFA pod variant, so keep this optional API as a no-op.\n    }")
+source.gsub!(/    @objc public func initiateOnDeviceConversionMeasurement\(phone: String\) \{\n        Analytics\.initiateOnDeviceConversionMeasurement\(phoneNumber: phone\)\n    \}/,
+             "    @objc public func initiateOnDeviceConversionMeasurement(phone: String) {\n        // No-op for the no-IDFA Analytics pod variant.\n    }")
+source.gsub!(/    @objc public func initiateOnDeviceConversionMeasurement\(hashedEmail: Data\) \{\n        Analytics\.initiateOnDeviceConversionMeasurement\(hashedEmailAddress: hashedEmail\)\n    \}/,
+             "    @objc public func initiateOnDeviceConversionMeasurement(hashedEmail: Data) {\n        // No-op for the no-IDFA Analytics pod variant.\n    }")
+source.gsub!(/    @objc public func initiateOnDeviceConversionMeasurement\(hashedPhone: Data\) \{\n        Analytics\.initiateOnDeviceConversionMeasurement\(hashedPhoneNumber: hashedPhone\)\n    \}/,
+             "    @objc public func initiateOnDeviceConversionMeasurement(hashedPhone: Data) {\n        // No-op for the no-IDFA Analytics pod variant.\n    }")
 
 File.write(path, source)
 RUBY
