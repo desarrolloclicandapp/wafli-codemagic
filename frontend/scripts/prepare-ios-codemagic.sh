@@ -54,6 +54,65 @@ if [ ! -f "$CONFIG_XML_TARGET" ]; then
 XML
 fi
 
+ANALYTICS_SWIFT="$ROOT_DIR/node_modules/@capacitor-firebase/analytics/ios/Plugin/FirebaseAnalytics.swift"
+
+if [ -f "$ANALYTICS_SWIFT" ] && grep -q "Analytics.initiateOnDeviceConversionMeasurement" "$ANALYTICS_SWIFT"; then
+  ANALYTICS_SWIFT_PATH="$ANALYTICS_SWIFT" ruby <<'RUBY'
+path = ENV.fetch('ANALYTICS_SWIFT_PATH')
+source = File.read(path)
+
+replacements = {
+  <<~'SWIFT' => <<~'SWIFT'
+    @objc public func initiateOnDeviceConversionMeasurement(email: String) {
+        Analytics.initiateOnDeviceConversionMeasurement(emailAddress: email)
+    }
+  SWIFT
+    @objc public func initiateOnDeviceConversionMeasurement(email: String) {
+        // WaFli uses Firebase Analytics without IDFA support. On-device conversion
+        // APIs require an extra Google measurement module that is intentionally not
+        // included in the no-IDFA pod variant, so keep this optional API as a no-op.
+    }
+  SWIFT
+  ,
+  <<~'SWIFT' => <<~'SWIFT'
+    @objc public func initiateOnDeviceConversionMeasurement(phone: String) {
+        Analytics.initiateOnDeviceConversionMeasurement(phoneNumber: phone)
+    }
+  SWIFT
+    @objc public func initiateOnDeviceConversionMeasurement(phone: String) {
+        // No-op for the no-IDFA Analytics pod variant.
+    }
+  SWIFT
+  ,
+  <<~'SWIFT' => <<~'SWIFT'
+    @objc public func initiateOnDeviceConversionMeasurement(hashedEmail: Data) {
+        Analytics.initiateOnDeviceConversionMeasurement(hashedEmailAddress: hashedEmail)
+    }
+  SWIFT
+    @objc public func initiateOnDeviceConversionMeasurement(hashedEmail: Data) {
+        // No-op for the no-IDFA Analytics pod variant.
+    }
+  SWIFT
+  ,
+  <<~'SWIFT' => <<~'SWIFT'
+    @objc public func initiateOnDeviceConversionMeasurement(hashedPhone: Data) {
+        Analytics.initiateOnDeviceConversionMeasurement(hashedPhoneNumber: hashedPhone)
+    }
+  SWIFT
+    @objc public func initiateOnDeviceConversionMeasurement(hashedPhone: Data) {
+        // No-op for the no-IDFA Analytics pod variant.
+    }
+  SWIFT
+}
+
+replacements.each do |from, to|
+  source = source.sub(from, to)
+end
+
+File.write(path, source)
+RUBY
+fi
+
 if ! grep -q "CapacitorFirebaseAnalytics/Analytics" "$PODFILE"; then
   ruby -0pi -e "sub(/# Add your Pods here\\n/, \"# Add your Pods here\\n  pod 'CapacitorFirebaseAnalytics\\/AnalyticsWithoutAdIdSupport', :path => '..\\/..\\/node_modules\\/@capacitor-firebase\\/analytics'\\n\")" "$PODFILE"
 fi
