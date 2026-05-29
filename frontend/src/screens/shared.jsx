@@ -88,7 +88,7 @@ function BottomNav({ active, onChange }) {
     { id: 'settings', label: 'Ajustes', Icon: Icons.Settings },
   ];
   return (
-    <nav className="botnav" aria-label="Navegacion principal">
+    <nav className="botnav" aria-label="Navegación principal">
       {items.map(it => {
         const isActive = active === it.id;
         return (
@@ -114,13 +114,9 @@ function DesktopSidebar({ active, onChange }) {
     { id: 'settings', label: 'Ajustes', helper: 'Preferencias', Icon: Icons.Settings },
   ];
   return (
-    <aside className="desktop-sidebar" aria-label="Navegacion principal">
+    <aside className="desktop-sidebar" aria-label="Navegación principal">
       <div className="desktop-sidebar__brand">
-        <span className="desktop-sidebar__logo"><Icons.Logo size={20} /></span>
-        <div className="col">
-          <span className="desktop-sidebar__title">WaFli</span>
-          <span className="desktop-sidebar__subtitle">Asistente de tu WhatsApp</span>
-        </div>
+        <span className="desktop-sidebar__logo"><Icons.Logo size={54} /></span>
       </div>
       <nav className="desktop-sidebar__nav">
         {items.map((it) => {

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import QRCode from 'qrcode';
 const { Icons, WaFliAPI, Avatar, AppHeader, IconButton, BottomNav, QuotaPill, BottomSheet, FullModal, EmptyState, Toast, StatusBar } = window;
 const LOCAL_CONVERSATIONS = [];
@@ -189,18 +189,20 @@ function isValidPhoneInput(rawPhone, countryValue) {
 // screens.jsx - All WaFli screens
 
 // SCREEN 1 · Landing pública
-function LandingScreen({ onStart, onLogin, onOpenLegal }) {
-  const [doc, setDoc] = React.useState(null);
-  const openLegal = (type) => {
-    if (onOpenLegal) onOpenLegal(type);
-    else setDoc(type);
+function LandingScreen({ onStart, onLogin }) {
+  const legalLinkStyle = {
+    height: 'auto',
+    padding: 0,
+    fontSize: 12,
+    color: 'var(--text-secondary)',
+    textDecoration: 'none',
   };
   return (
     <div className="scroll-y" style={{background: 'var(--bg)'}}>
       <div style={{padding: '24px 22px 10px'}}>
         <div className="row" style={{justifyContent: 'space-between', alignItems: 'center'}}>
           <div className="row gap-2" style={{alignItems: 'center'}}>
-            <Icons.Logo size={22} color="var(--accent)" />
+            <Icons.Logo size={22} />
             <span style={{fontSize: 17, fontWeight: 600, letterSpacing: '-0.015em'}}>WaFli</span>
           </div>
           <button className="btn btn--text" style={{fontSize: 14}} onClick={onLogin}>Entrar</button>
@@ -210,13 +212,13 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
       {/* Hero */}
       <div style={{padding: '32px 22px 24px'}}>
         <div style={{display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: 'var(--accent-soft)', color: 'var(--accent)', borderRadius: 'var(--r-pill)', fontSize: 12, fontWeight: 500, marginBottom: 18}}>
-          <Icons.Sparkles size={12} sw={2} /> Beta privada · ES
+          <Icons.Sparkles size={12} sw={2} /> IA para responder mejor
         </div>
         <h1 style={{fontSize: 38, lineHeight: 1.05, fontWeight: 600, letterSpacing: '-0.03em', margin: '0 0 16px'}}>
-          Tu wingman para WhatsApp.
+          Sabe qué decir cuando tú no.
         </h1>
         <p style={{fontSize: 17, lineHeight: 1.45, color: 'var(--text-secondary)', margin: '0 0 28px', textWrap: 'pretty'}}>
-          Te lee la conversación, te sugiere qué decir, tú decides. En tu español.
+          Entiende el contexto, prepara una respuesta editable y tú decides qué enviar. En tu español.
         </p>
         <button className="btn btn--primary btn--full" onClick={onStart}>Empezar gratis</button>
         <p className="t-caption" style={{textAlign: 'center', marginTop: 12}}>Plan Free incluido. Puedes ampliar cuando necesites más generaciones.</p>
@@ -240,11 +242,11 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
             borderBottom: 'none',
           }}>
             <div className="row gap-2" style={{marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid var(--border)'}}>
-              <Avatar name="Chat" size={32} />
-              <span style={{fontWeight: 600, fontSize: 14}}>Chat de WhatsApp</span>
+              <Avatar name="Clara" size={32} />
+              <span style={{fontWeight: 600, fontSize: 14}}>Clara</span>
             </div>
             <div style={{display: 'flex', flexDirection: 'column', gap: 6}}>
-              <div style={{alignSelf: 'flex-start', background: 'var(--gray-100)', padding: '8px 12px', borderRadius: '14px 14px 14px 4px', fontSize: 13, maxWidth: '78%'}}>Mensaje recibido desde WhatsApp</div>
+              <div style={{alignSelf: 'flex-start', background: 'var(--gray-100)', padding: '8px 12px', borderRadius: '14px 14px 14px 4px', fontSize: 13, maxWidth: '82%', lineHeight: 1.4}}>Me ha gustado verte hoy, pero me he quedado con ganas de hablar más contigo.</div>
               <div style={{
                 marginTop: 8,
                 background: 'var(--bg)',
@@ -254,9 +256,9 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
                 boxShadow: '0 4px 14px rgba(91, 95, 224, 0.18)',
               }}>
                 <div className="row gap-1" style={{color: 'var(--accent)', fontSize: 11, fontWeight: 600, marginBottom: 6, letterSpacing: '0.02em', textTransform: 'uppercase'}}>
-                  <Icons.Sparkles size={11} sw={2} /> Sugerencia
+                  <Icons.Sparkles size={11} sw={2} /> Sugerencia de WaFli
                 </div>
-                <div style={{fontSize: 13, lineHeight: 1.45}}>WaFli prepara una respuesta editable. Tú decides si enviarla.</div>
+                <div style={{fontSize: 13, lineHeight: 1.45}}>A mí también me ha gustado. Si te apetece, podemos tomar algo esta semana y seguimos la conversación con calma.</div>
               </div>
             </div>
           </div>
@@ -315,49 +317,15 @@ function LandingScreen({ onStart, onLogin, onOpenLegal }) {
       {/* Footer */}
       <div style={{padding: '20px 22px 32px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
         <span className="t-caption">(c) WaFli 2026</span>
-        <div className="row gap-4">
-          <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('terms')}>Términos</button>
-          <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('privacy')}>Privacidad</button>
-          <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('deletion')}>Eliminar datos</button>
-          <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('cookies')}>Cookies</button>
-          <button className="btn btn--text" style={{height: 'auto', padding: 0, fontSize: 12, color: 'var(--text-secondary)'}} onClick={() => openLegal('support')}>Soporte</button>
+        <div className="row gap-4" style={{flexWrap: 'wrap', justifyContent: 'flex-end'}}>
+          <a style={legalLinkStyle} href="/terms.html">Términos</a>
+          <a style={legalLinkStyle} href="/privacy.html">Privacidad</a>
+          <a style={legalLinkStyle} href="/account-deletion.html">Eliminar datos</a>
+          <a style={legalLinkStyle} href="/cookies.html">Cookies</a>
+          <a style={legalLinkStyle} href="/faq.html">FAQ</a>
+          <a style={legalLinkStyle} href="mailto:soporte@wafli.ai">Soporte</a>
         </div>
       </div>
-      {doc === 'terms' ? (
-        <LegalFullscreen
-          title={LEGAL_DOCUMENTS.terms.title}
-          body={[LEGAL_DOCUMENTS.terms.intro, ...LEGAL_DOCUMENTS.terms.sections.map(([heading, text]) => `${heading}\n${text}`)]}
-          onClose={() => setDoc(null)}
-        />
-      ) : null}
-      {doc === 'privacy' ? (
-        <LegalFullscreen
-          title={LEGAL_DOCUMENTS.privacy.title}
-          body={[LEGAL_DOCUMENTS.privacy.intro, ...LEGAL_DOCUMENTS.privacy.sections.map(([heading, text]) => `${heading}\n${text}`)]}
-          onClose={() => setDoc(null)}
-        />
-      ) : null}
-      {doc === 'deletion' ? (
-        <LegalFullscreen
-          title={LEGAL_DOCUMENTS.deletion.title}
-          body={[LEGAL_DOCUMENTS.deletion.intro, ...LEGAL_DOCUMENTS.deletion.sections.map(([heading, text]) => `${heading}\n${text}`)]}
-          onClose={() => setDoc(null)}
-        />
-      ) : null}
-      {doc === 'cookies' ? (
-        <LegalFullscreen
-          title={LEGAL_DOCUMENTS.cookies.title}
-          body={[LEGAL_DOCUMENTS.cookies.intro, ...LEGAL_DOCUMENTS.cookies.sections.map(([heading, text]) => `${heading}\n${text}`)]}
-          onClose={() => setDoc(null)}
-        />
-      ) : null}
-      {doc === 'support' ? (
-        <LegalFullscreen
-          title={LEGAL_DOCUMENTS.support.title}
-          body={[LEGAL_DOCUMENTS.support.intro, ...LEGAL_DOCUMENTS.support.sections.map(([heading, text]) => `${heading}\n${text}`)]}
-          onClose={() => setDoc(null)}
-        />
-      ) : null}
     </div>
   );
 }
@@ -370,15 +338,15 @@ const LEGAL_DOCUMENTS = {
     intro: 'Estos términos explican las reglas para usar WaFli como copiloto de conversación. Al crear una cuenta o continuar usando la app, aceptas estos términos y nuestra Política de Privacidad.',
     sections: [
       ['1. Contacto', 'Para soporte, privacidad o consultas legales puedes escribir a soporte@wafli.ai.'],
-      ['2. Qué es WaFli', 'WaFli es un wingman de conversación: muestra chats que tú conectas, analiza contexto reciente cuando lo solicitas y genera borradores editables. WaFli no es una red social, no ofrece citas, no decide por ti y no envía mensajes automáticamente.'],
+      ['2. Qué es WaFli', 'WaFli es un asistente de conversación: muestra chats que tú conectas, analiza contexto reciente cuando lo solicitas y genera borradores editables. WaFli no es una red social, no ofrece citas, no decide por ti y no envía mensajes automáticamente.'],
       ['3. Edad mínima', 'WaFli está pensado para personas adultas. Solo puedes usar la app si tienes al menos 18 años o la mayoría de edad aplicable en tu jurisdicción, la que sea mayor.'],
       ['4. Responsabilidad sobre tus conversaciones', 'Debes tener derecho o base legítima para conectar, visualizar y procesar tus conversaciones. Eres responsable de respetar privacidad, consentimiento, derechos de terceros y normas de las plataformas que uses.'],
       ['5. Conexión con WhatsApp', 'La conexión con WhatsApp depende de servicios y condiciones de terceros, puede pausarse, fallar o requerir reconexión. No debes usar WaFli para spam, mensajería masiva, automatización no autorizada, suplantación o cualquier uso prohibido por WhatsApp.'],
       ['6. Contenido generado por IA', 'Las respuestas generadas por IA son borradores. Pueden ser incorrectas, incompletas, ofensivas o no adecuadas al contexto. Siempre debes revisar y editar cualquier texto antes de copiarlo o enviarlo.'],
       ['7. Usos prohibidos', 'No debes usar WaFli para acoso, amenazas, manipulación, odio, violencia, fraude, phishing, spam, suplantación, vigilancia abusiva, scraping, extracción masiva de datos o cualquier actividad ilegal o dañina.'],
       ['8. Sin consejos profesionales', 'WaFli no ofrece asesoramiento legal, médico, psicológico, financiero ni de seguridad personal. Si una conversación implica riesgo, emergencia, acoso, violencia, autolesión o una situación sensible, busca ayuda profesional o servicios de emergencia.'],
-      ['9. Cuotas, planes y pagos', 'Las cuotas de IA se consumen al generar, regenerar, reescribir, analizar, abrir o reactivar conversaciones. En web los pagos pueden procesarse mediante Stripe. En apps distribuidas por App Store o Google Play, las compras digitales deben usar los sistemas de pago requeridos por cada tienda cuando corresponda.'],
-      ['10. Privacidad y eliminación', 'El tratamiento de datos se describe en la Política de Privacidad. Puedes solicitar exportación, borrar historial cacheado, desconectar tu WhatsApp y solicitar eliminación de cuenta desde Ajustes o mediante el recurso público de eliminación.'],
+      ['9. Cuotas, planes y pagos', 'Las cuotas de IA se consumen al generar, regenerar, reescribir o reactivar conversaciones. En web los pagos pueden procesarse mediante Stripe. En apps distribuidas por App Store o Google Play, las compras digitales deben usar los sistemas de pago requeridos por cada tienda cuando corresponda.'],
+      ['10. Privacidad y eliminación', 'El tratamiento de datos se describe en la Política de Privacidad. Puedes solicitar exportación, borrar historial en caché, desconectar tu WhatsApp y solicitar eliminación de cuenta desde Ajustes o mediante el recurso público de eliminación.'],
       ['11. Suspensión o limitación', 'Podemos limitar, suspender o cancelar acceso si detectamos abuso, riesgo de seguridad, incumplimiento legal, violación de estos términos o uso que pueda dañar a WaFli, a terceros o a plataformas conectadas.'],
       ['12. Cambios y disponibilidad', 'WaFli puede cambiar funciones, precios, límites, proveedores o disponibilidad. Haremos esfuerzos razonables por mantener el servicio, pero no garantizamos disponibilidad continua ni resultados concretos de la IA.'],
     ],
@@ -390,14 +358,14 @@ const LEGAL_DOCUMENTS = {
     intro: 'Esta política explica qué datos trata WaFli, para qué los usa, con quién puede compartirlos y qué controles tienes sobre tu información.',
     sections: [
       ['1. Contacto de privacidad', 'Para consultas de privacidad puedes escribir a soporte@wafli.ai.'],
-      ['2. Datos de cuenta', 'Tratamos datos como email, identificadores internos de usuario, sesión, login social, preferencias, idioma, tono, estado de onboarding y aceptación legal.'],
+      ['2. Datos de cuenta', 'Tratamos datos como correo electrónico, identificadores internos de usuario, sesión, inicio de sesión social, preferencias, idioma, tono, estado de onboarding y aceptación legal.'],
       ['3. Datos de conversaciones', 'Cuando conectas WhatsApp, WaFli puede procesar chats, mensajes recientes, metadatos de conversación, estado de lectura, archivos o medios recientes y datos técnicos necesarios para mostrar la app y generar sugerencias.'],
-      ['4. IA y contexto', 'WaFli envía contexto limitado a proveedores de IA únicamente cuando pides una acción como sugerir, reescribir, analizar, abrir o reactivar. No activamos el LLM en segundo plano para leer tus chats sin una acción tuya. Aplicamos minimización y anonimización técnica cuando corresponde.'],
+      ['4. IA y contexto', 'WaFli envía contexto limitado a proveedores de IA únicamente cuando pides una acción como sugerir, reescribir o reactivar. No activamos el LLM en segundo plano para leer tus chats sin una acción tuya. Aplicamos minimización y anonimización técnica cuando corresponde.'],
       ['5. Finalidades', 'Usamos datos para autenticarte, prestar la app, conectar conversaciones, generar borradores de IA, gestionar cuota y pagos, enviar notificaciones, mejorar estabilidad, prevenir abuso, cumplir obligaciones legales y ofrecer soporte.'],
-      ['6. Proveedores', 'Podemos usar proveedores como OpenAI para IA, Google/Firebase para notificaciones y Analytics, Google o Apple para login, Stripe o los sistemas de pago de las tiendas para pagos, servicios de hosting, email y herramientas de soporte.'],
+      ['6. Proveedores', 'Podemos usar proveedores como OpenAI para IA, Google/Firebase para notificaciones y Analytics, Google o Apple para inicio de sesión, Stripe o los sistemas de pago de las tiendas para pagos, servicios de alojamiento, correo electrónico y herramientas de soporte.'],
       ['7. Analytics', 'Usamos Firebase/Google Analytics para entender uso de la app, pantallas, eventos de producto y estabilidad. No debemos registrar contenido de mensajes, números de teléfono completos ni texto privado dentro de eventos de Analytics.'],
       ['8. Notificaciones', 'Si activas notificaciones, registramos tokens push o suscripciones para avisos de mensajes, cuota, conexión y novedades. Puedes desactivar las notificaciones desde Ajustes o desde el sistema operativo.'],
-      ['9. Retención', 'Conservamos datos mientras tu cuenta esté activa o mientras sea necesario para prestar el servicio. El cache de conversaciones debe ser limitado. Al solicitar eliminación de cuenta, iniciamos la eliminación y podemos conservar ciertos registros por seguridad, prevención de fraude, cumplimiento legal o respaldo durante un periodo limitado.'],
+      ['9. Retención', 'Conservamos datos mientras tu cuenta esté activa o mientras sea necesario para prestar el servicio. La caché de conversaciones debe ser limitada. Al solicitar eliminación de cuenta, iniciamos la eliminación y podemos conservar ciertos registros por seguridad, prevención de fraude, cumplimiento legal o respaldo durante un periodo limitado.'],
       ['10. Tus derechos', 'Puedes solicitar acceso, exportación, corrección, eliminación, desconexión de WhatsApp y borrado de historial desde Ajustes o escribiendo a soporte@wafli.ai. Algunas leyes pueden darte derechos adicionales según tu país.'],
       ['11. Seguridad', 'Usamos medidas razonables como HTTPS, control de acceso, minimización y separación de secretos. Ningún sistema es perfecto; si detectamos una incidencia relevante, actuaremos conforme a la ley aplicable.'],
       ['12. Edad e información sensible', 'WaFli está pensada para personas adultas. No debes usar la app para tratar información de terceros sin una base legítima.'],
@@ -411,11 +379,11 @@ const LEGAL_DOCUMENTS = {
     intro: 'Puedes solicitar la eliminación de tu cuenta de WaFli y de los datos asociados desde la app o desde el recurso público disponible sin iniciar sesión.',
     sections: [
       ['1. Solicitud desde la app', 'Abre Ajustes, entra en Privacidad y datos y solicita la eliminación de cuenta. La app revoca sesiones, desconecta servicios vinculados, borra cachés de conversación y elimina tokens de notificación.'],
-      ['2. Solicitud sin acceso a la app', 'Si ya desinstalaste WaFli o no puedes iniciar sesión, escribe desde el email asociado a tu cuenta a soporte@wafli.ai con el asunto “Solicitud de eliminación de cuenta WaFli”.'],
-      ['3. Eliminación parcial de datos', 'Puedes solicitar borrar historial cacheado, desconectar servicios vinculados o eliminar datos concretos sin cerrar tu cuenta. Indica qué datos quieres eliminar al contactar con soporte.'],
-      ['4. Datos eliminados', 'Eliminamos o anonimizamos sesiones, identidades de acceso, perfil, preferencias, conversaciones cacheadas, contactos cacheados, medios temporales, datos técnicos de conexión, tokens push y datos de uso que no deban conservarse.'],
+      ['2. Solicitud sin acceso a la app', 'Si ya desinstalaste WaFli o no puedes iniciar sesión, escribe desde el correo asociado a tu cuenta a soporte@wafli.ai con el asunto “Solicitud de eliminación de cuenta WaFli”.'],
+      ['3. Eliminación parcial de datos', 'Puedes solicitar borrar historial en caché, desconectar servicios vinculados o eliminar datos concretos sin cerrar tu cuenta. Indica qué datos quieres eliminar al contactar con soporte.'],
+      ['4. Datos eliminados', 'Eliminamos o anonimizamos sesiones, identidades de acceso, perfil, preferencias, conversaciones en caché, contactos en cachés, medios temporales, datos técnicos de conexión, tokens push y datos de uso que no deban conservarse.'],
       ['5. Datos retenidos', 'Podemos conservar registros mínimos por seguridad, prevención de fraude, soporte, impuestos, pagos, cumplimiento legal, disputas, políticas de tienda o backups durante un periodo limitado.'],
-      ['6. Plazos', 'La solicitud desde la app inicia limpieza inmediata y deja la cuenta en periodo de gracia de 7 días. Después, la cuenta se elimina o anonimiza definitivamente. Las solicitudes por email pueden requerir verificación y normalmente se procesan en un máximo de 30 días.'],
+      ['6. Plazos', 'La solicitud desde la app inicia limpieza inmediata y deja la cuenta en periodo de gracia de 7 días. Después, la cuenta se elimina o anonimiza definitivamente. Las solicitudes por correo pueden requerir verificación y normalmente se procesan en un máximo de 30 días.'],
       ['7. Suscripciones', 'Si tienes una suscripción gestionada por Google Play u otro proveedor, cancélala desde el proveedor correspondiente. La eliminación de cuenta no siempre cancela automáticamente cobros gestionados fuera de WaFli.'],
       ['8. Página pública', 'El recurso público para Play Console y App Store es /account-deletion.html y no requiere iniciar sesión. La política de privacidad pública está disponible en /privacy.html.'],
     ],
@@ -429,7 +397,7 @@ const LEGAL_DOCUMENTS = {
       ['1. Tecnologías usadas', 'Podemos usar cookies, localStorage, sessionStorage, service workers, tokens de sesión y SDKs como Firebase Analytics.'],
       ['2. Finalidades técnicas', 'Estas tecnologías permiten mantener sesión, recordar preferencias, activar PWA, notificaciones, seguridad y funcionamiento offline básico.'],
       ['3. Medición', 'Firebase/Google Analytics puede medir eventos de uso, pantallas y rendimiento. No usamos estos eventos para guardar contenido de chats.'],
-      ['4. Control', 'Puedes borrar cookies y almacenamiento desde tu navegador o sistema operativo. Si lo haces, algunas funciones pueden dejar de funcionar o requerir nuevo login.'],
+      ['4. Control', 'Puedes borrar cookies y almacenamiento desde tu navegador o sistema operativo. Si lo haces, algunas funciones pueden dejar de funcionar o requerir nuevo inicio de sesión.'],
     ],
   },
   support: {
@@ -438,29 +406,29 @@ const LEGAL_DOCUMENTS = {
     updated: 'Última actualización: mayo 2026',
     intro: 'Aquí tienes respuestas rápidas sobre uso, privacidad, IA, notificaciones, pagos y cuenta. Si necesitas ayuda humana, escribe a soporte@wafli.ai.',
     sections: [
-      ['1. ¿Qué es WaFli?', 'WaFli es un wingman de conversación: te ayuda a entender contexto, escribir mejor y preparar respuestas editables. Tú decides qué usar, editar o descartar.'],
+      ['1. ¿Qué es WaFli?', 'WaFli es un asistente de conversación: te ayuda a entender contexto, escribir mejor y preparar respuestas editables. Tú decides qué usar, editar o descartar.'],
       ['2. ¿WaFli es una app de citas?', 'No. WaFli no es una red social ni una app de citas. Es una herramienta privada de apoyo para redactar y organizar conversaciones que tú conectas.'],
       ['3. ¿WaFli envía mensajes automáticamente?', 'No. WaFli no envía mensajes por ti. La app genera borradores editables y cualquier envío requiere una acción explícita tuya.'],
       ['4. ¿Cómo conecto mi WhatsApp?', 'En la pantalla Conectar introduces tu número, recibes un código de emparejamiento y lo usas desde Dispositivos vinculados en tu WhatsApp.'],
       ['5. ¿Por qué puede pausarse o caer la conexión?', 'La conexión depende de disponibilidad de terceros, red, sesión del dispositivo y estado del servicio. Si se pausa, la app te avisará y podrás reconectar cuando corresponda.'],
-      ['6. ¿Qué puede hacer la IA?', 'Puede sugerir respuestas, reescribir textos, analizar qué quiso decir una persona, ayudarte a abrir una conversación o reactivar un hilo frío.'],
+      ['6. ¿Qué puede hacer la IA?', 'Puede sugerir respuestas, reescribir mensajes propios y ayudarte a reactivar una conversación.'],
       ['7. ¿La IA siempre acierta?', 'No. Las sugerencias pueden ser incorrectas, sonar raras o no captar el contexto. Debes revisar y editar cada texto antes de usarlo.'],
-      ['8. ¿Qué consume cuota?', 'Sugerir, regenerar, reescribir, analizar, abrir y reactivar consumen generaciones. Editar manualmente un texto no consume cuota.'],
+      ['8. ¿Qué consume cuota?', 'Sugerir, regenerar, reescribir y reactivar consumen generaciones. Editar manualmente un texto no consume cuota.'],
       ['9. ¿Qué pasa si se agota mi cuota?', 'Puedes seguir leyendo chats y escribiendo manualmente. La app bloqueará nuevas generaciones de IA hasta el próximo reinicio de cuota o hasta que compres/actives más saldo si está disponible.'],
       ['10. ¿Mis conversaciones se usan para entrenar modelos?', 'WaFli debe usar tus conversaciones solo para prestar la función que solicitas. No debe enviar contenido privado a Analytics ni usarlo para entrenamiento sin una base válida y consentimiento cuando corresponda.'],
       ['11. ¿Qué datos procesa WaFli?', 'Puede procesar datos de cuenta, preferencias, conexión, mensajes recientes, metadatos de conversación, uso de IA, notificaciones, pagos y soporte. La Política de Privacidad explica el detalle.'],
-      ['12. ¿Cuándo se envía contexto a la IA?', 'Solo cuando pides una acción de IA como sugerir, reescribir, analizar, abrir o reactivar. WaFli no activa el modelo para leer chats nuevos en segundo plano sin acción tuya.'],
+      ['12. ¿Cuándo se envía contexto a la IA?', 'Solo cuando pides una acción de IA como sugerir, reescribir o reactivar. WaFli no activa el modelo para leer chats nuevos en segundo plano sin acción tuya.'],
       ['13. ¿Qué son las notificaciones?', 'Son avisos de mensajes, conversaciones encalladas, cuota, estado de conexión o novedades. Puedes activar o desactivar categorías desde Ajustes y también desde el sistema operativo.'],
       ['14. No me llegan notificaciones. ¿Qué hago?', 'Verifica que el permiso del sistema esté concedido, que Permitir notificaciones esté activo en WaFli, que no hayas silenciado la conversación y que el teléfono no bloquee la app por ahorro de batería.'],
       ['15. ¿Puedo silenciar o excluir chats?', 'Sí. Puedes silenciar notificaciones de una conversación o excluirla de WaFli si no quieres verla ni usarla con IA. Las conversaciones excluidas pueden gestionarse desde Privacidad y datos cuando la función esté disponible.'],
-      ['16. ¿Cómo borro mis datos?', 'Desde Ajustes > Privacidad y datos puedes solicitar exportación, borrar historial cacheado, desconectar WhatsApp o solicitar eliminación de cuenta. También existe una página pública de eliminación de cuenta.'],
+      ['16. ¿Cómo borro mis datos?', 'Desde Ajustes > Privacidad y datos puedes solicitar exportación, borrar historial en caché, desconectar WhatsApp o solicitar eliminación de cuenta. También existe una página pública de eliminación de cuenta.'],
       ['17. ¿Qué pasa al eliminar mi cuenta?', 'Se inicia la eliminación de datos asociados a tu cuenta. Puede existir un periodo de gracia y algunos registros mínimos pueden conservarse temporalmente por seguridad, prevención de fraude, cumplimiento legal o respaldo.'],
       ['18. ¿Cómo cancelo un plan?', 'Si pagaste en web, revisa Plan y facturación o escribe a soporte@wafli.ai. Si pagaste desde App Store o Google Play, debes cancelar desde la tienda correspondiente.'],
       ['19. ¿WaFli guarda mi tarjeta?', 'No deberíamos almacenar datos completos de tarjeta. Los pagos se gestionan mediante proveedores externos como Stripe o los sistemas de pago de las tiendas.'],
       ['20. ¿Hay edad mínima para usar WaFli?', 'Sí. WaFli está pensada para personas adultas. Solo puedes usarla si tienes al menos 18 años o la mayoría de edad aplicable en tu jurisdicción.'],
       ['21. ¿Qué usos están prohibidos?', 'No uses WaFli para acoso, amenazas, spam, fraude, suplantación, manipulación, explotación, contenido ilegal, vigilancia abusiva o cualquier actividad que viole derechos de terceros.'],
       ['22. ¿Qué hago si la app muestra un error?', 'Cierra y vuelve a abrir la app, verifica internet y prueba reconectar si el problema es de conexión. Si persiste, escribe a soporte@wafli.ai indicando dispositivo, fecha aproximada y qué acción estabas haciendo.'],
-      ['23. ¿Qué información debo enviar a soporte?', 'Envía tu email de cuenta, dispositivo, sistema operativo, captura si ayuda y una descripción del problema. No envíes contenido íntimo o sensible si no es necesario.'],
+      ['23. ¿Qué información debo enviar a soporte?', 'Envía el correo de tu cuenta, dispositivo, sistema operativo, captura si ayuda y una descripción del problema. No envíes contenido íntimo o sensible si no es necesario.'],
       ['24. ¿Dónde están los documentos legales?', 'Puedes consultar Términos, Privacidad, Cookies y Eliminación de cuenta desde la app o en las páginas públicas de WaFli tras el despliegue web.'],
     ],
   },
@@ -563,7 +531,7 @@ function loadExternalScript(src, id) {
       script.dataset.loaded = '1';
       resolve();
     };
-    script.onerror = () => reject(new Error('No pudimos cargar el proveedor de acceso.'));
+    script.onerror = () => reject(new Error('No hemos podido cargar el proveedor de acceso.'));
     document.head.appendChild(script);
   });
 }
@@ -609,7 +577,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
         setError('Esta cuenta tiene una eliminación pendiente. Puedes recuperarla ahora y volver a usar WaFli.');
         return;
       }
-      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos iniciar sesión con ese proveedor.');
+      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido iniciar sesión con ese proveedor.');
     } finally {
       setLoadingProvider('');
     }
@@ -641,7 +609,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
       if (!idToken) throw new Error('Google no devolvio un token valido.');
       await finishProviderLogin('google', { idToken });
     } catch (apiError) {
-      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || apiError?.message || 'No pudimos iniciar sesion con Google.');
+      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || apiError?.message || 'No hemos podido iniciar sesión con Google.');
       setLoadingProvider('');
     }
   };
@@ -668,7 +636,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
           width: Math.min(360, googleButtonRef.current.offsetWidth || 320)
         });
       })
-      .catch(() => setError('No pudimos cargar Google Sign-In.'));
+      .catch(() => setError('No hemos podido cargar Google Sign-In.'));
     return () => { cancelled = true; };
   }, [isCapacitorNative, googleClientId, handleGoogleCredential]);
 
@@ -695,7 +663,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
         profile: response?.user || null
       });
     } catch (apiError) {
-      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos iniciar sesión con Apple.');
+      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido iniciar sesión con Apple.');
       setLoadingProvider('');
     }
   };
@@ -729,7 +697,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
         },
       });
     } catch (apiError) {
-      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || apiError?.message || 'No pudimos iniciar sesion con Apple.');
+      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || apiError?.message || 'No hemos podido iniciar sesión con Apple.');
       setLoadingProvider('');
     }
   };
@@ -737,7 +705,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
   return (
     <>
       <AppHeader
-        title="Registro / Login"
+        title="Registro / inicio de sesión"
         leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
       />
       <div className="scroll-y" style={{padding: '20px 22px 24px'}}>
@@ -943,18 +911,12 @@ function SpanishVariantScreen({ onBack, onContinue }) {
 }
 
 function ToneBaseScreen({ onBack, onContinue }) {
-  const tones = [
-    { id: 'relajado', title: 'Relajado', sample: 'Tranqui, sin agobios. Que tal el finde?' },
-    { id: 'desenfadado', title: 'Desenfadado', sample: 'Eh, qué tal. Llevaba pensando en escribirte :)' },
-    { id: 'picante', title: 'Picante', sample: 'Estaba pensando en ti... mala idea o buena idea?' },
-    { id: 'intelectual', title: 'Intelectual', sample: 'Tu ultima frase me hizo pensar. Contame mas.' },
-  ];
-  const [selected, setSelected] = React.useState('desenfadado');
+  const [selected, setSelected] = React.useState(DEFAULT_AI_AGENT);
   return (
     <>
       <AppHeader
-        title="¿Qué tono prefieres por defecto?"
-        subtitle="Lo puedes cambiar para cada conversación"
+        title="Elige tu agente IA"
+        subtitle="WaFli lo usará por defecto al crear tu perfil, pero podrás cambiarlo en cada ayuda."
         leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
       />
       <div className="scroll-y" style={{padding: '20px 22px 24px'}}>
@@ -964,24 +926,24 @@ function ToneBaseScreen({ onBack, onContinue }) {
           <span>&lt;90s</span>
         </div>
         <div className="col gap-2">
-          {tones.map((t) => {
-            const active = selected === t.id;
+          {AI_AGENTS.map((agent) => {
+            const active = selected === agent.id;
             return (
               <button
-                key={t.id}
-                onClick={() => setSelected(t.id)}
+                key={agent.id}
+                onClick={() => setSelected(agent.id)}
                 className={'tone-card ' + (active ? 'tone-card--active' : '')}
               >
                 <div className="row" style={{justifyContent: 'space-between', alignItems: 'center'}}>
-                  <div style={{fontSize: 15, fontWeight: 700}}>{t.title}</div>
+                  <div style={{fontSize: 15, fontWeight: 700}}>{agent.label}</div>
                   {active ? <Icons.Check size={18} sw={2.5} style={{color: 'var(--accent)'}} /> : null}
                 </div>
-                <div className="tone-preview">{t.sample}</div>
+                <div className="tone-preview">{agent.description}</div>
               </button>
             );
           })}
         </div>
-        <button className="btn btn--primary btn--full" style={{marginTop: 14, opacity: selected ? 1 : 0.55}} disabled={!selected} onClick={() => onContinue && onContinue(tones.find(t => t.id === selected)?.title || selected)}>
+        <button className="btn btn--primary btn--full" style={{marginTop: 14, opacity: selected ? 1 : 0.55}} disabled={!selected} onClick={() => onContinue && onContinue(selected)}>
           Continuar
         </button>
       </div>
@@ -997,13 +959,13 @@ function getInstallProfile() {
   if (isIOS) {
     return {
       label: 'iOS Safari',
-      summary: 'Toca Compartir y luego Añadir a pantalla de inicio.',
-      steps: ['Toca el botón Compartir.', 'Elige Añadir a pantalla de inicio.', 'Confirma con Añadir.'],
+      summary: 'Pulsa Compartir y luego Añadir a pantalla de inicio.',
+      steps: ['Pulsa el botón Compartir.', 'Elige Añadir a pantalla de inicio.', 'Confirma con Añadir.'],
       visual: 'ios-a2hs.gif',
       visualSteps: [
-        { src: 'ios-install-1.jpeg', title: 'Abre el menú de compartir', text: 'Desde Safari, toca el icono de compartir en la barra inferior.' },
+        { src: 'ios-install-1.jpeg', title: 'Abre el menú de compartir', text: 'Desde Safari, pulsa el icono de compartir en la barra inferior.' },
         { src: 'ios-install-2.jpeg', title: 'Busca la opción correcta', text: 'Desliza el menú hasta encontrar Añadir a pantalla de inicio.' },
-        { src: 'ios-install-3.jpeg', title: 'Añade WaFli', text: 'Confirma el nombre y toca Añadir.' },
+        { src: 'ios-install-3.jpeg', title: 'Añade WaFli', text: 'Confirma el nombre y pulsa Añadir.' },
         { src: 'ios-install-4.jpeg', title: 'Listo', text: 'WaFli queda como app en tu pantalla de inicio.' },
       ],
       canAutoInstall: false,
@@ -1013,11 +975,11 @@ function getInstallProfile() {
   if (isAndroid) {
     return {
       label: 'Android Chrome',
-      summary: 'Abre el menú de tres puntos y toca Instalar app.',
-      steps: ['Toca el menú de tres puntos.', 'Elige Instalar app o Añadir a pantalla de inicio.', 'Confirma la instalación.'],
+      summary: 'Abre el menú de tres puntos y pulsa Instalar app.',
+      steps: ['Pulsa el menú de tres puntos.', 'Elige Instalar app o Añadir a pantalla de inicio.', 'Confirma la instalación.'],
       visual: 'android-a2hs.gif',
       visualSteps: [
-        { src: 'android-install-1.jpeg', title: 'Abre el menú', text: 'Toca los tres puntos de Chrome.' },
+        { src: 'android-install-1.jpeg', title: 'Abre el menú', text: 'Pulsa los tres puntos de Chrome.' },
         { src: 'android-install-2.jpeg', title: 'Instala WaFli', text: 'Elige Instalar app o Añadir a pantalla de inicio.' },
         { src: 'android-install-3.jpeg', title: 'Confirma', text: 'Acepta la instalación y abre WaFli desde tu inicio.' },
       ],
@@ -1241,12 +1203,12 @@ function taskPairingMessage(task) {
   const message = cleanPairingMessage(task.errorMessage);
   if (task.errorCode === 'whatsapp_phone_already_registered') return 'Este número de WhatsApp ya está asociado a otra cuenta. Inicia sesión con el correo original o usa otro número.';
   if (task.errorCode === 'pairing_cooldown') return message || 'Hay demasiados intentos seguidos. Espera un momento antes de generar otro código.';
-  if (task.errorCode === 'pairing_proxy_ip_blacklisted') return message || 'No pudimos preparar la vinculación. Espera un momento antes de generar otro código.';
+  if (task.errorCode === 'pairing_proxy_ip_blacklisted') return message || 'No hemos podido preparar la vinculación. Espera un momento antes de generar otro código.';
   if (task.errorCode === 'pairing_socket_rejected') return message || 'Tu WhatsApp rechazó la conexión antes de generar el código. Espera un momento y vuelve a intentarlo.';
-  if (task.errorCode === 'pairing_socket_error') return message || 'La conexión falló antes de generar el código. Reintenta después de limpiar la sesión.';
+  if (task.errorCode === 'pairing_socket_error') return message || 'La conexión falló antes de generar el código. Inténtalo de nuevo después de limpiar la sesión.';
   if (task.errorCode === 'pairing_socket_timeout') return 'La conexión tardó demasiado en prepararse. Espera unos segundos y genera un código nuevo.';
   if (task.errorCode === 'pairing_socket_closed') return 'La conexión se cerró antes de mostrar el código. Genera uno nuevo.';
-  return message || 'No pudimos generar el código. Reintenta.';
+  return message || 'No hemos podido generar el código. Inténtalo de nuevo.';
 }
 
 function pairingDisconnectMessage(status, visibleCode) {
@@ -1269,7 +1231,7 @@ function getPairingGuide(platform) {
       title: 'iPhone',
       steps: [
         { src: 'pairing-ios-1.jpeg', title: 'Abre configuración', text: 'En tu WhatsApp, entra en Configuración.' },
-        { src: 'pairing-ios-2.jpeg', title: 'Dispositivos vinculados', text: 'Toca Dispositivos vinculados.' },
+        { src: 'pairing-ios-2.jpeg', title: 'Dispositivos vinculados', text: 'Pulsa Dispositivos vinculados.' },
         { src: 'pairing-ios-3.jpeg', title: 'Vincula con número', text: 'Elige vincular con número de teléfono e introduce el código.' },
       ],
       checklist: ['Configuración', 'Dispositivos vinculados', 'Vincular con número de teléfono', 'Introduce el código ABCD-EFGH']
@@ -1278,9 +1240,9 @@ function getPairingGuide(platform) {
   return {
     title: 'Android',
     steps: [
-      { src: 'pairing-android-1.jpeg', title: 'Abre el menú', text: 'Toca el menú de tres puntos o Ajustes.' },
+      { src: 'pairing-android-1.jpeg', title: 'Abre el menú', text: 'Pulsa el menú de tres puntos o Ajustes.' },
       { src: 'pairing-android-2.jpeg', title: 'Dispositivos vinculados', text: 'Entra en Dispositivos vinculados.' },
-      { src: 'pairing-android-3.jpeg', title: 'Vincular dispositivo', text: 'Toca Vincular un dispositivo.' },
+      { src: 'pairing-android-3.jpeg', title: 'Vincular dispositivo', text: 'Pulsa Vincular un dispositivo.' },
       { src: 'pairing-android-4.jpeg', title: 'Usa el número', text: 'Elige vincular con número e introduce el código.' },
     ],
     checklist: ['Menú o Ajustes', 'Dispositivos vinculados', 'Vincular un dispositivo', 'Vincular con número de teléfono']
@@ -1437,13 +1399,46 @@ function displayTextForQuotedMessage(quotedMessage = {}) {
     image: 'Imagen',
     sticker: 'Sticker',
     audio: 'Audio',
-    video: 'Video',
+    video: 'Vídeo',
     document: 'Documento',
-    location: 'Ubicacion',
+    location: 'Ubicación',
     contact: 'Contacto',
     poll: 'Encuesta',
     unsupported: 'Mensaje no compatible'
   })[normalizedType] || 'Mensaje';
+}
+
+function comparablePhone(value = '') {
+  return String(value || '').replace(/[^\d]/g, '');
+}
+
+function isTechnicalAuthorName(value = '') {
+  const raw = String(value || '').trim();
+  if (!raw) return true;
+  if (/@(?:s\.whatsapp\.net|c\.us|g\.us)$/i.test(raw)) return true;
+  const digits = comparablePhone(raw);
+  return digits.length >= 7 && /^[+\d\s().-]+$/.test(raw);
+}
+
+function resolveQuotedAuthorName(quotedMessage = {}, message = {}, chat = {}) {
+  const rawName = String(
+    quotedMessage.authorName ||
+    quotedMessage.senderName ||
+    quotedMessage.participantName ||
+    ''
+  ).trim();
+  const quotedSender = String(quotedMessage.sender || quotedMessage.from || '').toLowerCase();
+  if (quotedSender === 'me' || quotedMessage.fromMe === true) return 'Tú';
+  if (rawName && !isTechnicalAuthorName(rawName)) return rawName;
+
+  const contactName = chat.name || chat.contactName || 'contacto';
+  const rawDigits = comparablePhone(rawName || quotedMessage.participant || quotedMessage.participantJid || '');
+  const contactDigits = comparablePhone(chat.phone || chat.contactPhone || chat.id || '');
+  if (rawDigits && contactDigits && (rawDigits.endsWith(contactDigits) || contactDigits.endsWith(rawDigits))) {
+    return contactName;
+  }
+  if (message.from === 'me') return contactName;
+  return rawDigits ? 'Tú' : contactName;
 }
 
 function shouldDisplayChatMessage(message = {}) {
@@ -1467,6 +1462,7 @@ function mapApiMessage(message, chatId = '') {
   };
   const statusLabel = message.sender === 'me' ? (statusLabelMap[status] || '') : '';
   const metadata = message.metadata || {};
+  const isGroupChat = Boolean(metadata.isGroup || String(chatId || message.chat_id || message.chatId || '').endsWith('@g.us'));
   const type = normalizeApiMessageType(message.message_type || 'text');
   const mediaType = normalizeApiMessageType(message.media_type || metadata.mediaType || type);
   const editedAt = message.edited_at || metadata.editedAt || null;
@@ -1477,12 +1473,12 @@ function mapApiMessage(message, chatId = '') {
     image: 'Imagen',
     sticker: 'Sticker',
     audio: 'Audio',
-    video: 'Video',
+    video: 'Vídeo',
     document: 'Documento',
-    location: 'Ubicacion',
+    location: 'Ubicación',
     contact: 'Contacto',
     poll: 'Encuesta',
-    reaction: 'Reaccion',
+    reaction: 'Reacción',
     unsupported: 'Mensaje no compatible. Revísalo en WhatsApp.'
   };
   return {
@@ -1497,8 +1493,8 @@ function mapApiMessage(message, chatId = '') {
     mimeType: message.mime_type || metadata.mimeType || '',
     fileName: message.file_name || metadata.fileName || '',
     sizeBytes: Number(message.size_bytes || metadata.sizeBytes || 0),
-    isGroup: Boolean(metadata.isGroup || metadata.participant || metadata.participantName || metadata.senderName),
-    senderName: message.sender_name || metadata.senderName || metadata.participantName || metadata.pushName || '',
+    isGroup: isGroupChat,
+    senderName: isGroupChat ? (message.sender_name || metadata.senderName || metadata.participantName || metadata.pushName || '') : '',
     participantId: metadata.participant || '',
     quotedMessage: metadata.quotedMessage || metadata.quoted || null,
     viewOnce: Boolean(metadata.viewOnce),
@@ -1520,6 +1516,8 @@ function mapApiMessage(message, chatId = '') {
 
 function quotedMessagePayload(message = {}, chat = {}) {
   if (!message?.id) return null;
+  const quotedType = normalizeApiMessageType(message.mediaType || message.messageType || message.type || '');
+  if (message.viewOnce && ['image', 'video'].includes(quotedType)) return null;
   const authorName = message.from === 'me'
     ? 'yo'
     : (message.senderName || chat.name || chat.phone || 'contacto');
@@ -1547,11 +1545,16 @@ function hasAiRelevantMedia(message = {}) {
   return Boolean(message?.hasMedia || AI_MEDIA_TYPES.has(kind));
 }
 
+function isViewOnceVisualMessage(message = {}) {
+  const kind = messageMediaKind(message);
+  return Boolean(message?.viewOnce && ['image', 'video'].includes(kind));
+}
+
 function mediaKindLabel(kind = '') {
   return ({
     image: 'imagen',
     sticker: 'sticker',
-    video: 'video',
+    video: 'vídeo',
     audio: 'audio',
     document: 'documento',
     location: 'ubicación',
@@ -1563,7 +1566,7 @@ function buildAiMediaContext(messages = [], quotedMessage = null) {
   const candidates = [
     quotedMessage ? { ...quotedMessage, _target: true } : null,
     ...messages.slice(-8)
-  ].filter(Boolean).filter(hasAiRelevantMedia);
+  ].filter(Boolean).filter((message) => hasAiRelevantMedia(message) && !isViewOnceVisualMessage(message));
   if (!candidates.length) return null;
   const uniqueKinds = Array.from(new Set(candidates.map(messageMediaKind).filter(Boolean)));
   const onlyStickers = uniqueKinds.length === 1 && uniqueKinds[0] === 'sticker';
@@ -1588,16 +1591,16 @@ function buildAiMediaContext(messages = [], quotedMessage = null) {
     targetLabel,
     summary: hasSticker ? `Hay ${labels} en el contexto reciente. También hay stickers como señal ligera de tono/reacción.` : `Hay ${labels} en el contexto reciente.`,
     prompt: video
-      ? 'Detecté un video en el contexto. Para evitar inventar, contame obligatoriamente qué pasa o qué parte importa antes de generar.'
+      ? 'Detecté un vídeo en el contexto. Para evitar inventar, describe qué ocurre o qué parte importa antes de generar.'
       : audio
         ? 'Detecté audio en el contexto. Si la transcripción no alcanza, agrega qué intención debería tener la respuesta.'
         : visual
-          ? `Detecté ${targetLabel}. Si querés, contame qué aparece o qué detalle importa para responder mejor.`
-          : `Detecté ${targetLabel}. Si querés, agrega el dato clave para que la IA no invente.`,
+          ? `Detecté ${targetLabel}. Si quieres, describe qué aparece o qué detalle importa para responder mejor.`
+          : `Detecté ${targetLabel}. Si quieres, agrega el dato clave para que la IA no invente.`,
     placeholder: video
-      ? 'Ej. En el video muestra el producto fallando / está llegando al lugar / se escucha que confirma la hora / quiero responder sobre el detalle final...'
+      ? 'Ej. En el vídeo se ve el producto fallando / está llegando al lugar / confirma la hora / quiero responder sobre el detalle final...'
       : visual
-        ? 'Ej. En la imagen sale el producto que pidió / es una captura con una fecha / quiero responder algo tranquilo sobre eso...'
+        ? 'Ej. En la imagen aparece el producto que pidió / es una captura con una fecha / quiero responder con calma sobre eso...'
         : audio
           ? 'Ej. El audio suena apurado / confirmó la hora / pidió que le pase el dato sin rodeos...'
           : 'Ej. El documento es una factura / la ubicación es el punto de encuentro / solo quiero confirmar recibido...'
@@ -1656,7 +1659,7 @@ function ConnectScreen({ onBack, onConnected }) {
     }
     QRCode.toDataURL(qrData, { margin: 1, width: 260, errorCorrectionLevel: 'M' })
       .then((url) => { if (!cancelled) setQrImage(url); })
-      .catch(() => { if (!cancelled) setBackendError('No pudimos dibujar el QR. Genera uno nuevo.'); });
+      .catch(() => { if (!cancelled) setBackendError('No hemos podido dibujar el QR. Genera uno nuevo.'); });
     return () => { cancelled = true; };
   }, [qrData]);
 
@@ -1708,7 +1711,7 @@ function ConnectScreen({ onBack, onConnected }) {
       if (status.status) setConnectionStatus(status.status);
       setStep('qr');
     } catch (apiError) {
-      setBackendError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos generar el QR. Reintenta.');
+      setBackendError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido generar el QR. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -1760,7 +1763,7 @@ function ConnectScreen({ onBack, onConnected }) {
             setQrExpiresAt(status.qrExpiresAt || null);
             setBackendError('');
           } else if (['disconnected', 'reconnect_paused', 'runtime_unavailable'].includes(status.status) && status.disconnectReason) {
-            setBackendError(pairingDisconnectMessage(status, '') || 'No pudimos mantener el QR activo. Genera uno nuevo.');
+            setBackendError(pairingDisconnectMessage(status, '') || 'No hemos podido mantener el QR activo. Genera uno nuevo.');
           }
           return;
         }
@@ -1817,7 +1820,7 @@ function ConnectScreen({ onBack, onConnected }) {
       if (status.status) setConnectionStatus(status.status);
       setStep('code');
     } catch (apiError) {
-      setBackendError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos generar el código. Reintenta.');
+      setBackendError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido generar el código. Inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -1826,16 +1829,16 @@ function ConnectScreen({ onBack, onConnected }) {
   const qrInstructions = [
     <>Abre <b>WhatsApp</b> en tu móvil.</>,
     <>Entra a <b>Dispositivos vinculados</b>.</>,
-    <>Toca <b>Vincular un dispositivo</b>.</>,
+    <>Pulsa <b>Vincular un dispositivo</b>.</>,
     <>Escanea el QR de esta pantalla.</>,
   ];
 
   const codeInstructions = [
     <>Abre <b>tu WhatsApp</b> en tu móvil.</>,
-    <>Toca <b>Configuración</b> o <b>Ajustes</b>.</>,
-    <>Toca <b>Dispositivos vinculados</b>.</>,
-    <>Toca <b>Vincular un dispositivo</b>.</>,
-    <>Toca <b>Vincular con número de teléfono</b>.</>,
+    <>Pulsa <b>Configuración</b> o <b>Ajustes</b>.</>,
+    <>Pulsa <b>Dispositivos vinculados</b>.</>,
+    <>Pulsa <b>Vincular un dispositivo</b>.</>,
+    <>Pulsa <b>Vincular con número de teléfono</b>.</>,
     <>Introduce el código de arriba.</>,
   ];
 
@@ -2062,7 +2065,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
         .filter(isUsefulContactSuggestion);
       setContactSuggestions(mergeCanonicalChats(suggestions).slice(0, CONTACT_SEARCH_LIMIT));
     } catch (error) {
-      setApiError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos buscar contactos.');
+      setApiError(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido buscar contactos.');
       setContactSuggestions([]);
     } finally {
       setLoadingContacts(false);
@@ -2136,7 +2139,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
     : recentConversationContacts;
   const newChatEmptyText = contactQuery.length >= CONTACT_SEARCH_MIN_LENGTH
     ? 'No encontramos ese contacto activo.'
-    : 'Busca por nombre o numero. Mostramos solo chats activos para no cargar toda tu agenda.';
+    : 'Busca por nombre o número. Mostramos solo chats activos para no cargar toda tu agenda.';
   const refreshChats = () => {
     loadChats();
     setLastRefreshAt(new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
@@ -2170,7 +2173,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
       setMenuOpen(false);
       onOpenChat(result?.chat ? mapApiChat(result.chat).id : contactId);
     } catch (error) {
-      setApiError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos iniciar la conversación.');
+      setApiError(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido iniciar la conversación.');
     }
   };
   const createContact = async () => {
@@ -2196,7 +2199,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
         onOpenChat(created.canonicalChatId || created.id);
       }
     } catch (error) {
-      setApiError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos crear el contacto.');
+      setApiError(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido crear el contacto.');
     }
   };
   const canSaveContact = newContactName.trim().length > 0 && isValidPhoneInput(newContactPhone, newContactCountry);
@@ -2229,11 +2232,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
                     aria-label="Cerrar menú"
                     style={{position: 'fixed', inset: 0, background: 'transparent', border: 'none', zIndex: 29}}
                   />
-                  <div style={{
-                    position: 'absolute', top: 36, right: 0, zIndex: 30,
-                    width: 220, background: 'var(--bg)', border: '1px solid var(--border)',
-                    borderRadius: 12, boxShadow: 'var(--sh-card)', overflow: 'hidden',
-                  }}>
+                  <div style={getHeaderMenuDropdownStyle(220)}>
                     <button onClick={refreshChats} style={menuActionStyle}>
                       <Icons.Refresh size={16} /> Refrescar
                     </button>
@@ -2364,7 +2363,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
                 autoFocus
                 value={contactSearch}
                 onChange={e => setContactSearch(e.target.value)}
-                placeholder="Buscar por nombre o numero"
+                placeholder="Buscar por nombre o número"
                 style={{flex: 1, minWidth: 0, border: 'none', outline: 'none', background: 'transparent', fontSize: 16}}
               />
             </div>
@@ -2493,6 +2492,21 @@ const menuActionStyle = {
   fontSize: 14.5,
   color: 'var(--text)',
 };
+function getHeaderMenuDropdownStyle(width = 240) {
+  return {
+    position: 'fixed',
+    top: 'calc(var(--safe-top) + 58px)',
+    right: 'calc(var(--safe-right) + 12px)',
+    zIndex: 300,
+    width: `min(${width}px, calc(100vw - 24px - var(--safe-left) - var(--safe-right)))`,
+    maxWidth: 'calc(100vw - 24px - var(--safe-left) - var(--safe-right))',
+    background: 'var(--bg)',
+    border: '1px solid var(--border)',
+    borderRadius: 12,
+    boxShadow: 'var(--sh-card)',
+    overflow: 'hidden',
+  };
+}
 const contactRowStyle = {
   width: '100%',
   display: 'flex',
@@ -2529,6 +2543,10 @@ function MessageStatus({ status }) {
   );
 }
 
+function messageMetaAlreadyHasStatus(message = {}) {
+  return /\b(?:enviando|enviado|entregado|le[ií]do|fall[oó])\b/i.test(String(message.t || message.time || ''));
+}
+
 function ConvCard({ match, onClick, onToggleFavorite, onLongPress }) {
   const holdRef = React.useRef(null);
   const startHold = () => {
@@ -2554,7 +2572,9 @@ function ConvCard({ match, onClick, onToggleFavorite, onLongPress }) {
         <div className="row" style={{justifyContent: 'space-between', gap: 8, marginBottom: 2}}>
           <div className="row gap-1" style={{minWidth: 0}}>
             <span className="conv-card__name" style={{fontWeight: match.unread ? 600 : 500, fontSize: 14.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{match.name}</span>
-            {match.favorite && <span style={{fontSize: 12, lineHeight: 1, color: 'var(--warning)'}}>?</span>}
+            {match.favorite && (
+              <span aria-hidden="true" style={{fontSize: 13, lineHeight: 1, color: 'var(--warning)'}}>★</span>
+            )}
             {match.stale && <Icons.Hourglass size={13} sw={1.75} style={{color: 'var(--warning)', flexShrink: 0}} />}
           </div>
           <span className="t-caption" style={{fontSize: 12, color: match.unread ? 'var(--accent)' : 'var(--text-tertiary)', flexShrink: 0, fontVariantNumeric: 'tabular-nums'}}>{match.time}</span>
@@ -2580,29 +2600,36 @@ function ConvCard({ match, onClick, onToggleFavorite, onLongPress }) {
       </div>
       </button>
       <button
-        onClick={onToggleFavorite}
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggleFavorite && onToggleFavorite();
+        }}
         aria-label={match.favorite ? 'Quitar de favoritas' : 'Marcar como favorita'}
         style={{
           border: 'none', background: 'transparent', cursor: 'pointer',
           color: match.favorite ? 'var(--warning)' : 'var(--text-tertiary)',
-          fontSize: 18, lineHeight: 1, padding: '4px 2px',
+          fontSize: 20, lineHeight: 1, padding: '6px 4px',
+          minWidth: 32, minHeight: 32, borderRadius: 999,
         }}
       >
-        {match.favorite ? '?' : '?'}
+        {match.favorite ? '★' : '☆'}
       </button>
     </div>
   );
 }
 
 // SCREEN 4 · Vista de conversación
-function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactivate, onAnalyze, composerSeed = '', offline = false, showInstallShortcut = false, onInstallApp, aiSheetOpen = false }) {
+function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAnalyze, composerSeed = '', offline = false, showInstallShortcut = false, onInstallApp, aiSheetOpen = false }) {
   const [refreshKey, setRefreshKey] = React.useState(0);
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
+  const [aiProfileOpen, setAiProfileOpen] = React.useState(false);
   const [editName, setEditName] = React.useState('');
   const [editPhoneCountry, setEditPhoneCountry] = React.useState(COUNTRY_PREFIX_OPTIONS[0][0]);
   const [editPhone, setEditPhone] = React.useState('');
   const [muted, setMuted] = React.useState(false);
+  const [chatAiProfile, setChatAiProfile] = React.useState(() => normalizeAiManualProfile());
+  const [chatAiProfileStatus, setChatAiProfileStatus] = React.useState('');
   const [draft, setDraft] = React.useState('');
   const [aiMenuOpen, setAiMenuOpen] = React.useState(false);
   const [remoteMessages, setRemoteMessages] = React.useState(null);
@@ -2645,7 +2672,9 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
     mediaContext: buildAiMediaContext(messages, extra.quotedMessage || null)
   });
   const isEmpty = messages.length === 0;
-  const canRecordInlineAudio = Boolean(navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined');
+  const isNativeIOS = Boolean(WaFliAPI?.client?.IS_CAPACITOR_NATIVE && window.Capacitor?.getPlatform?.() === 'ios');
+  const canRecordInlineAudio = Boolean(!isNativeIOS && navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined');
+  const composerFileAccept = isNativeIOS ? 'image/*,video/*,.webp' : 'image/*,video/*,audio/*,.webp';
   const isThreadNearBottom = React.useCallback(() => {
     const node = scrollRef.current;
     if (!node) return true;
@@ -2664,8 +2693,22 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
   const lastSentAt = lastMessage?.sentAt ? new Date(lastMessage.sentAt).getTime() : 0;
   const inactiveHours = lastSentAt ? (Date.now() - lastSentAt) / 36e5 : 0;
   const isCooledThread = !isEmpty && inactiveHours >= 24 && lastMessage?.from === 'me';
-  const ctaMode = isEmpty ? 'opener' : (isCooledThread ? 'reactivate' : 'suggest');
+  const ctaMode = isCooledThread ? 'reactivate' : 'suggest';
   const showContextualCta = ctaMode !== 'suggest' && !aiMenuOpen && !aiSheetOpen;
+
+  React.useEffect(() => {
+    let alive = true;
+    setChatAiProfileStatus('');
+    setChatAiProfile(normalizeAiManualProfile());
+    if (!activeChatId || !WaFliAPI?.chats?.getAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return () => { alive = false; };
+    WaFliAPI.chats.getAiProfile(activeChatId)
+      .then(result => {
+        if (!alive) return;
+        setChatAiProfile(normalizeAiManualProfile(result?.profile?.manual));
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [activeChatId]);
 
   React.useEffect(() => {
     lastSeenMessageCountRef.current = 0;
@@ -2814,13 +2857,25 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       setEditOpen(false);
       setMenuOpen(false);
     } catch (error) {
-      setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos guardar el contacto.');
+      setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido guardar el contacto.');
     }
   };
   const excludeConversation = () => {
     setMenuOpen(false);
     WaFliAPI?.chats?.updateMeta?.(activeChatId, { excluded: true }).catch(() => {});
     onBack();
+  };
+  const saveChatAiProfile = async () => {
+    if (!WaFliAPI?.chats?.updateAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return;
+    setChatAiProfileStatus('Guardando...');
+    try {
+      const payload = normalizeAiManualProfile(chatAiProfile);
+      const result = await WaFliAPI.chats.updateAiProfile(activeChatId, payload);
+      setChatAiProfile(normalizeAiManualProfile(result?.profile?.manual || payload));
+      setChatAiProfileStatus('Guardado');
+    } catch (_) {
+      setChatAiProfileStatus('No se pudo guardar');
+    }
   };
   const toggleMuted = () => {
     const next = !muted;
@@ -2957,7 +3012,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       audioStreamRef.current?.getTracks?.().forEach(track => track.stop());
       audioStreamRef.current = null;
       sendPresenceUpdate('paused');
-      setChatError('No pudimos acceder al microfono. Revisa los permisos e intenta de nuevo.');
+      setChatError('No hemos podido acceder al micrófono. Revisa los permisos e inténtalo de nuevo.');
     }
   }, [audioDraft, canRecordInlineAudio, offline, recordingAudio, sending, sendPresenceUpdate]);
   const handleMicPointerDown = () => {
@@ -3032,7 +3087,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       setDraft('');
       setReplyTo(null);
     } catch (error) {
-      setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos enviar el mensaje.');
+      setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido enviar el mensaje.');
     } finally {
       setSending(false);
     }
@@ -3047,7 +3102,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
     const mimeType = file.type || 'application/octet-stream';
     const mediaType = inferUploadMediaType(file, options.mediaType);
     if (!mediaType) {
-      setChatError('Por ahora puedes adjuntar imágenes, videos, stickers webp o audios.');
+      setChatError('Por ahora puedes adjuntar imágenes, vídeos, stickers webp o audios.');
       return;
     }
     const maxBytes = 12 * 1024 * 1024;
@@ -3084,7 +3139,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         mediaType,
         hasMedia: false,
         quotedMessage,
-        text: caption || options.label || ({ image: 'Imagen', video: 'Video', audio: 'Audio', sticker: 'Sticker' }[mediaType] || 'Archivo'),
+        text: caption || options.label || ({ image: 'Imagen', video: 'Vídeo', audio: 'Audio', sticker: 'Sticker' }[mediaType] || 'Archivo'),
         fileName: file.name || '',
         sizeBytes: file.size || 0,
         t: `hoy ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · enviando`
@@ -3100,7 +3155,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       if (options.clearReply !== false) setReplyTo(null);
       return true;
     } catch (error) {
-      setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos enviar el archivo.');
+      setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido enviar el archivo.');
       return false;
     } finally {
       setSending(false);
@@ -3116,12 +3171,12 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
     }
     const resolvedFiles = selectedFiles.map((file) => ({ file, mediaType: inferUploadMediaType(file) }));
     if (resolvedFiles.some((item) => !item.mediaType)) {
-      setChatError('Hay un archivo no compatible. Puedes adjuntar imágenes, videos, stickers webp o audios.');
+      setChatError('Hay un archivo no compatible. Puedes adjuntar imágenes, vídeos, stickers webp o audios.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     if (resolvedFiles.some((item) => item.mediaType !== 'image')) {
-      setChatError('Para enviar varios archivos a la vez, selecciona solo imágenes. Videos, audios y stickers se envían de a uno.');
+      setChatError('Para enviar varios archivos a la vez, selecciona solo imágenes. Vídeos, audios y stickers se envían de forma individual.');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -3215,20 +3270,20 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
       })
       .catch(() => {
         if (!alive) return;
-        setImageViewer((current) => current && current.message?.id === imageViewer.message.id ? { ...current, loading: false, error: 'No pudimos cargar esta imagen.' } : current);
+        setImageViewer((current) => current && current.message?.id === imageViewer.message.id ? { ...current, loading: false, error: 'No hemos podido cargar esta imagen.' } : current);
       });
     return () => {
       alive = false;
     };
   }, [imageViewer?.message?.chatId, imageViewer?.message?.id, imageViewer?.url, imageViewer?.retryKey]);
   const handleImageViewerTouchStart = React.useCallback((event) => {
-    imageViewerTouchStartRef.current = event.touches?.[0]?.clientX ?? event.clientX ?? null;
+    imageViewerTouchStartRef.current = event.touches?.[0]?.clientX | event.clientX | null;
   }, []);
   const handleImageViewerTouchEnd = React.useCallback((event) => {
     const start = imageViewerTouchStartRef.current;
     imageViewerTouchStartRef.current = null;
     if (start == null) return;
-    const end = event.changedTouches?.[0]?.clientX ?? event.clientX ?? start;
+    const end = event.changedTouches?.[0]?.clientX | event.clientX | start;
     const delta = end - start;
     if (Math.abs(delta) < 48) return;
     moveImageViewer(delta < 0 ? 1 : -1);
@@ -3297,14 +3352,15 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         message: sourceText,
         editingMessage: true,
         contextMode: 'edit_message',
-        tone: 'Desenfadado',
-        notes: 'La persona usuaria está editando un mensaje propio ya enviado. Reescribe solo ese mensaje para que suene natural, fiel al contexto y listo para guardar como edición.'
+        agent: 'Amistoso',
+        objective: 'Responder natural',
+        userContext: 'La persona usuaria está editando un mensaje propio ya enviado. Reescribe solo ese mensaje para que suene natural, fiel al contexto y listo para guardar como edición.'
       });
       if (result?.text) setEditMessageText(result.text);
       emitQuotaUsage(result);
     } catch (error) {
       if (error.code === 'quota_exhausted') setChatError('No te quedan generaciones IA disponibles.');
-      else setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos reescribir este mensaje.');
+      else setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido reescribir este mensaje.');
     } finally {
       setMessageActionLoading('');
     }
@@ -3361,16 +3417,15 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
                   aria-label="Cerrar menú"
                   style={{position: 'fixed', inset: 0, background: 'transparent', border: 'none', zIndex: 29}}
                 />
-                <div style={{
-                  position: 'absolute', top: 36, right: 0, zIndex: 30,
-                  width: 240, background: 'var(--bg)', border: '1px solid var(--border)',
-                  borderRadius: 12, boxShadow: 'var(--sh-card)', overflow: 'hidden',
-                }}>
+                <div style={getHeaderMenuDropdownStyle(240)}>
                   <button onClick={() => { setEditOpen(true); setMenuOpen(false); }} style={menuActionStyle}>
                     <Icons.Edit size={16} /> Editar nombre y número
                   </button>
                   <button onClick={toggleMuted} style={{...menuActionStyle, borderTop: '1px solid var(--border)'}}>
                     <Icons.Bell size={16} /> {muted ? 'Activar notificaciones' : 'Silenciar notificaciones'}
+                  </button>
+                  <button onClick={() => { setAiProfileOpen(true); setMenuOpen(false); }} style={{...menuActionStyle, borderTop: '1px solid var(--border)'}}>
+                    <Icons.Settings size={16} /> Ajustes IA del contacto
                   </button>
                   <button onClick={excludeConversation} style={{...menuActionStyle, borderTop: '1px solid var(--border)', color: 'var(--danger)'}}>
                     <Icons.Close size={16} /> Excluir de WaFli
@@ -3412,18 +3467,20 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
               background: 'var(--accent-soft)', color: 'var(--accent)',
               fontSize: 12, fontWeight: 500, marginBottom: 14,
             }}>Match nuevo</div>
-            <div className="t-h3" style={{margin: '0 0 6px'}}>Aún no habéis hablado</div>
+            <div className="t-h3" style={{margin: '0 0 6px'}}>Aún no hay mensajes</div>
             <div className="t-small" style={{color: 'var(--text-secondary)', maxWidth: 260, margin: '0 auto 18px'}}>
-              Pídele a WaFli una apertura que no suene a copia-pega.
+              Escribe el primer mensaje o usa las acciones IA para preparar una respuesta con contexto.
             </div>
-            <button className="btn btn--secondary btn--md" onClick={onOpener}>
-              <Icons.Sparkles size={16} /> Necesito abrir
+            <button className="btn btn--secondary btn--md" onClick={() => onSuggest && onSuggest(buildAiContext())}>
+              <Icons.Sparkles size={16} /> Sugerir respuesta
             </button>
           </div>
         ) : (
           <>
             <ChatMessages
               messages={messages}
+              chatName={match.name}
+              chatPhone={match.phone}
               onLongPressMessage={openMessageActions}
               onReplyMessage={(message) => setReplyTo(message)}
               onOpenImage={openImageViewer}
@@ -3445,19 +3502,14 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         )}
       </div>
 
-      {!(aiSheetOpen || aiMenuOpen || editOpen || selectedMessage || editingMessage || imageViewer) ? (
+      {!(aiSheetOpen || aiMenuOpen || editOpen || aiProfileOpen || selectedMessage || editingMessage || imageViewer) ? (
       <div className="chat-fixed-composer" style={{position: 'relative', zIndex: 130, width: '100%', maxWidth: '100%', boxSizing: 'border-box', flexShrink: 0, minHeight: 'fit-content', maxHeight: 'min(calc(var(--visual-viewport-height) - 120px), 320px)', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--bg)', borderTop: '1px solid var(--border)', boxShadow: '0 -10px 24px rgba(15, 23, 42, 0.10)'}}>
         {/* Contextual CTA bar */}
         {showContextualCta && (
           <div style={{padding: '8px 14px', background: 'var(--gray-50)', borderTop: '1px solid var(--border)'}}>
-            {ctaMode === 'opener' && (
-              <button onClick={() => { dismissComposerKeyboard(); onOpener && onOpener(); }} disabled={offline} className="btn btn--primary btn--full" style={{height: 48, opacity: offline ? 0.55 : 1}}>
-                <Icons.Sparkles size={16} /> Necesito abrir
-              </button>
-            )}
             {ctaMode === 'reactivate' && (
               <button onClick={() => { dismissComposerKeyboard(); onReactivate && onReactivate(buildAiContext()); }} disabled={offline} className="btn btn--primary btn--full" style={{height: 48, opacity: offline ? 0.55 : 1}}>
-                <Icons.Sparkles size={16} /> Reactivar hilo
+                <Icons.Sparkles size={16} /> Reactivar conversación
               </button>
             )}
           </div>
@@ -3490,7 +3542,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*,video/*,audio/*,.webp"
+              accept={composerFileAccept}
               style={{display: 'none'}}
               onChange={(event) => sendMediaFiles(event.target.files)}
             />
@@ -3519,7 +3571,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
             ) : recordingAudio ? (
               <div style={{flex: 1, minHeight: 40, border: '1px solid rgba(180,30,30,0.25)', borderRadius: 22, padding: '10px 14px', background: 'var(--danger-soft)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10}}>
                 <span className="t-small" style={{fontWeight: 700}}>Grabando nota de voz...</span>
-                <span className="t-caption">toca stop para revisar</span>
+                <span className="t-caption">pulsa Detener para revisar</span>
               </div>
             ) : (
               <textarea
@@ -3564,7 +3616,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
                 aria-label={recordingAudio ? 'Detener nota de voz' : 'Grabar nota de voz'}
               >
                 {recordingAudio ? (
-                  <span style={{fontSize: 15, lineHeight: 1}}>¦</span>
+                  <span style={{fontSize: 15, lineHeight: 1}}>|</span>
                 ) : (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z" />
@@ -3645,7 +3697,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
                 setImageViewer((current) => current ? { ...current, url: '', error: '', loading: false, retryKey: Date.now() } : current);
               }}
             >
-              {imageViewer.error} Toca para reintentar.
+              {imageViewer.error} Pulsa para reintentar.
             </button>
           ) : (
             <img
@@ -3732,7 +3784,27 @@ function ChatScreen({ matchId, onBack, onSuggest, onOpener, onRewrite, onReactiv
         <div style={{padding: '8px 18px 18px'}}>
           <div className="t-h3" style={{marginBottom: 12}}>Acciones IA</div>
           <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onSuggest && onSuggest(buildAiContext(replyTo ? { quotedMessage: quotedMessagePayload(replyTo, match) } : {})); }}><Icons.Sparkles size={16} /> {replyTo ? 'Sugerir respuesta al mensaje' : 'Sugerir respuesta'}</button>
-          <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onReactivate && onReactivate(buildAiContext()); }}><Icons.Refresh size={16} /> Reactivar hilo frío</button>
+          <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onReactivate && onReactivate(buildAiContext()); }}><Icons.Refresh size={16} /> Reactivar conversación</button>
+          <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onRewrite && onRewrite(draft); }}><Icons.Edit size={16} /> Reescribir mensaje propio</button>
+        </div>
+      </BottomSheet>
+      <BottomSheet open={aiProfileOpen} onClose={() => setAiProfileOpen(false)} height="76%">
+        <div style={{display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '4px 18px 18px', gap: 12}}>
+          <div className="row gap-2" style={{alignItems: 'center'}}>
+            <Icons.Settings size={18} style={{color: 'var(--accent)'}} />
+            <span className="t-h3">Ajustes IA del contacto</span>
+          </div>
+          <AiProfileAdvancedControls
+            intensity={normalizeAiManualProfile(chatAiProfile).intensity}
+            setIntensity={(nextValue) => setChatAiProfile(previous => ({ ...normalizeAiManualProfile(previous), intensity: nextValue }))}
+            aiProfile={chatAiProfile}
+            setAiProfile={setChatAiProfile}
+            onSaveAiProfile={saveChatAiProfile}
+            profileStatus={chatAiProfileStatus}
+          />
+          <button className="btn btn--secondary btn--full" onClick={() => setAiProfileOpen(false)}>
+            Cerrar
+          </button>
         </div>
       </BottomSheet>
       <BottomSheet open={editOpen} onClose={() => setEditOpen(false)} height="88%">
@@ -3868,7 +3940,7 @@ function MessageMediaPreview({ message, onOpenImage }) {
             ? 'Archivo demasiado pesado para previsualizarlo aqui.'
           : code === 'media_descriptor_missing' || code === 'media_not_found'
             ? 'Archivo temporal no disponible.'
-            : 'Toca para reintentar cargar este archivo.';
+            : 'Pulsa para reintentar cargar este archivo.';
         setError(friendly);
     });
     return () => {
@@ -3891,7 +3963,7 @@ function MessageMediaPreview({ message, onOpenImage }) {
         }}
       >
         <span className="chat-media-placeholder__dot" />
-        Toca para cargar archivo
+        Pulsa para cargar archivo
       </button>
     );
   }
@@ -3942,7 +4014,7 @@ function MessageMediaPreview({ message, onOpenImage }) {
         <video controls playsInline preload="metadata" src={url} className="chat-media-preview-video" />
         {caption ? <div className="t-caption" style={{marginTop: 4, color: 'var(--text-secondary)'}}>{caption}</div> : null}
         <a href={url} download={message.fileName || 'video.mp4'} className="t-caption" style={{display: 'inline-flex', marginTop: 6, color: 'var(--accent)', fontWeight: 700}}>
-          Descargar video
+          Descargar vídeo
         </a>
       </div>
     );
@@ -3967,10 +4039,12 @@ function MessageStructuredPreview({ message }) {
   const bodyStyle = {fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.35};
 
   if (message.viewOnce) {
+    const viewOnceKind = normalizeApiMessageType(message.mediaType || message.type || '');
+    const viewOnceLabel = viewOnceKind === 'video' ? 'este vídeo' : viewOnceKind === 'image' ? 'esta foto' : 'este contenido';
     return (
       <div style={cardStyle}>
         <div style={titleStyle}>Una sola visualización</div>
-        <div style={bodyStyle}>Este contenido solo se puede ver una vez. Revísalo directamente en tu WhatsApp.</div>
+        <div style={bodyStyle}>Revisa {viewOnceLabel} de una sola visualización en WhatsApp. WaFli no puede abrir este contenido ni usarlo con IA.</div>
       </div>
     );
   }
@@ -3996,11 +4070,11 @@ function MessageStructuredPreview({ message }) {
 
   if (message.type === 'location') {
     const location = message.location || {};
-    const label = location.name || location.address || message.text || 'Ubicacion compartida';
+    const label = location.name || location.address || message.text || 'Ubicación compartida';
     const coords = location.latitude && location.longitude ? `${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}` : '';
     return (
       <div style={cardStyle}>
-        <div style={titleStyle}>{message.liveLocation ? 'Ubicacion en vivo' : 'Ubicacion'}</div>
+        <div style={titleStyle}>{message.liveLocation ? 'Ubicación en vivo' : 'Ubicación'}</div>
         <div style={bodyStyle}>{label}</div>
         {coords ? <div className="t-mono" style={{fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4}}>{coords}</div> : null}
       </div>
@@ -4053,7 +4127,7 @@ function LinkifiedText({ text = '' }) {
   return <>{nodes}</>;
 }
 
-function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImage, messageError, onRetry }) {
+function ChatMessages({ messages, chatName = '', chatPhone = '', onLongPressMessage, onReplyMessage, onOpenImage, messageError, onRetry }) {
   // Group by day separator
   const grouped = [];
   let lastDay = null;
@@ -4096,7 +4170,7 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
           image: 'Imagen',
           sticker: 'Sticker',
           audio: 'Audio',
-          video: 'Video',
+          video: 'Vídeo',
           document: 'Documento',
         }[m.mediaType || m.type];
         const visibleText = isDeleted ? 'Mensaje eliminado' : (m.hasMedia && mediaFallbackText && m.text === mediaFallbackText ? '' : m.text);
@@ -4111,12 +4185,27 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
           if (holdRef.current) clearTimeout(holdRef.current);
           holdRef.current = null;
         };
+        const replyButton = (
+          <button
+            type="button"
+            className={'chat-message-reply ' + (mine ? 'chat-message-reply--mine' : 'chat-message-reply--theirs')}
+            aria-label="Responder mensaje"
+            onClick={(event) => { event.stopPropagation(); onReplyMessage && onReplyMessage(m); }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M10 8.5V4L3 11l7 7v-4.6h4.2c3.2 0 5.4 1.4 6.8 4.1-.3-5.1-3.1-9-8.1-9H10z" fill="currentColor" />
+            </svg>
+          </button>
+        );
         return (
           <div key={m.id} className={'chat-message-row ' + (mine ? 'chat-message-row--mine' : 'chat-message-row--theirs')} style={{
             display: 'flex',
             justifyContent: mine ? 'flex-end' : 'flex-start',
+            alignItems: 'flex-end',
+            gap: 4,
             marginTop: grouped_with_prev ? 0 : 4,
           }}>
+            {mine ? replyButton : null}
             <div
               className={'chat-message-bubble ' + (mine ? 'chat-message-bubble--mine' : 'chat-message-bubble--theirs') + (grouped_with_prev ? ' chat-message-bubble--stacked' : '')}
               onClick={() => onLongPressMessage && onLongPressMessage(m)}
@@ -4153,7 +4242,7 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
               {m.quotedMessage && !isDeleted ? (
                 <div className="chat-message-quote" style={{borderLeft: '3px solid var(--accent)', background: 'rgba(255,255,255,0.45)', borderRadius: 8, padding: '5px 7px', marginBottom: 6}}>
                   <div className="t-caption" style={{fontWeight: 700, color: 'var(--accent)'}}>
-                    {m.quotedMessage.authorName || (m.quotedMessage.sender === 'me' ? 'yo' : 'contacto')}
+                    {resolveQuotedAuthorName(m.quotedMessage, m, { name: chatName, phone: chatPhone })}
                   </div>
                   <div className="t-caption" style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
                     {displayTextForQuotedMessage(m.quotedMessage)}
@@ -4165,21 +4254,13 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
                   <LinkifiedText text={visibleText} />
                 </span>
               ) : null}
-              <div style={{display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginTop: 4}}>
-                <button
-                  className="btn btn--text chat-message-reply"
-                  style={{height: 20, padding: 0, fontSize: 11, color: 'var(--text-tertiary)'}}
-                  onClick={(event) => { event.stopPropagation(); onReplyMessage && onReplyMessage(m); }}
-                >
-                  Responder
-                </button>
-              </div>
               <div className="chat-message-meta">
                 {messageTime ? <span>{messageTime}</span> : null}
                 {m.edited && !isDeleted ? <span>editado</span> : null}
-                {mine ? <MessageStatus status={m.status} /> : null}
+                {mine && !messageMetaAlreadyHasStatus(m) ? <MessageStatus status={m.status} /> : null}
               </div>
             </div>
+            {!mine ? replyButton : null}
             {(messageError === m.id || m.status === 'failed') && mine && (
               <button className="btn btn--text" onClick={onRetry} style={{fontSize: 11, color: 'var(--danger)', marginLeft: 8}}>
                 Error · Reintentar
@@ -4193,16 +4274,422 @@ function ChatMessages({ messages, onLongPressMessage, onReplyMessage, onOpenImag
 }
 
 // SCREEN 5 · Sugerir respuesta (bottom sheet content)
-const TONES = ['Relajado', 'Desenfadado', 'Picante', 'Intelectual'];
+const AI_AGENTS = [
+  {
+    id: 'Ligoteo',
+    label: 'Ligoteo',
+    description: 'Citas, química y conexión sin sonar intenso ni forzado.',
+    objectives: ['Concretar una cita', 'Crear conexión', 'Seguir la charla con química', 'Personalizado'],
+  },
+  {
+    id: 'Profesional',
+    label: 'Profesional',
+    description: 'Trabajo, clientes, jefes o conversaciones donde conviene ser claro y cuidado.',
+    objectives: ['Responder con claridad', 'Pedir información', 'Cerrar una tarea', 'Personalizado'],
+  },
+  {
+    id: 'Amistoso',
+    label: 'Amistoso',
+    description: 'Amigos, familia y chats cotidianos con naturalidad cercana.',
+    objectives: ['Responder natural', 'Mantener la conversación', 'Apoyar o acompañar', 'Personalizado'],
+  },
+];
+const DEFAULT_AI_AGENT = 'Ligoteo';
+const AI_AUTO_OBJECTIVE = 'Auto';
+const TONES = AI_AGENTS.map(agent => agent.label);
+const AI_INTENSITY_OPTIONS = [
+  ['auto', 'Auto'],
+  ['suave', 'Suave'],
+  ['media', 'Media'],
+  ['directa', 'Directa'],
+];
+const AI_RELATIONSHIP_OPTIONS = [
+  ['auto', 'Auto'],
+  ['professional', 'Profesional'],
+  ['flirt', 'Ligoteo'],
+  ['friend', 'Amistad'],
+  ['family', 'Familia'],
+  ['client', 'Cliente'],
+  ['boss', 'Jefe'],
+  ['group', 'Grupo'],
+];
+const AI_RESPONSE_LENGTH_OPTIONS = [
+  ['auto', 'Auto'],
+  ['corta', 'Corta'],
+  ['media', 'Media'],
+  ['larga', 'Larga'],
+];
+const AI_ADDRESS_MODE_OPTIONS = [
+  ['auto', 'Automatico'],
+  ['tu', 'Tu'],
+  ['vos', 'Vos'],
+  ['usted', 'Usted'],
+];
+const AI_INITIATIVE_OPTIONS = [
+  ['auto', 'Automatico'],
+  ['prudente', 'Prudente'],
+  ['equilibrada', 'Equilibrada'],
+  ['proactiva', 'Proactiva'],
+];
+
+function getAiAgentConfig(agent) {
+  return AI_AGENTS.find(item => item.id === agent || item.label === agent) || AI_AGENTS.find(item => item.id === DEFAULT_AI_AGENT) || AI_AGENTS[0];
+}
+
+function defaultObjectiveForAgent(agent) {
+  return AI_AUTO_OBJECTIVE;
+}
+
+function normalizeAiManualProfile(profile = {}) {
+  const source = profile && typeof profile === 'object' ? profile : {};
+  return {
+    relationshipType: source.relationshipType || 'auto',
+    preferredAgent: source.preferredAgent || 'auto',
+    preferredObjective: source.preferredObjective || AI_AUTO_OBJECTIVE,
+    intensity: source.intensity || 'auto',
+    responseLength: source.responseLength || 'auto',
+    addressMode: source.addressMode || source.treatment || 'auto',
+    initiativeLevel: source.initiativeLevel || source.initiative || 'auto',
+    notes: source.notes || '',
+  };
+}
+
+function getSpeechRecognitionConstructor() {
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function useDeviceSpeechInput(setValue, setError) {
+  const recognitionRef = React.useRef(null);
+  const [listening, setListening] = React.useState(false);
+
+  const stop = React.useCallback(() => {
+    const recognition = recognitionRef.current;
+    recognitionRef.current = null;
+    setListening(false);
+    try { recognition?.stop?.(); } catch (_) {}
+    try { recognition?.abort?.(); } catch (_) {}
+  }, []);
+
+  React.useEffect(() => () => {
+    stop();
+  }, [stop]);
+
+  React.useEffect(() => {
+    const handleStop = () => stop();
+    window.addEventListener('wafli:ai-stop-dictation', handleStop);
+    return () => window.removeEventListener('wafli:ai-stop-dictation', handleStop);
+  }, [stop]);
+
+  const start = React.useCallback(() => {
+    stop();
+    const Recognition = getSpeechRecognitionConstructor();
+    if (!Recognition) {
+      setError && setError('Tu navegador no ofrece transcripción directa. Usa el micrófono del teclado del móvil para dictar este campo sin consumir IA.');
+      return;
+    }
+    try {
+      const recognition = new Recognition();
+      recognitionRef.current = recognition;
+      recognition.lang = 'es-ES';
+      recognition.interimResults = false;
+      recognition.continuous = false;
+      recognition.onstart = () => setListening(true);
+      recognition.onend = () => {
+        if (recognitionRef.current === recognition) recognitionRef.current = null;
+        setListening(false);
+      };
+      recognition.onerror = () => {
+        if (recognitionRef.current === recognition) recognitionRef.current = null;
+        setListening(false);
+        setError && setError('No hemos podido escuchar el dictado. También puedes usar el micrófono del teclado del móvil.');
+      };
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results || [])
+          .map(result => result?.[0]?.transcript || '')
+          .join(' ')
+          .trim();
+        if (transcript) {
+          setValue(previous => `${String(previous || '').trim()}${previous ? ' ' : ''}${transcript}`.trim());
+        }
+        if (recognitionRef.current === recognition) recognitionRef.current = null;
+        setListening(false);
+        try { recognition.stop?.(); } catch (_) {}
+        try { recognition.abort?.(); } catch (_) {}
+      };
+      recognition.start();
+    } catch (_) {
+      recognitionRef.current = null;
+      setListening(false);
+      setError && setError('No hemos podido activar el micrófono. Puedes dictar desde el teclado del móvil.');
+    }
+  }, [setError, setValue, stop]);
+
+  return { listening, start, stop };
+}
+
+
+function AiAgentControls({ agent, setAgent, objective, setObjective, customObjective, setCustomObjective }) {
+  const selectedAgent = getAiAgentConfig(agent);
+  const objectives = [AI_AUTO_OBJECTIVE, ...(selectedAgent.objectives || []).filter(item => item !== AI_AUTO_OBJECTIVE)];
+
+  const changeAgent = (nextAgent) => {
+    setAgent(nextAgent);
+    setObjective(AI_AUTO_OBJECTIVE);
+    setCustomObjective('');
+  };
+
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 14}}>
+      <div>
+        <div className="t-caption" style={{margin: '0 0 6px', fontWeight: 700}}>Agente</div>
+        <div style={{display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2}}>
+          {AI_AGENTS.map(item => (
+            <button
+              key={item.id}
+              type="button"
+              className={'chip ' + (agent === item.id || agent === item.label ? 'chip--active' : '')}
+              onClick={() => changeAgent(item.id)}
+              style={{whiteSpace: 'nowrap'}}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="t-caption" style={{display: 'block', margin: '0 0 6px', fontWeight: 700}}>Objetivo</label>
+        <select
+          value={objective}
+          onChange={event => {
+            setObjective(event.target.value);
+            if (event.target.value !== 'Personalizado') setCustomObjective('');
+          }}
+          style={{
+            width: '100%',
+            border: '1px solid var(--border-strong)',
+            borderRadius: 12,
+            padding: '10px 12px',
+            background: 'var(--bg)',
+            color: 'var(--text)',
+            font: 'inherit',
+            outline: 'none'
+          }}
+        >
+          {objectives.map(item => <option key={item} value={item}>{item}</option>)}
+        </select>
+        {objective === 'Personalizado' ? (
+          <input
+            value={customObjective}
+            onChange={event => setCustomObjective(event.target.value)}
+            placeholder="Describe el objetivo"
+            style={{
+              width: '100%',
+              marginTop: 8,
+              border: '1px solid var(--border-strong)',
+              borderRadius: 12,
+              padding: '10px 12px',
+              background: 'var(--bg)',
+              color: 'var(--text)',
+              font: 'inherit',
+              outline: 'none'
+            }}
+          />
+        ) : null}
+      </div>
+
+      <p className="t-caption" style={{margin: '-2px 0 0', color: 'var(--text-secondary)'}}>
+        WaFli usara el contexto del chat al generar.
+      </p>
+    </div>
+  );
+}
+
+function AiProfileAdvancedControls({ intensity = 'auto', setIntensity, aiProfile, setAiProfile, onSaveAiProfile, profileStatus }) {
+  const manualProfile = normalizeAiManualProfile(aiProfile);
+
+  const updateManualProfile = (key, value) => {
+    if (!setAiProfile) return;
+    setAiProfile(previous => ({ ...normalizeAiManualProfile(previous), [key]: value }));
+  };
+
+  return (
+    <div className="card" style={{padding: 12, border: '1px solid var(--border)', background: 'var(--surface)'}}>
+      <div className="t-small" style={{fontWeight: 700, marginBottom: 4}}>Ajustes avanzados por chat</div>
+      <p className="t-caption" style={{margin: '0 0 12px', color: 'var(--text-secondary)'}}>
+        Opcional. Se guarda solo para este contacto y ayuda a WaFli a responder mejor.
+      </p>
+      <div style={{display: 'grid', gap: 10}}>
+        <label className="t-caption" style={{display: 'grid', gap: 5, fontWeight: 700}}>
+          Relacion
+          <select
+            value={manualProfile.relationshipType}
+            onChange={event => updateManualProfile('relationshipType', event.target.value)}
+            style={{border: '1px solid var(--border-strong)', borderRadius: 12, padding: '9px 10px', background: 'var(--bg)', color: 'var(--text)', font: 'inherit'}}
+          >
+            {AI_RELATIONSHIP_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+        <label className="t-caption" style={{display: 'grid', gap: 5, fontWeight: 700}}>
+          Intensidad
+          <select
+            value={intensity}
+            onChange={event => {
+              const nextValue = event.target.value;
+              setIntensity && setIntensity(nextValue);
+              updateManualProfile('intensity', nextValue);
+            }}
+            style={{border: '1px solid var(--border-strong)', borderRadius: 12, padding: '9px 10px', background: 'var(--bg)', color: 'var(--text)', font: 'inherit'}}
+          >
+            {AI_INTENSITY_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+        <label className="t-caption" style={{display: 'grid', gap: 5, fontWeight: 700}}>
+          Cómo tratar a esa persona
+          <select
+            value={manualProfile.addressMode}
+            onChange={event => updateManualProfile('addressMode', event.target.value)}
+            style={{border: '1px solid var(--border-strong)', borderRadius: 12, padding: '9px 10px', background: 'var(--bg)', color: 'var(--text)', font: 'inherit'}}
+          >
+            {AI_ADDRESS_MODE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+        <label className="t-caption" style={{display: 'grid', gap: 5, fontWeight: 700}}>
+          Nivel de iniciativa
+          <select
+            value={manualProfile.initiativeLevel}
+            onChange={event => updateManualProfile('initiativeLevel', event.target.value)}
+            style={{border: '1px solid var(--border-strong)', borderRadius: 12, padding: '9px 10px', background: 'var(--bg)', color: 'var(--text)', font: 'inherit'}}
+          >
+            {AI_INITIATIVE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>
+        <label className="t-caption" style={{display: 'grid', gap: 5, fontWeight: 700}}>
+          Notas persistentes
+          <textarea
+            className="textarea"
+            rows={2}
+            value={manualProfile.notes}
+            onChange={event => updateManualProfile('notes', event.target.value)}
+            placeholder="Ej. es mi jefe directo, mejor ir al grano."
+            style={{fontSize: 14, lineHeight: 1.4}}
+          />
+        </label>
+        <button type="button" className="btn btn--ghost btn--sm" style={{justifySelf: 'start', border: '1px solid var(--border-strong)', color: 'var(--text)'}} onClick={onSaveAiProfile}>
+          Guardar ajustes
+        </button>
+        {profileStatus ? <span className="t-caption" style={{color: profileStatus.startsWith('Guard') ? 'var(--success, var(--accent))' : 'var(--text-secondary)'}}>{profileStatus}</span> : null}
+      </div>
+    </div>
+  );
+}
+
+function AiOptionalControls({ userContext, setUserContext, setError, contextPlaceholder }) {
+  const [showContext, setShowContext] = React.useState(() => Boolean(String(userContext || '').trim()));
+  const { listening, start, stop } = useDeviceSpeechInput(setUserContext, setError);
+
+  React.useEffect(() => {
+    if (String(userContext || '').trim()) setShowContext(true);
+  }, [userContext]);
+
+  React.useEffect(() => {
+    if (!showContext) stop();
+  }, [showContext, stop]);
+
+  const changeContextVisibility = (event) => {
+    const checked = event.target.checked;
+    setShowContext(checked);
+    if (!checked) {
+      stop();
+      setUserContext('');
+    }
+  };
+
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 10, margin: '14px 0 10px'}}>
+      <label className="row gap-2" style={{alignItems: 'center', cursor: 'pointer', userSelect: 'none'}}>
+        <input type="checkbox" checked={showContext} onChange={changeContextVisibility} />
+        <span className="t-small" style={{fontWeight: 700}}>Agregar contexto (opcional)</span>
+      </label>
+
+      {showContext ? (
+        <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
+          <textarea
+            className="textarea"
+            rows={3}
+            value={userContext}
+            onChange={event => setUserContext(event.target.value)}
+            placeholder={contextPlaceholder || 'Añade solo lo que la IA deba tener en cuenta.'}
+            style={{fontSize: 15, lineHeight: 1.45}}
+          />
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={listening ? stop : start}
+            style={{alignSelf: 'flex-start', border: '1px solid var(--border-strong)', color: 'var(--text)'}}
+          >
+            <Icons.Mic size={14} /> {listening ? 'Detener dictado' : 'Dictar contexto'}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function stopAiSpeechDictation() {
+  try {
+    window.dispatchEvent(new CustomEvent('wafli:ai-stop-dictation'));
+  } catch (_) {}
+}
 
 function emitQuotaUsage(result = {}) {
   window.dispatchEvent(new CustomEvent('wafli:quota-refresh'));
   if (result.quota) window.dispatchEvent(new CustomEvent('wafli:quota-consumed', { detail: result.quota }));
 }
 
-function AiReportButton({ chatId, action = 'unknown', text = '', metadata = null }) {
+const AI_REPORT_METADATA_KEYS = new Set([
+  'source',
+  'action',
+  'chatId',
+  'agent',
+  'objective',
+  'variant',
+  'promptVersion',
+  'qualityFlags',
+  'dialectWarnings',
+  'spanishNaturalnessFlags',
+  'humanReplyScore',
+  'humanReplyDimensions',
+  'model',
+  'objectiveSource',
+  'intensity',
+  'situation',
+  'relationshipType',
+  'usedConversationProfile',
+  'contextCopilotHints',
+  'hasQuotedMessage',
+  'hasMediaContext',
+  'originalLength',
+  'selectedIndex',
+  'wasEditedBeforeSend',
+]);
+
+function sanitizeAiReportMetadata(metadata = {}, extra = {}) {
+  const safe = {};
+  if (metadata && typeof metadata === 'object') {
+    Object.entries(metadata).forEach(([key, value]) => {
+      if (AI_REPORT_METADATA_KEYS.has(key) && value !== undefined) safe[key] = value;
+    });
+  }
+  return { ...safe, ...extra };
+}
+
+function AiReportButton({ chatId, action = 'unknown', text = '', originalText = '', metadata = null }) {
   const [status, setStatus] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [reason, setReason] = React.useState('not_helpful');
+  const [note, setNote] = React.useState('');
   const reportableText = String(text || '').trim();
   if (!reportableText || !WaFliAPI?.ai?.reportGeneratedContent || !WaFliAPI?.client?.isAuthenticated?.()) return null;
 
@@ -4210,286 +4697,513 @@ function AiReportButton({ chatId, action = 'unknown', text = '', metadata = null
     setLoading(true);
     setStatus('');
     try {
+      const noteText = note.trim();
+      const safeMetadata = sanitizeAiReportMetadata(metadata, {
+        chatId,
+        action,
+        wasEditedBeforeReport: Boolean(originalText) && reportableText !== String(originalText || '').trim(),
+        reportedTextLength: reportableText.length,
+        noteLength: noteText.length,
+      });
       await WaFliAPI.ai.reportGeneratedContent({
         chatId,
         action,
-        reason: 'not_helpful',
+        reason,
+        note: noteText,
         generatedText: reportableText,
-        metadata: metadata || {},
+        text: reportableText,
+        metadata: safeMetadata,
       });
       setStatus('Reporte enviado. Gracias.');
+      setOpen(false);
+      setNote('');
     } catch (apiError) {
-      setStatus(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos enviar el reporte.');
+      setStatus(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido enviar el reporte.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '0 0 10px', flexWrap: 'wrap'}}>
-      <button type="button" className="btn btn--ghost btn--sm" style={{border: '1px solid var(--border)', color: 'var(--text-secondary)'}} disabled={loading} onClick={submit}>
-        {loading ? 'Reportando...' : 'Reportar respuesta IA'}
+    <div style={{display: 'grid', gap: 8, minWidth: 220}}>
+      <button type="button" className="btn btn--ghost btn--sm" style={{border: '1px solid var(--border)', color: 'var(--text-secondary)', justifySelf: 'start'}} disabled={loading} onClick={() => setOpen(previous => !previous)}>
+        {open ? 'Cerrar reporte' : 'Reportar respuesta IA'}
       </button>
+      {open ? (
+        <div className="card" style={{padding: 10, display: 'grid', gap: 8, border: '1px solid var(--border)'}}>
+          <label className="t-caption" style={{display: 'grid', gap: 5, fontWeight: 700}}>
+            Motivo
+            <select
+              value={reason}
+              onChange={event => setReason(event.target.value)}
+              style={{border: '1px solid var(--border-strong)', borderRadius: 10, padding: '8px 10px', background: 'var(--bg)', color: 'var(--text)', font: 'inherit'}}
+            >
+              <option value="not_helpful">No me ayudo</option>
+              <option value="wrong_context">Contexto equivocado</option>
+              <option value="sounds_ai">Suena a IA</option>
+              <option value="wrong_variant">Variante incorrecta</option>
+              <option value="invented">Invento informacion</option>
+              <option value="wrong_tone">Tono incorrecto</option>
+              <option value="unsafe">Puede ser inapropiada</option>
+              <option value="privacy">Privacidad</option>
+              <option value="spam">Suena repetitiva o spam</option>
+              <option value="other">Otro</option>
+            </select>
+          </label>
+          <label className="t-caption" style={{display: 'grid', gap: 5, fontWeight: 700}}>
+            Comentario (opcional)
+            <textarea
+              className="textarea"
+              rows={3}
+              value={note}
+              onChange={event => setNote(event.target.value)}
+              placeholder="¿Qué falló o qué esperabas recibir?"
+              style={{fontSize: 14, lineHeight: 1.4}}
+            />
+          </label>
+          <div className="row gap-2" style={{flexWrap: 'wrap'}}>
+            <button type="button" className="btn btn--primary btn--sm" disabled={loading} onClick={submit}>
+              {loading ? 'Enviando...' : 'Enviar reporte'}
+            </button>
+            <button type="button" className="btn btn--ghost btn--sm" style={{border: '1px solid var(--border)', color: 'var(--text-secondary)'}} disabled={loading} onClick={() => setOpen(false)}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : null}
       {status ? <span className="t-caption" style={{color: status.startsWith('Reporte') ? 'var(--success, var(--accent))' : 'var(--danger)'}}>{status}</span> : null}
     </div>
   );
 }
 
-function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerencia', caption = 'Edita lo que quieras antes de enviar.', quotedMessage = null, mediaContext = null, onClose, onSent, onQuota }) {
-  const [tone, setTone] = React.useState('Desenfadado');
-  const [userDraft, setUserDraft] = React.useState('');
-  const [notes, setNotes] = React.useState('');
-  const [mediaNotes, setMediaNotes] = React.useState('');
+
+function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerir respuesta', caption = '', matchContext = '', mediaContext = null, quotedMessage = null, onClose, onSent, onQuota, canSend = true }) {
+  const [agent, setAgent] = React.useState(DEFAULT_AI_AGENT);
+  const [objective, setObjective] = React.useState(defaultObjectiveForAgent(DEFAULT_AI_AGENT));
+  const [customObjective, setCustomObjective] = React.useState('');
+  const [userContext, setUserContext] = React.useState('');
+  const [intensity, setIntensity] = React.useState('auto');
+  const [aiProfile, setAiProfile] = React.useState(() => normalizeAiManualProfile());
+  const [profileStatus, setProfileStatus] = React.useState('');
   const [text, setText] = React.useState('');
-  const [regenerating, setRegenerating] = React.useState(false);
   const [generated, setGenerated] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
   const generatedTextRef = React.useRef('');
   const generationMetaRef = React.useRef(null);
+  const hasResult = generated && Boolean(text.trim());
+  const isReactivate = action === 'reactivate';
 
-  const generateRemote = async (action = 'suggest', payload = {}) => {
-    if (!WaFliAPI?.ai?.[action] || !WaFliAPI?.client?.isAuthenticated?.()) {
-      setError('Inicia sesión y conecta tu WhatsApp para generar mensajes IA.');
-      return true;
-    }
-    if (mediaContext?.requiresContext && !mediaNotes.trim()) {
-      setError('Para videos necesito que agregues contexto: qué pasa, qué se escucha o qué parte importa.');
-      return true;
-    }
-    setRegenerating(true);
-    setError('');
+  React.useEffect(() => {
+    let alive = true;
+    if (!chatId || !WaFliAPI?.chats?.getAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return () => { alive = false; };
+    WaFliAPI.chats.getAiProfile(chatId)
+      .then(result => {
+        if (!alive) return;
+        const manual = normalizeAiManualProfile(result?.profile?.manual);
+        setAiProfile(manual);
+        if (manual.intensity && manual.intensity !== 'auto') setIntensity(manual.intensity);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [chatId]);
+
+  const saveAiProfile = async () => {
+    if (!WaFliAPI?.chats?.updateAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return;
+    setProfileStatus('Guardando...');
     try {
-      const requestedAction = payload.action || action;
-      const supportNotes = [
-        notes.trim(),
-        requestedAction === 'reactivate'
-          ? 'La persona usuaria quiere retomar un hilo frío sin presionar.'
-          : 'La persona usuaria quiere una respuesta sugerida útil, natural y lista para enviar.'
-      ].filter(Boolean).join(' | ');
-      const result = await WaFliAPI.ai[action]({
-        chatId,
-        tone,
-        intent: userDraft.trim(),
-        notes: supportNotes,
-        mediaContext: mediaNotes.trim(),
-        quotedMessage,
-        ...payload
-      });
-      if (result.text) {
-        setText(result.text);
-        generatedTextRef.current = result.text;
-        generationMetaRef.current = {
-          source: 'ai_suggestion',
-          aiAction: payload.action || action,
-          aiModel: result.model || '',
-          promptVersion: result.promptVersion || '',
-        };
-        setGenerated(true);
-      }
-      emitQuotaUsage(result);
-      return true;
-    } catch (apiError) {
-      if (apiError.code === 'quota_exhausted') onQuota && onQuota();
-      else setError(WaFliAPI.client.toUserMessage(apiError));
-      return true;
-    } finally {
-      setRegenerating(false);
+      const payload = normalizeAiManualProfile({ ...aiProfile, intensity });
+      const result = await WaFliAPI.chats.updateAiProfile(chatId, payload);
+      setAiProfile(normalizeAiManualProfile(result?.profile?.manual || payload));
+      setProfileStatus('Guardado');
+    } catch (_) {
+      setProfileStatus('No se pudo guardar');
     }
   };
 
-  const handleTone = (t) => {
-    setTone(t);
-  };
-  const generateInitial = async () => {
-    await generateRemote(action);
-  };
-  const regen = async () => {
-    if (!generated && !text.trim()) {
-      await generateInitial();
+  const buildPayload = (extra = {}) => ({
+    chatId,
+    action,
+    agent,
+    tone: agent,
+    objective,
+    intensity,
+    customObjective: objective === 'Personalizado' ? customObjective.trim() : '',
+    userContext: userContext.trim(),
+    matchContext,
+    quotedMessage,
+    mediaContext,
+    ...extra,
+  });
+
+  const generateSuggestion = async () => {
+    if (loading) return;
+      const baseEndpoint = isReactivate ? WaFliAPI?.ai?.reactivate : WaFliAPI?.ai?.suggest;
+      const isRegeneration = hasResult;
+      const endpoint = isRegeneration ? (WaFliAPI?.ai?.regenerate || baseEndpoint) : baseEndpoint;
+    if (!endpoint || !WaFliAPI?.client?.isAuthenticated?.()) {
+      setError('Inicia sesión y conecta tu WhatsApp para generar con IA.');
       return;
     }
-    await generateRemote('regenerate', { action });
+    stopAiSpeechDictation();
+    setLoading(true);
+    setError('');
+    try {
+      const result = await endpoint(buildPayload(isRegeneration ? {
+        regeneration: true,
+        previousGeneratedText: String(generatedTextRef.current || text || '').trim(),
+        currentDraftText: String(text || '').trim(),
+      } : {}));
+      const nextText = String(result?.text || result?.message || '').trim();
+      if (nextText) {
+        const resultMeta = result?.meta || {};
+        setText(nextText);
+        setGenerated(true);
+        generatedTextRef.current = nextText;
+        generationMetaRef.current = {
+          ...resultMeta,
+          source: isReactivate ? 'reactivate' : 'ai_suggestion',
+          action,
+          chatId,
+          promptVersion: resultMeta.promptVersion || result.promptVersion || result['promptVersion'] || '',
+          model: resultMeta.model || result.model || '',
+          variant: resultMeta.variant || result.variant || '',
+          contextCopilotHints: resultMeta.contextCopilotHints ?? result.contextCopilotHints ?? null,
+          agent: resultMeta.agent || agent,
+          objective: resultMeta.objective || objective,
+          objectiveSource: resultMeta.objectiveSource || '',
+          intensity: resultMeta.intensity || intensity,
+          situation: resultMeta.situation || '',
+          relationshipType: resultMeta.relationshipType || '',
+          usedConversationProfile: Boolean(resultMeta.usedConversationProfile),
+          customObjective: objective === 'Personalizado' ? customObjective.trim() : '',
+          userContext: userContext.trim(),
+          hasQuotedMessage: Boolean(quotedMessage),
+          hasMediaContext: Boolean(mediaContext),
+        };
+      }
+      emitQuotaUsage(result);
+    } catch (apiError) {
+      if (apiError.code === 'quota_exhausted') onQuota && onQuota();
+      else setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido generar la sugerencia.');
+    } finally {
+      setLoading(false);
+    }
   };
-  const canSend = Boolean(text.trim());
+
+  const clearResult = () => {
+    setText('');
+    setGenerated(false);
+    generatedTextRef.current = '';
+    generationMetaRef.current = null;
+    setError('');
+  };
 
   return (
-    <div className="ai-sheet" style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '4px 18px 18px'}}>
+    <div className="ai-sheet" style={{display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: '4px 18px 18px'}}>
       <div className="ai-sheet__scroll">
-      <div className="row gap-2" style={{marginBottom: 4, alignItems: 'center'}}>
-        <Icons.Sparkles size={18} style={{color: 'var(--accent)'}} />
-        <span className="t-h3">{title}</span>
-      </div>
-      <p className="t-caption" style={{margin: '0 0 10px'}}>{caption}</p>
-      <p className="t-caption" style={{margin: '0 0 14px', color: 'var(--text-secondary)'}}>
-        Elegí el tono y, si querés, dale una idea base o una instrucción de apoyo. La cuota se consume recién cuando generás.
-      </p>
-      {mediaContext?.hasMedia ? (
-        <div className="card" style={{padding: 10, marginBottom: 12, background: 'var(--accent-soft)', borderColor: 'rgba(14, 165, 143, 0.18)'}}>
-          <div className="t-caption" style={{fontWeight: 800, color: 'var(--accent)', marginBottom: 4}}>
-            Contexto multimedia
-          </div>
-          <div className="t-small" style={{color: 'var(--text-secondary)', marginBottom: 8}}>
-            {mediaContext.prompt || mediaContext.summary || 'Hay contenido multimedia reciente. Agrega contexto si querés una respuesta más precisa.'}
-          </div>
-          <textarea
-            className="textarea"
-            value={mediaNotes}
-            onChange={e => setMediaNotes(e.target.value)}
-            placeholder={mediaContext.placeholder || 'Describe lo importante de la imagen, video, audio o archivo...'}
-            rows={3}
-            style={{fontSize: 16, lineHeight: 1.45, minHeight: 76, background: 'var(--bg)'}}
-          />
+        <div className="row gap-2" style={{marginBottom: 12, alignItems: 'center'}}>
+          <Icons.Sparkles size={18} style={{color: 'var(--accent)'}} />
+          <span className="t-h3">{title}</span>
         </div>
-      ) : null}
-      {quotedMessage ? (
-        <div className="card" style={{padding: 10, marginBottom: 12, background: 'var(--gray-50)'}}>
-          <div className="t-caption" style={{fontWeight: 700, color: 'var(--accent)', marginBottom: 2}}>
-            Respondiendo a {quotedMessage.authorName || 'contacto'}
-          </div>
-          <div className="t-small" style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-            {displayTextForQuotedMessage(quotedMessage)}
-          </div>
-        </div>
-      ) : null}
 
-      {/* Tones */}
-      <div style={{display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 16, paddingBottom: 4, marginLeft: -18, marginRight: -18, padding: '0 18px 4px'}}>
-        {TONES.map(t => (
-          <span key={t} className={'chip ' + (tone === t ? 'chip--active' : '')} onClick={() => handleTone(t)}>{t}</span>
-        ))}
-      </div>
-
-      <textarea
-        className="textarea"
-        value={userDraft}
-        onChange={e => setUserDraft(e.target.value)}
-        placeholder={action === 'reactivate' ? 'Opcional: idea base para retomar, ej. vi esto y me acordé de vos...' : 'Opcional: posible respuesta que escribirías vos...'}
-        style={{minHeight: 72, marginBottom: 10, fontSize: 16, lineHeight: 1.45}}
-      />
-
-      <textarea
-        className="textarea"
-        value={notes}
-        onChange={e => setNotes(e.target.value)}
-        placeholder="Opcional: apoyo para la IA, ej. sin sonar intenso, sin parecer raro, más seguro..."
-        style={{minHeight: 72, marginBottom: 12, fontSize: 16, lineHeight: 1.45}}
-      />
-
-      {/* Textarea */}
-      <div style={{position: 'relative', flex: 1, minHeight: 0, marginBottom: 12}}>
-        <textarea
-          className="textarea"
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="La sugerencia aparecerá acá y la podés editar antes de enviarla."
-          style={{
-            height: '100%', width: '100%', fontSize: 16, lineHeight: 1.5, minHeight: 120,
-            opacity: regenerating ? 0.4 : 1, transition: 'opacity 150ms',
-          }}
+        <AiAgentControls
+          agent={agent}
+          setAgent={setAgent}
+          objective={objective}
+          setObjective={setObjective}
+          customObjective={customObjective}
+          setCustomObjective={setCustomObjective}
+          userContext={userContext}
+          setUserContext={setUserContext}
+          setError={setError}
+          intensity={intensity}
+          setIntensity={setIntensity}
+          aiProfile={aiProfile}
+          setAiProfile={setAiProfile}
+          onSaveAiProfile={saveAiProfile}
+          profileStatus={profileStatus}
+          contextPlaceholder={isReactivate
+            ? 'Ej. quiero retomar sin parecer intenso; habíamos quedado en hablar esta semana...'
+            : 'Ej. es alguien que me interesa, mi jefe o un amigo; quiero sonar con calma, claro o cercano...'}
         />
-        {regenerating && (
-          <div style={{position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--accent)', fontSize: 13, fontWeight: 500}}>
-            <Spinner size={16} /> generando...
+
+        {hasResult ? (
+          <div style={{position: 'relative', flex: 1, minHeight: 0, marginBottom: 12}}>
+            <textarea
+              className="textarea"
+              value={text}
+              onChange={event => setText(event.target.value)}
+              style={{
+                height: '100%', width: '100%', fontSize: 16, lineHeight: 1.5, minHeight: 140,
+                opacity: loading ? 0.4 : 1, transition: 'opacity 150ms',
+              }}
+            />
+            {loading ? (
+              <div style={{position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--accent)', fontSize: 13, fontWeight: 500}}>
+                <Spinner size={16} /> generando...
+              </div>
+            ) : null}
           </div>
-        )}
-      </div>
-      </div>
+        ) : null}
 
-      {/* Secondary actions */}
-      <div className="ai-sheet__footer">
-      <div className="row gap-2" style={{marginBottom: 12}}>
-        <button className={generated || text.trim() ? 'btn btn--ghost btn--md' : 'btn btn--primary btn--md'} style={{flex: 1, border: generated || text.trim() ? '1px solid var(--border-strong)' : undefined, color: generated || text.trim() ? 'var(--text)' : undefined, opacity: regenerating ? 0.65 : 1}} disabled={regenerating} onClick={generated || text.trim() ? regen : generateInitial}>
-          {generated || text.trim() ? <Icons.Refresh size={16} /> : <Icons.Sparkles size={16} />}
-          {generated || text.trim() ? 'Regenerar' : 'Generar sugerencia'}
-        </button>
-        <button className="btn btn--ghost btn--md" style={{flex: 1, border: '1px solid var(--border-strong)', color: 'var(--text)'}} onClick={() => setText('')}>
-          <Icons.Edit size={15} /> Limpiar
-        </button>
-      </div>
+        <div className="ai-sheet__actions">
+          <div className="row gap-2" style={{marginBottom: hasResult ? 10 : 0, flexWrap: 'wrap', alignItems: 'center'}}>
+            <button
+              className={hasResult ? 'btn btn--ghost btn--sm' : 'btn btn--primary btn--sm'}
+              style={{border: hasResult ? '1px solid var(--border-strong)' : undefined, color: hasResult ? 'var(--text)' : undefined, opacity: loading ? 0.65 : 1}}
+              disabled={loading}
+              onClick={generateSuggestion}
+            >
+              {hasResult ? <Icons.Refresh size={15} /> : <Icons.Sparkles size={15} />}
+              {hasResult ? 'Regenerar' : 'Generar'}
+            </button>
+            {hasResult ? (
+              <>
+                <button className="btn btn--ghost btn--sm" style={{border: '1px solid var(--border-strong)', color: 'var(--text)'}} onClick={clearResult}>
+                  <Icons.Edit size={14} /> Limpiar
+                </button>
+                <AiReportButton chatId={chatId} action={action} text={text} originalText={generatedTextRef.current} metadata={generationMetaRef.current || { source: isReactivate ? 'reactivate' : 'ai_suggestion', agent, objective }} />
+              </>
+            ) : null}
+          </div>
 
-      {/* Send */}
-      {error ? <p className="t-caption" style={{margin: '0 0 8px', color: 'var(--danger)'}}>{error}</p> : null}
-      <AiReportButton chatId={chatId} action={action} text={text} metadata={generationMetaRef.current || { source: 'ai_suggestion' }} />
-      {canSend ? (
-        <button className="btn btn--primary btn--full" disabled={regenerating} onClick={async () => {
-          try {
-            if (!text.trim()) {
-              setError('Genera o escribe un mensaje antes de enviarlo.');
-              return;
-            }
-            if (WaFliAPI?.chats?.send && WaFliAPI?.client?.isAuthenticated?.()) {
-              await WaFliAPI.chats.send(chatId, text, generationMetaRef.current ? {
-                metadata: {
-                  ...generationMetaRef.current,
-                  wasEditedBeforeSend: text.trim() !== String(generatedTextRef.current || '').trim()
-                }
-              } : {});
-            }
-            onSent && onSent(text);
-          } catch (apiError) {
-            setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos enviar el mensaje.');
-          }
-        }}>Enviar</button>
-      ) : (
-        <div className="btn btn--secondary btn--full" aria-disabled="true" style={{pointerEvents: 'none', opacity: 0.78}}>
-          Genera o escribe una sugerencia para enviar
+          <AiOptionalControls
+            userContext={userContext}
+            setUserContext={setUserContext}
+            setError={setError}
+            contextPlaceholder={isReactivate
+              ? 'Ej. quiero retomar sin parecer intenso; habíamos quedado en hablar esta semana...'
+              : 'Ej. es alguien que me interesa, mi jefe o un amigo; quiero sonar con calma, claro o cercano...'}
+          />
+
+          {error ? <p className="t-caption" style={{margin: hasResult ? '0 0 8px' : '10px 0 0', color: 'var(--danger)'}}>{error}</p> : null}
         </div>
-      )}
-      <div className="row gap-1" style={{justifyContent: 'center', marginTop: 10, color: 'var(--text-secondary)', fontSize: 12}}>
-        <Icons.Bolt size={11} sw={2} fill="currentColor" />
-        <span className="t-mono" style={{fontSize: 12}}>La cuota se actualiza desde el servicio</span>
       </div>
-      </div>
+
+      {hasResult && canSend ? (
+        <div className="ai-sheet__footer">
+          <button className="btn btn--primary btn--full" disabled={loading} onClick={async () => {
+            try {
+              if (!text.trim()) {
+                setError('Genera un mensaje antes de enviarlo.');
+                return;
+              }
+              if (WaFliAPI?.chats?.send && WaFliAPI?.client?.isAuthenticated?.()) {
+                await WaFliAPI.chats.send(chatId, text, generationMetaRef.current ? {
+                  metadata: {
+                    ...generationMetaRef.current,
+                    wasEditedBeforeSend: text.trim() !== String(generatedTextRef.current || '').trim()
+                  }
+                } : {});
+              }
+              onSent && onSent(text);
+            } catch (apiError) {
+              setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido enviar el mensaje.');
+            }
+          }}>Enviar</button>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 function RewriteSheet({ chatId, sourceText = '', onUse, onQuota }) {
-  const [tone, setTone] = React.useState('Desenfadado');
-  const [rewritten, setRewritten] = React.useState(sourceText || '');
+  const [agent, setAgent] = React.useState(DEFAULT_AI_AGENT);
+  const [objective, setObjective] = React.useState(defaultObjectiveForAgent(DEFAULT_AI_AGENT));
+  const [customObjective, setCustomObjective] = React.useState('');
+  const [userContext, setUserContext] = React.useState('');
+  const [intensity, setIntensity] = React.useState('auto');
+  const [aiProfile, setAiProfile] = React.useState(() => normalizeAiManualProfile());
+  const [profileStatus, setProfileStatus] = React.useState('');
+  const [baseDraft, setBaseDraft] = React.useState(sourceText || '');
+  const [rewritten, setRewritten] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
-  const generatedRef = React.useRef('');
-  const regen = async () => {
-    if (!sourceText && !rewritten.trim()) {
-      setError('Escribe algo en el composer para reescribirlo.');
-      return;
-    }
-    if (WaFliAPI?.ai?.rewrite && WaFliAPI?.client?.isAuthenticated?.()) {
-      setLoading(true);
-      setError('');
-      try {
-        const result = await WaFliAPI.ai.rewrite({ chatId, draft: sourceText || rewritten, tone });
-        if (result.text) setRewritten(result.text);
-        emitQuotaUsage(result);
-      } catch (apiError) {
-        if (apiError.code === 'quota_exhausted') onQuota && onQuota();
-        else setError(WaFliAPI.client.toUserMessage(apiError));
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-    setError('Inicia sesión y conecta tu WhatsApp para reescribir con IA.');
-  };
+  const generatedMetaRef = React.useRef(null);
+  const generatedTextRef = React.useRef('');
+  const hasResult = Boolean(rewritten.trim());
+
   React.useEffect(() => {
-    const key = `${chatId || ''}:${sourceText || ''}`;
-    if (!sourceText || generatedRef.current === key) return;
-    generatedRef.current = key;
-    regen();
-  }, [chatId, sourceText]);
+    setBaseDraft(sourceText || '');
+    setRewritten('');
+    generatedMetaRef.current = null;
+    generatedTextRef.current = '';
+  }, [sourceText]);
+
+  React.useEffect(() => {
+    let alive = true;
+    if (!chatId || !WaFliAPI?.chats?.getAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return () => { alive = false; };
+    WaFliAPI.chats.getAiProfile(chatId)
+      .then(result => {
+        if (!alive) return;
+        const manual = normalizeAiManualProfile(result?.profile?.manual);
+        setAiProfile(manual);
+        if (manual.intensity && manual.intensity !== 'auto') setIntensity(manual.intensity);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [chatId]);
+
+  const saveAiProfile = async () => {
+    if (!WaFliAPI?.chats?.updateAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return;
+    setProfileStatus('Guardando...');
+    try {
+      const payload = normalizeAiManualProfile({ ...aiProfile, intensity });
+      const result = await WaFliAPI.chats.updateAiProfile(chatId, payload);
+      setAiProfile(normalizeAiManualProfile(result?.profile?.manual || payload));
+      setProfileStatus('Guardado');
+    } catch (_) {
+      setProfileStatus('No se pudo guardar');
+    }
+  };
+
+  const generateRewrite = async () => {
+    const draft = baseDraft.trim();
+    if (!draft) {
+      setError('Escribe el mensaje base que quieres reescribir.');
+      return;
+    }
+    const isRegeneration = hasResult;
+    const endpoint = isRegeneration ? (WaFliAPI?.ai?.regenerate || WaFliAPI?.ai?.rewrite) : WaFliAPI?.ai?.rewrite;
+    if (!endpoint || !WaFliAPI?.client?.isAuthenticated?.()) {
+      setError('Inicia sesión y conecta tu WhatsApp para reescribir con IA.');
+      return;
+    }
+    stopAiSpeechDictation();
+    setLoading(true);
+    setError('');
+    try {
+      const result = await endpoint({
+        chatId,
+        action: 'rewrite',
+        draft,
+        message: draft,
+        agent,
+        tone: agent,
+        objective,
+        intensity,
+        customObjective: objective === 'Personalizado' ? customObjective.trim() : '',
+        userContext: userContext.trim(),
+        regeneration: isRegeneration,
+        previousGeneratedText: isRegeneration ? String(generatedTextRef.current || rewritten || '').trim() : '',
+        currentDraftText: isRegeneration ? String(rewritten || '').trim() : '',
+      });
+      const nextText = String(result?.text || result?.message || '').trim();
+      if (nextText) {
+        const resultMeta = result?.meta || {};
+        setRewritten(nextText);
+        generatedTextRef.current = nextText;
+        generatedMetaRef.current = {
+          ...resultMeta,
+          source: 'rewrite',
+          action: 'rewrite',
+          chatId,
+          originalLength: draft.length,
+          promptVersion: resultMeta.promptVersion || result.promptVersion || result['promptVersion'] || '',
+          model: resultMeta.model || result.model || '',
+          variant: resultMeta.variant || result.variant || '',
+          contextCopilotHints: resultMeta.contextCopilotHints ?? result.contextCopilotHints ?? null,
+          agent: resultMeta.agent || agent,
+          objective: resultMeta.objective || objective,
+          objectiveSource: resultMeta.objectiveSource || '',
+          intensity: resultMeta.intensity || intensity,
+          situation: resultMeta.situation || '',
+          relationshipType: resultMeta.relationshipType || '',
+          usedConversationProfile: Boolean(resultMeta.usedConversationProfile),
+          customObjective: objective === 'Personalizado' ? customObjective.trim() : '',
+          userContext: userContext.trim(),
+        };
+      }
+      emitQuotaUsage(result);
+    } catch (apiError) {
+      if (apiError.code === 'quota_exhausted') onQuota && onQuota();
+      else setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido reescribir el mensaje.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearResult = () => {
+    setRewritten('');
+    generatedMetaRef.current = null;
+    generatedTextRef.current = '';
+    setError('');
+  };
+
   return (
-    <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '4px 18px 18px'}}>
-      <div className="row gap-2" style={{marginBottom: 4, alignItems: 'center'}}><Icons.Sparkles size={18} style={{color: 'var(--accent)'}} /><span className="t-h3">Reescribir</span></div>
-      <div style={{display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 12, paddingBottom: 4}}>{TONES.map(t => <span key={t} className={'chip ' + (tone === t ? 'chip--active' : '')} onClick={() => setTone(t)}>{t}</span>)}</div>
-      <div className="t-caption" style={{marginBottom: 6}}>Original</div>
-      <div className="card" style={{padding: 10, marginBottom: 10, fontSize: 13.5}}>{sourceText || 'Escribe algo en el composer para reescribir.'}</div>
-      <div className="t-caption" style={{marginBottom: 6}}>Reescrito</div>
-      <textarea className="textarea" rows={6} value={rewritten} onChange={e => setRewritten(e.target.value)} placeholder="Tu mensaje reescrito aparecerá aquí." style={{fontSize: 16, marginBottom: 12}} />
-      <AiReportButton chatId={chatId} action="rewrite" text={rewritten} metadata={{ source: 'rewrite', originalLength: String(sourceText || '').length }} />
-      {error ? <p className="t-caption" style={{margin: '0 0 8px', color: 'var(--danger)'}}>{error}</p> : null}
-      <button className="btn btn--ghost btn--md" style={{marginBottom: 10}} disabled={loading} onClick={regen}><Icons.Refresh size={16} /> {loading ? 'Generando...' : 'Regenerar'}</button>
-      <button className="btn btn--primary btn--full" onClick={() => onUse && onUse(rewritten)}>Usar este</button>
+    <div className="ai-sheet" style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '4px 18px 18px'}}>
+      <div className="ai-sheet__scroll">
+        <div className="row gap-2" style={{marginBottom: 12, alignItems: 'center'}}>
+          <Icons.Sparkles size={18} style={{color: 'var(--accent)'}} />
+          <span className="t-h3">Reescribir mensaje propio</span>
+        </div>
+        <AiAgentControls
+          agent={agent}
+          setAgent={setAgent}
+          objective={objective}
+          setObjective={setObjective}
+          customObjective={customObjective}
+          setCustomObjective={setCustomObjective}
+          userContext={userContext}
+          setUserContext={setUserContext}
+          setError={setError}
+          intensity={intensity}
+          setIntensity={setIntensity}
+          aiProfile={aiProfile}
+          setAiProfile={setAiProfile}
+          onSaveAiProfile={saveAiProfile}
+          profileStatus={profileStatus}
+          contextPlaceholder="Ej. quiero sonar más seguro, más cercano o menos seco."
+        />
+        <label className="t-caption" style={{display: 'block', marginBottom: 6, fontWeight: 700}}>Mensaje base</label>
+        <textarea
+          className="textarea"
+          rows={4}
+          value={baseDraft}
+          onChange={event => setBaseDraft(event.target.value)}
+          placeholder="Escribe el mensaje que quieres reescribir"
+          style={{fontSize: 16, lineHeight: 1.45, marginBottom: 12}}
+        />
+        {hasResult ? (
+          <div style={{position: 'relative', marginBottom: 12}}>
+            <textarea className="textarea" rows={6} value={rewritten} onChange={event => setRewritten(event.target.value)} style={{fontSize: 16, lineHeight: 1.5, opacity: loading ? 0.45 : 1}} />
+            {loading ? (
+              <div style={{position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--accent)', fontSize: 13, fontWeight: 500}}>
+                <Spinner size={16} /> generando...
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="ai-sheet__actions">
+          <div className="row gap-2" style={{marginBottom: hasResult ? 10 : 0, flexWrap: 'wrap', alignItems: 'center'}}>
+            <button className={hasResult ? 'btn btn--ghost btn--sm' : 'btn btn--primary btn--sm'} style={{border: hasResult ? '1px solid var(--border-strong)' : undefined, color: hasResult ? 'var(--text)' : undefined}} disabled={loading} onClick={generateRewrite}>
+              {hasResult ? <Icons.Refresh size={15} /> : <Icons.Sparkles size={15} />} {hasResult ? 'Regenerar' : 'Generar'}
+            </button>
+            {hasResult ? (
+              <>
+                <button className="btn btn--ghost btn--sm" style={{border: '1px solid var(--border-strong)', color: 'var(--text)'}} onClick={clearResult}>
+                  <Icons.Edit size={14} /> Limpiar
+                </button>
+                <AiReportButton chatId={chatId} action="rewrite" text={rewritten} originalText={generatedTextRef.current} metadata={generatedMetaRef.current || { source: 'rewrite', agent, objective, originalLength: String(baseDraft || '').length }} />
+              </>
+            ) : null}
+          </div>
+          <AiOptionalControls
+            userContext={userContext}
+            setUserContext={setUserContext}
+            setError={setError}
+            contextPlaceholder="Ej. quiero sonar más seguro, más cercano o menos seco."
+          />
+          {error ? <p className="t-caption" style={{margin: hasResult ? '0 0 8px' : '10px 0 0', color: 'var(--danger)'}}>{error}</p> : null}
+        </div>
+      </div>
+      {hasResult ? (
+        <div className="ai-sheet__footer">
+          <button className="btn btn--primary btn--full" disabled={loading} onClick={() => onUse && onUse(rewritten)}>Usar este texto</button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -4499,24 +5213,9 @@ function AnalysisSheet({ chatId, message = '', onSuggest, onQuota }) {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState('');
   React.useEffect(() => {
-    let alive = true;
-    const run = async () => {
-      if (!WaFliAPI?.ai?.analyze || !WaFliAPI?.client?.isAuthenticated?.()) return;
-      setLoading(true);
-      setError('');
-      try {
-        const result = await WaFliAPI.ai.analyze({ chatId, message });
-        if (alive) setAnalysis(result.text || '');
-        emitQuotaUsage(result);
-      } catch (apiError) {
-        if (apiError.code === 'quota_exhausted') onQuota && onQuota();
-        else if (alive) setError(WaFliAPI.client.toUserMessage(apiError));
-      } finally {
-        if (alive) setLoading(false);
-      }
-    };
-    run();
-    return () => { alive = false; };
+    setAnalysis('');
+    setError('');
+    setLoading(false);
   }, [chatId, message]);
   return (
     <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '4px 18px 18px'}}>
@@ -4525,7 +5224,7 @@ function AnalysisSheet({ chatId, message = '', onSuggest, onQuota }) {
       <div className="card" style={{padding: 10, marginBottom: 12, fontSize: 13.5}}>{message || 'No hay mensaje seleccionado.'}</div>
       <div className="card" style={{padding: 12, marginBottom: 12}}>
         {loading ? <p style={{margin: 0}}>Analizando...</p> : analysis ? <p style={{margin: 0, whiteSpace: 'pre-wrap'}}>{analysis}</p> : (
-          <p style={{margin: 0, color: 'var(--text-secondary)'}}>El análisis aparecerá cuando la IA devuelva una respuesta.</p>
+          <p style={{margin: 0, color: 'var(--text-secondary)'}}>WaFli no analiza mensajes automaticamente. Usa sugerir respuesta para generar solo cuando quieras.</p>
         )}
       </div>
       <AiReportButton chatId={chatId} action="analyze" text={analysis} metadata={{ source: 'analysis' }} />
@@ -4535,9 +5234,9 @@ function AnalysisSheet({ chatId, message = '', onSuggest, onQuota }) {
   );
 }
 
-// SCREEN 6 · Necesito abrir (apertura para match nuevo)
+// SCREEN 6 · Sugerencia heredada para compatibilidad interna
 function OpenerSheet({ chatId, matchName = 'Chat', onClose, onUse, onQuota }) {
-  const [tone, setTone] = React.useState('Desenfadado');
+  const [tone, setTone] = React.useState(DEFAULT_AI_AGENT);
   const [context, setContext] = React.useState('');
   const [selected, setSelected] = React.useState(0);
   const [remoteOptions, setRemoteOptions] = React.useState([]);
@@ -4548,7 +5247,7 @@ function OpenerSheet({ chatId, matchName = 'Chat', onClose, onUse, onQuota }) {
   const options = remoteOptions.map((text) => ({ kind: 'IA', text }));
   const generateOpener = async () => {
     if (!WaFliAPI?.ai?.opener || !WaFliAPI?.client?.isAuthenticated?.()) {
-      setError('Inicia sesión y conecta tu WhatsApp para generar aperturas con IA.');
+      setError('Inicia sesión y conecta tu WhatsApp para generar sugerencias con IA.');
       return;
     }
     setLoading(true);
@@ -4572,16 +5271,16 @@ function OpenerSheet({ chatId, matchName = 'Chat', onClose, onUse, onQuota }) {
   };
 
   React.useEffect(() => {
-    if (generatedRef.current) return;
-    generatedRef.current = true;
-    generateOpener();
+    generatedRef.current = false;
+    setRemoteOptions([]);
+    setSelected(0);
   }, [chatId]);
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '4px 18px 18px'}}>
       <div className="row gap-2" style={{marginBottom: 4, alignItems: 'center'}}>
         <Icons.Sparkles size={18} style={{color: 'var(--accent)'}} />
-        <span className="t-h3">Apertura para {matchName}</span>
+        <span className="t-h3">Sugerencia para {matchName}</span>
       </div>
       <p className="t-caption" style={{margin: '0 0 14px'}}>Elige una de las tres o regenera.</p>
 
@@ -4607,7 +5306,7 @@ function OpenerSheet({ chatId, matchName = 'Chat', onClose, onUse, onQuota }) {
         </div>
 
         {/* Options */}
-        <div className="t-small" style={{fontWeight: 500, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: 11, marginBottom: 8}}>Opciones de apertura</div>
+        <div className="t-small" style={{fontWeight: 500, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: 11, marginBottom: 8}}>Opciones</div>
         <div style={{display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16}}>
           {options.length ? options.map((o, i) => (
             <button
@@ -4637,7 +5336,7 @@ function OpenerSheet({ chatId, matchName = 'Chat', onClose, onUse, onQuota }) {
             </button>
           )) : (
             <div className="card" style={{padding: 12}}>
-              <span className="t-small" style={{color: 'var(--text-secondary)'}}>Genera una apertura para ver opciones reales.</span>
+              <span className="t-small" style={{color: 'var(--text-secondary)'}}>Genera una sugerencia para ver opciones reales.</span>
             </div>
           )}
         </div>
@@ -4667,7 +5366,7 @@ function usageActionLabel(action = '') {
   return {
     suggest: 'Sugerencia de respuesta',
     rewrite: 'Reescritura de texto',
-    opener: 'Apertura de conversación',
+    opener: 'Sugerencia de respuesta',
     reactivate: 'Reactivación de hilo',
     analyze: 'Análisis de mensaje'
   }[key] || 'Generación IA';
@@ -4699,8 +5398,8 @@ function formatUsageRow(row = {}) {
   const reason = {
     suggest: 'Se gastó al pedir una respuesta sugerida.',
     rewrite: 'Se gastó al reescribir un texto.',
-    opener: 'Se gastó al pedir una apertura.',
-    reactivate: 'Se gastó al reactivar un hilo frío.',
+    opener: 'Se gastó al pedir una respuesta sugerida.',
+    reactivate: 'Se gastó al reactivar una conversación.',
     analyze: 'Se gastó al analizar un mensaje.'
   }[String(row.action || '').toLowerCase()] || 'Se gastó al usar una acción de IA.';
   return { detail, reason, statusLabel };
@@ -4726,7 +5425,7 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
         setRemoteUsage(result.usage || null);
         setPlanName(result.usage?.balance?.plan_name || '');
       } catch (error) {
-        if (alive) setUsageError(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos cargar tu uso.');
+        if (alive) setUsageError(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido cargar tu uso.');
       } finally {
         if (alive) setUsageLoading(false);
       }
@@ -4737,9 +5436,9 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
   const balance = remoteUsage?.balance;
   const summary = remoteUsage?.summary || {};
   const hasBalance = Boolean(balance);
-  const total = hasBalance ? Number(summary.includedLimit ?? balance?.included_limit ?? 0) + Number(summary.packBalance ?? balance?.pack_balance ?? 0) : 0;
-  const used = hasBalance ? Number(summary.usedInPeriod ?? balance?.used_in_period ?? 0) : 0;
-  const remaining = hasBalance ? Number(summary.totalAvailable ?? Math.max(0, Number(balance?.included_limit || 0) - used) + Number(balance?.pack_balance || 0)) : 0;
+  const total = hasBalance ? Number(summary.includedLimit | balance?.included_limit | 0) + Number(summary.packBalance | balance?.pack_balance | 0) : 0;
+  const used = hasBalance ? Number(summary.usedInPeriod | balance?.used_in_period | 0) : 0;
+  const remaining = hasBalance ? Number(summary.totalAvailable | Math.max(0, Number(balance?.included_limit || 0) - used) + Number(balance?.pack_balance || 0)) : 0;
   const periodLabel = summary.periodType === 'month' ? 'este mes' : summary.periodType === 'trial' ? 'en tu trial' : 'hoy';
   const renewLabel = summary.periodType === 'month'
     ? 'Se renueva al empezar el próximo mes.'
@@ -4770,7 +5469,7 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
       window.location.href = url;
       setRestoreMsg('Abrimos la tienda para gestionar tu suscripción.');
     } catch (error) {
-      setRestoreMsg(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos abrir la gestión de suscripción.');
+      setRestoreMsg(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido abrir la gestión de suscripción.');
     }
   };
   const restoreNativePurchases = async () => {
@@ -4779,7 +5478,7 @@ function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
       await WaFliAPI.billing.restorePurchases();
       setRestoreMsg('Compras restauradas y sincronizadas.');
     } catch (error) {
-      setRestoreMsg(WaFliAPI?.client?.toUserMessage?.(error) || 'No pudimos restaurar compras.');
+      setRestoreMsg(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido restaurar compras.');
     }
   };
 
@@ -4896,8 +5595,11 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
   const [email, setEmail] = React.useState('');
   const [alias, setAlias] = React.useState('');
   const [spanishVariant, setSpanishVariant] = React.useState('Neutro');
-  const [toneBase, setToneBase] = React.useState('Desenfadado');
+  const [toneBase, setToneBase] = React.useState(DEFAULT_AI_AGENT);
   const [language, setLanguage] = React.useState('ES');
+  const [styleWordsUse, setStyleWordsUse] = React.useState('');
+  const [styleWordsAvoid, setStyleWordsAvoid] = React.useState('');
+  const [styleExamples, setStyleExamples] = React.useState('');
   const [notifications, setNotifications] = React.useState(notificationPrefs || {
     global: false,
     newMessage: true,
@@ -4948,8 +5650,13 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
         setEmail(profile.email || email);
         setAlias(profile.alias || '');
         setSpanishVariant(profile.spanish_variant || profile.spanishVariant || 'Neutro');
-        setToneBase(profile.base_tone || profile.baseTone || 'Desenfadado');
+        const savedAgent = getAiAgentConfig(profile.base_tone || profile.baseTone || DEFAULT_AI_AGENT);
+        setToneBase(savedAgent.label);
         setLanguage(profile.ui_language || profile.uiLanguage || 'ES');
+        const aiStyle = profile.ai_style_profile || profile.aiStyleProfile || {};
+        setStyleWordsUse(aiStyle.wordsUse || aiStyle.words_use || '');
+        setStyleWordsAvoid(aiStyle.wordsAvoid || aiStyle.words_avoid || '');
+        setStyleExamples(aiStyle.examples || aiStyle.writingExamples || aiStyle.styleExamples || '');
       } catch (_) {}
     };
     loadProfile();
@@ -4971,7 +5678,22 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
       setActionMsg('Perfil actualizado');
       setSheet(null);
     } catch (apiError) {
-      setActionMsg(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos guardar el perfil.');
+      setActionMsg(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido guardar el perfil.');
+    }
+  };
+  const saveSpeakingStyle = async () => {
+    try {
+      await WaFliAPI?.me?.updateProfile?.({
+        aiStyleProfile: {
+          wordsUse: styleWordsUse,
+          wordsAvoid: styleWordsAvoid,
+          examples: styleExamples,
+        }
+      });
+      setActionMsg('Forma de hablar guardada');
+      setSheet(null);
+    } catch (apiError) {
+      setActionMsg(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido guardar tu forma de hablar.');
     }
   };
   const runPrivacyAction = async (config = {}) => {
@@ -4988,7 +5710,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
       setSheet(null);
       if (typeof afterSuccess === 'function') await afterSuccess();
     } catch (apiError) {
-      setActionMsg(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos completar la acción.');
+      setActionMsg(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido completar la acción.');
     } finally {
       setPrivacyLoading('');
     }
@@ -5015,7 +5737,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
       URL.revokeObjectURL(url);
       setActionMsg('Descarga preparada');
     } catch (apiError) {
-      setActionMsg(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos preparar la descarga.');
+      setActionMsg(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido preparar la descarga.');
     } finally {
       setPrivacyLoading('');
     }
@@ -5023,7 +5745,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
   const askPrivacyAction = (config) => setPrivacyConfirm(config);
   const disconnectWhatsApp = () => askPrivacyAction({
     id: 'disconnect',
-    title: 'Desconectar tu WhatsApp?',
+    title: '¿Desconectar tu WhatsApp?',
     body: 'WaFli dejará de recibir y enviar mensajes hasta que vuelvas a conectar tu WhatsApp.',
     confirmLabel: 'Sí, desconectar',
     loadingLabel: 'Desconectando...',
@@ -5033,7 +5755,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
   });
   const deletePrivacyHistory = () => askPrivacyAction({
     id: 'history',
-    title: 'Borrar historial cacheado?',
+    title: '¿Borrar historial en caché?',
     body: 'Se eliminará el historial temporal que WaFli usa para mostrar chats recientes y contexto IA. No borra tus chats originales.',
     confirmLabel: 'Sí, borrar historial',
     loadingLabel: 'Borrando...',
@@ -5060,12 +5782,12 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
       : idleLabel
   );
   const openSupport = async () => {
-    if (isNativeApp) {
+    try {
+      window.location.href = SUPPORT_URL;
+    } catch (_) {
       await navigator.clipboard?.writeText?.(SUPPORT_EMAIL).catch(() => {});
-      onShowToast && onShowToast('Email de soporte copiado');
-      return;
+      onShowToast && onShowToast('Correo de soporte copiado');
     }
-    window.open(SUPPORT_URL, '_blank', 'noopener,noreferrer');
   };
 
   const item = (icon, title, subtitle, onClick, noBorder = false) => (
@@ -5105,7 +5827,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
                 color: 'var(--accent)',
                 flexShrink: 0,
               }}>
-                <span className="t-mono" style={{fontSize: 13, fontWeight: 800}}>Aa</span>
+                <Icons.Settings size={17} />
               </span>
             </div>
             <div className="theme-segment">
@@ -5126,12 +5848,12 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
           </div>
           <div className="card" style={{padding: 0, overflow: 'hidden'}}>
             {item(<Icons.User size={17} />, 'Perfil', `${spanishVariant} · ${toneBase}`, () => setSheet('profile'))}
+            {item(<Icons.Sparkles size={17} />, 'Mi forma de hablar', 'Palabras que usas y evitas', () => setSheet('speaking-style'))}
             {item(<Icons.Card size={17} />, 'Plan y facturación', 'Atajo a plan + pago + facturas', () => setSheet('billing'))}
             {item(<Icons.Lock size={17} />, 'Privacidad', 'Datos, exportación y eliminación', () => setSheet('privacy'))}
-            {item(<Icons.Bell size={17} />, 'Notificaciones', notifications.global ? 'Encendidas' : 'Apagadas', () => setSheet('notifications'))}
+            {item(<Icons.Bell size={17} />, 'Notificaciones', notifications.global ? 'Activadas' : 'Desactivadas', () => setSheet('notifications'))}
             {item(<Icons.Settings size={17} />, 'Apariencia', theme === 'dark' ? 'Oscuro' : theme === 'light' ? 'Claro' : 'Sistema', () => setSheet('appearance'))}
-            {showLanguageSelector ? item(<Icons.Globe size={17} />, 'Idioma de la app', language, () => setSheet('language')) : null}
-            {item(<Icons.Help size={17} />, 'Soporte', 'FAQ, contacto y estado del servicio', () => setSheet('support'))}
+            {item(<Icons.Help size={17} />, 'Soporte', 'Contacto por correo', () => setSheet('support'))}
             {item(<Icons.Doc size={17} />, 'Términos legales', 'T&C, privacidad, cookies y soporte', () => setSheet('terms'), true)}
           </div>
 
@@ -5157,7 +5879,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
       <BottomSheet open={sheet === 'profile'} onClose={() => setSheet(null)} height="88%">
         <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
           <span className="t-h3" style={{marginBottom: 10}}>Perfil</span>
-          <label className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Email</label>
+          <label className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Correo</label>
           <div className="card" style={{padding: '10px 12px', marginBottom: 12, background: 'var(--gray-50)'}}>{email}</div>
           <label className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Variante de español</label>
           <div className="row gap-2" style={{flexWrap: 'wrap', marginBottom: 12}}>
@@ -5165,16 +5887,63 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
               <button key={v} className={'chip ' + (spanishVariant === v ? 'chip--active' : '')} onClick={() => setSpanishVariant(v)}>{v}</button>
             ))}
           </div>
-          <label className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Tono base</label>
+          <label className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Agente predeterminado</label>
           <div className="row gap-2" style={{flexWrap: 'wrap', marginBottom: 12}}>
-            {['Relajado', 'Desenfadado', 'Picante', 'Intelectual'].map((v) => (
-              <button key={v} className={'chip ' + (toneBase === v ? 'chip--active' : '')} onClick={() => setToneBase(v)}>{v}</button>
+            {AI_AGENTS.map((agent) => (
+              <button key={agent.id} className={'chip ' + (getAiAgentConfig(toneBase).id === agent.id ? 'chip--active' : '')} onClick={() => setToneBase(agent.label)}>{agent.label}</button>
             ))}
           </div>
           <label className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Nombre o alias (opcional)</label>
           <input value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="Tu alias" autoComplete="nickname" autoCorrect="off" enterKeyHint="done" style={{width: '100%', border: '1px solid var(--border-strong)', borderRadius: 12, padding: '11px 12px', outline: 'none', fontSize: 16, marginBottom: 14, fontFamily: 'inherit'}} />
           <div style={{position: 'sticky', bottom: 0, zIndex: 80, flexShrink: 0, margin: '18px -18px 0', padding: '10px 18px calc(12px + var(--safe-bottom))', background: 'var(--bg)', borderTop: '1px solid var(--border)'}}>
             <button className="btn btn--primary btn--full" onClick={saveProfile}>Guardar</button>
+          </div>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={sheet === 'speaking-style'} onClose={() => setSheet(null)} height="68%">
+        <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
+          <span className="t-h3" style={{marginBottom: 8}}>Mi forma de hablar</span>
+          <p className="t-caption" style={{margin: '0 0 14px', color: 'var(--text-secondary)'}}>
+            Opcional. Ayuda a WaFli a sonar más parecido a ti cuando generas una respuesta.
+          </p>
+          <label className="t-small" style={{fontWeight: 700, marginBottom: 6}}>Palabras que suelo usar</label>
+          <input
+            value={styleWordsUse}
+            onChange={(event) => setStyleWordsUse(event.target.value)}
+            placeholder="Ej. perfecto, claro, sin problema"
+            maxLength={240}
+            autoCorrect="off"
+            enterKeyHint="next"
+            style={{width: '100%', border: '1px solid var(--border-strong)', borderRadius: 12, padding: '11px 12px', outline: 'none', fontSize: 16, marginBottom: 14, fontFamily: 'inherit'}}
+          />
+          <label className="t-small" style={{fontWeight: 700, marginBottom: 6}}>Palabras que no uso</label>
+          <input
+            value={styleWordsAvoid}
+            onChange={(event) => setStyleWordsAvoid(event.target.value)}
+            placeholder="Ej. muy formal, urgente, estimado"
+            maxLength={240}
+            autoCorrect="off"
+            enterKeyHint="done"
+            style={{width: '100%', border: '1px solid var(--border-strong)', borderRadius: 12, padding: '11px 12px', outline: 'none', fontSize: 16, marginBottom: 14, fontFamily: 'inherit'}}
+          />
+          <label className="t-small" style={{fontWeight: 700, marginBottom: 6}}>Ejemplos de cómo escribo</label>
+          <textarea
+            className="textarea"
+            rows={4}
+            value={styleExamples}
+            onChange={(event) => setStyleExamples(event.target.value)}
+            placeholder="Ej. copia 2 o 3 mensajes tuyos cortos para que WaFli entienda tu ritmo."
+            maxLength={700}
+            style={{fontSize: 15, lineHeight: 1.45, marginBottom: 14}}
+          />
+          <div className="card" style={{padding: 12, background: 'var(--gray-50)', marginTop: 2}}>
+            <p className="t-caption" style={{margin: 0}}>
+              No hace falta completarlo. WaFli también usa el contexto del chat y tu variante de español.
+            </p>
+          </div>
+          <div style={{position: 'sticky', bottom: 0, zIndex: 80, flexShrink: 0, margin: '18px -18px 0', padding: '10px 18px calc(12px + var(--safe-bottom))', background: 'var(--bg)', borderTop: '1px solid var(--border)'}}>
+            <button className="btn btn--primary btn--full" onClick={saveSpeakingStyle}>Guardar</button>
           </div>
         </div>
       </BottomSheet>
@@ -5199,7 +5968,7 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
           <span className="t-h3" style={{marginBottom: 10}}>Privacidad</span>
           <div className="card" style={{padding: 12, marginBottom: 12}}>
             <div className="t-small" style={{fontWeight: 600, marginBottom: 6}}>Datos almacenados</div>
-            <p className="t-caption" style={{margin: 0, color: 'var(--text-secondary)'}}>Usamos un cache temporal de conversaciones recientes para mostrar tus chats y generar respuestas. Puedes borrar ese historial desde aquí.</p>
+            <p className="t-caption" style={{margin: 0, color: 'var(--text-secondary)'}}>Usamos una caché temporal de conversaciones recientes para mostrar tus chats y generar respuestas. Puedes borrar ese historial desde aquí.</p>
           </div>
           <div className="card" style={{padding: 12, marginBottom: 12, background: 'var(--gray-50)'}}>
             <div className="t-small" style={{fontWeight: 700, marginBottom: 4}}>Mejora de modelo desactivada en V0</div>
@@ -5300,15 +6069,6 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
         </div>
       </BottomSheet>
 
-      <BottomSheet open={showLanguageSelector && sheet === 'language'} onClose={() => setSheet(null)} height="60%">
-        <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
-          <span className="t-h3" style={{marginBottom: 10}}>Idioma de la app</span>
-          {['ES', 'EN', 'PT'].map((opt) => (
-            <button key={opt} className={'btn btn--md ' + (language === opt ? 'btn--primary' : 'btn--secondary')} style={{marginBottom: 8}} onClick={() => setLanguage(opt)}>{opt}</button>
-          ))}
-        </div>
-      </BottomSheet>
-
       <BottomSheet open={sheet === 'appearance'} onClose={() => setSheet(null)} height="58%">
         <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
           <span className="t-h3" style={{marginBottom: 10}}>Apariencia</span>
@@ -5339,28 +6099,16 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
         </div>
       </BottomSheet>
 
-      <BottomSheet open={sheet === 'support'} onClose={() => setSheet(null)} height="92%">
-        <div style={{padding: '8px 18px 18px', display: 'flex', flexDirection: 'column', gap: 10}}>
-          <span className="t-h3" style={{marginBottom: 2}}>Soporte y FAQs</span>
+      <BottomSheet open={sheet === 'support'} onClose={() => setSheet(null)} height="58%">
+        <div style={{padding: '8px 18px 18px', display: 'flex', flexDirection: 'column', gap: 12}}>
+          <span className="t-h3" style={{marginBottom: 2}}>Soporte</span>
           <p className="t-caption" style={{margin: '0 0 6px', color: 'var(--text-secondary)', textWrap: 'pretty'}}>
-            Respuestas rápidas sobre uso, privacidad, IA, notificaciones, pagos, cuenta y solución de problemas.
+            Si necesitas ayuda, escríbenos con el correo de tu cuenta, dispositivo, sistema operativo y una descripción breve del problema.
           </p>
-          <div className="card" style={{padding: 12, display: 'flex', flexDirection: 'column', gap: 10}}>
-            {LEGAL_DOCUMENTS.support.sections.map(([heading, text]) => (
-              <div key={heading} style={{paddingBottom: 10, borderBottom: '1px solid var(--border)'}}>
-                <div className="t-small" style={{fontWeight: 800, marginBottom: 4}}>{heading}</div>
-                <div className="t-caption" style={{color: 'var(--text-secondary)', lineHeight: 1.45}}>{text}</div>
-              </div>
-            ))}
-          </div>
           <div className="card" style={{padding: 12}}>
-            <div className="t-small" style={{fontWeight: 800, marginBottom: 6}}>Contacto humano</div>
-            <div className="t-caption" style={{marginBottom: 8, color: 'var(--text-secondary)'}}>
-              Si el problema persiste, escribe con tu email de cuenta, dispositivo, sistema operativo y una descripción breve.
-            </div>
-            <div className="t-caption" style={{marginBottom: 8}}>{SUPPORT_EMAIL}</div>
-            <button className="btn btn--secondary btn--md" style={{marginBottom: 8}} onClick={openSupport}>Enviar email a soporte</button>
-            <button className="btn btn--text" style={{height: 36}} onClick={openSupport}>Contactar con WaFli</button>
+            <div className="t-small" style={{fontWeight: 800, marginBottom: 6}}>Contacto</div>
+            <div className="t-caption" style={{marginBottom: 12, color: 'var(--text-secondary)'}}>{SUPPORT_EMAIL}</div>
+            <button className="btn btn--secondary btn--md" onClick={openSupport}>Enviar correo a soporte</button>
           </div>
         </div>
       </BottomSheet>      <BottomSheet open={sheet === 'terms'} onClose={() => setSheet(null)} height="76%">
@@ -5369,7 +6117,6 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
           <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('terms'); }}>Términos y Condiciones</button>
           <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('privacy'); }}>Política de Privacidad</button>
           <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('cookies'); }}>Política de Cookies</button>
-          <button className="btn btn--secondary btn--md" style={{textAlign: 'left'}} onClick={() => { setSheet(null); setLegalDoc('support'); }}>FAQs y soporte</button>
         </div>
       </BottomSheet>
       {legalDoc && LEGAL_DOCUMENTS[legalDoc] ? (
@@ -5417,7 +6164,7 @@ function AndroidBillingNotice() {
     <div className="card" style={{padding: 12, marginBottom: 12, borderColor: 'rgba(14, 165, 143, 0.18)', background: 'var(--accent-soft)'}}>
       <div className="t-small" style={{fontWeight: 800, color: 'var(--accent)', marginBottom: 4}}>Compras nativas</div>
       <div className="t-caption" style={{color: 'var(--text-secondary)'}}>
-        Las compras dentro de {platformName} se gestionan con {storeName}. Esta version no abre pagos externos.
+        Las compras dentro de {platformName} se gestionan con {storeName}. Esta versión no abre pagos externos.
       </div>
     </div>
   );
@@ -5427,16 +6174,16 @@ function PlanSelectorSheet({ onChoose }) {
   const blocked = androidBillingBlocked();
   const { storeName } = nativeBillingStoreCopy();
   const plans = [
-    { id: 'free', name: 'Gratis', price: '€0', quota: '5 generaciones IA/dia', features: ['Plan básico incluido', 'Sugerir y reescribir', 'Vuelve a Gratis cancelando Plus/Pro desde la tienda'] },
-    { id: 'plus', name: 'Plus', price: '€4.99/mes', quota: '150 generaciones IA/mes', features: ['Más generaciones mensuales', 'Sugerir, reescribir y abrir'] },
+    { id: 'free', name: 'Gratis', price: '€0', quota: '5 generaciones IA/día', features: ['Plan básico incluido', 'Sugerir y reescribir', 'Vuelve a Gratis cancelando Plus/Pro desde la tienda'] },
+    { id: 'plus', name: 'Plus', price: '€4.99/mes', quota: '150 generaciones IA/mes', features: ['Más generaciones mensuales', 'Sugerir, reescribir y reactivar'] },
     { id: 'pro', name: 'Pro', price: '€9.99/mes', quota: '500 generaciones IA/mes', features: ['Mayor cupo mensual', 'Pensado para uso intensivo', 'Packs extra compatibles'] },
   ];
   return (
-    <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
+    <div style={{display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: '8px 18px 18px'}}>
       <span className="t-h3" style={{marginBottom: 10}}>Ver planes</span>
       <span className="t-caption" style={{color: 'var(--text-secondary)', marginBottom: 12}}>Planes mensuales y gestión desde la tienda correspondiente.</span>
       <AndroidBillingNotice />
-      <div className="col gap-2" style={{overflow: 'auto'}}>
+      <div className="col gap-2 billing-plan-list">
         {plans.map((p) => (
           <div key={p.id} className="card" style={{padding: 12}}>
             <div className="row" style={{justifyContent: 'space-between', alignItems: 'baseline'}}>
@@ -5479,10 +6226,10 @@ function PackSelectorSheet({ onBuy }) {
     { id: '50', qty: 50, price: 2.99 },
   ];
   return (
-    <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
+    <div style={{display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: '8px 18px 18px'}}>
       <span className="t-h3" style={{marginBottom: 10}}>Comprar packs</span>
       <AndroidBillingNotice />
-      <div className="col gap-2">
+      <div className="col gap-2 billing-pack-list">
         {packs.map((p) => (
           <div key={p.id} className="card" style={{padding: 12}}>
             <div className="row" style={{justifyContent: 'space-between'}}>
@@ -5520,7 +6267,7 @@ function UsageHistorySheet() {
         }));
         if (alive) setRows(recent);
       } catch (apiError) {
-        if (alive) setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos cargar el historial.');
+        if (alive) setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido cargar el historial.');
       } finally {
         if (alive) setLoading(false);
       }
@@ -5529,10 +6276,10 @@ function UsageHistorySheet() {
     return () => { alive = false; };
   }, []);
   return (
-    <div style={{display: 'flex', flexDirection: 'column', flex: 1, padding: '8px 18px 18px'}}>
+    <div style={{display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: '8px 18px 18px'}}>
       <span className="t-h3" style={{marginBottom: 4}}>Historial de uso</span>
       <p className="t-caption" style={{margin: '0 0 12px', color: 'var(--text-secondary)'}}>Cada fila indica qué acción de IA consumió cuota y en qué chat ocurrió.</p>
-      <div className="card" style={{padding: 0, overflow: 'hidden'}}>
+      <div className="card usage-history-list" style={{padding: 0}}>
         {loading ? (
           <div style={{padding: '12px'}}><span className="t-small">Cargando historial...</span></div>
         ) : error ? (
@@ -5574,6 +6321,3 @@ Object.assign(window, {
   PlanSelectorSheet, PackSelectorSheet, UsageHistorySheet, PaymentSuccessSheet,
   Spinner,
 });
-
-
-

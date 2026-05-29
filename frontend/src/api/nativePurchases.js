@@ -55,13 +55,13 @@ function capabilities() {
 }
 
 function appUserIdForProfile(profile = {}) {
-  if (!profile?.id) throw new ApiClientError(400, "missing_user_profile", "No pudimos identificar tu cuenta para compras nativas.");
+  if (!profile?.id) throw new ApiClientError(400, "missing_user_profile", "No hemos podido identificar tu cuenta para compras nativas.");
   return `wafli_${profile.id}`;
 }
 
 async function ensureConfigured() {
   if (!isNativePurchasePlatform()) {
-    throw new ApiClientError(400, "native_payments_unavailable", "Las compras nativas solo estan disponibles en Android o iOS.");
+    throw new ApiClientError(400, "native_payments_unavailable", "Las compras nativas solo están disponibles en Android o iOS.");
   }
 
   const apiKey = apiKeyForPlatform();
@@ -225,7 +225,7 @@ async function purchaseByProduct({ productId, category, source }) {
     const pkg = packageForProduct(offering, productId);
     const product = pkg ? null : await getStoreProduct(productId, category);
     if (!pkg && !product) {
-      throw new ApiClientError(400, "native_product_not_found", "El producto no esta activo en la tienda para esta version.");
+      throw new ApiClientError(400, "native_product_not_found", "El producto no está activo en la tienda para esta versión.");
     }
     const purchase = pkg
       ? await Purchases.purchasePackage({ aPackage: pkg })
@@ -251,14 +251,14 @@ async function purchaseByProduct({ productId, category, source }) {
   } catch (error) {
     if (error?.userCancelled) return { native: true, cancelled: true };
     if (error instanceof ApiClientError) throw error;
-    throw new ApiClientError(400, error?.code || "native_purchase_failed", error?.message || "No pudimos completar la compra nativa.");
+    throw new ApiClientError(400, error?.code || "native_purchase_failed", error?.message || "No hemos podido completar la compra nativa.");
   }
 }
 
 async function purchasePlan(planName = "plus") {
   const safePlan = String(planName || "plus").toLowerCase();
   const productId = safePlan === "pro" ? REVENUECAT_PRO_PRODUCT_ID : safePlan === "plus" ? REVENUECAT_PLUS_PRODUCT_ID : "";
-  if (!productId) throw new ApiClientError(400, "unsupported_plan", "Este plan no esta disponible en este momento.");
+  if (!productId) throw new ApiClientError(400, "unsupported_plan", "Este plan no está disponible en este momento.");
   trackEvent("native_purchase_started", { provider: "revenuecat", purchase_type: "plan", plan_name: safePlan }).catch(() => {});
   return purchaseByProduct({
     productId,
@@ -269,10 +269,10 @@ async function purchasePlan(planName = "plus") {
 
 async function purchasePack(packSize = 50) {
   if (Number(packSize || 0) !== 50) {
-    throw new ApiClientError(400, "unsupported_pack", "Solo el pack de 50 generaciones esta disponible en este momento.");
+    throw new ApiClientError(400, "unsupported_pack", "Solo el pack de 50 generaciones está disponible en este momento.");
   }
   if (!REVENUECAT_PACK_50_PRODUCT_ID) {
-    throw new ApiClientError(400, "native_product_not_configured", "No pudimos cargar este producto de tienda.");
+    throw new ApiClientError(400, "native_product_not_configured", "No hemos podido cargar este producto de tienda.");
   }
   trackEvent("native_purchase_started", { provider: "revenuecat", purchase_type: "pack", pack_size: 50 }).catch(() => {});
   return purchaseByProduct({

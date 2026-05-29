@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { PushNotifications } from '@capacitor/push-notifications';
 
@@ -27,6 +27,7 @@ const PRIVATE_SCREENS = new Set([
   'chats', 'chats-empty', 'chat', 'chat-empty', 'plan', 'settings'
 ]);
 const WHATSAPP_REQUIRED_SCREENS = new Set(['chats', 'chats-empty', 'chat', 'chat-empty']);
+const ONBOARDING_FLOW_SCREENS = new Set(['legal', 'spanish-variant', 'tone-base', 'connect']);
 const PWA_INSTALL_SEEN_KEY = 'wafli:pwaInstallOpportunitySeen';
 const PWA_INSTALLED_KEY = 'wafli:pwaInstalled';
 
@@ -42,7 +43,7 @@ const screenForOnboardingStep = (nextStep) => {
   const step = String(nextStep || '').replace(/_/g, '-').toLowerCase();
   if (step === 'legal') return 'legal';
   if (step === 'profile' || step === 'spanish-variant') return 'spanish-variant';
-  if (step === 'tone' || step === 'tone-base' || step === 'base-tone') return 'tone-base';
+  if (step === 'tone' || step === 'tone-base' || step === 'base-tone' || step === 'basetone') return 'tone-base';
   if (step === 'whatsapp' || step === 'connect') return 'connect';
   return 'chats';
 };
@@ -70,13 +71,14 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   // Multi-tab navigation: track current tab + screen + active chat
   const [screen, setScreen] = React.useState(flagScreen || initialScreen);
   const [activeChat, setActiveChat] = React.useState('');
-  const [sheet, setSheet] = React.useState(null); // 'suggest' | 'reactivate' | 'opener' | 'rewrite' | 'analysis' | null
+  const [sheet, setSheet] = React.useState(null); // 'suggest' | 'reactivate' | 'rewrite' | 'analysis' | null
   const [modal, setModal] = React.useState(flagModal === 'quota' ? 'quota' : null); // 'quota' | null
   const [billingSheet, setBillingSheet] = React.useState(null); // plans | packs | history | success
   const [toast, setToast] = React.useState(null);
   const [analysisMessage, setAnalysisMessage] = React.useState('');
   const [composerSeed, setComposerSeed] = React.useState('');
   const [aiContext, setAiContext] = React.useState(null);
+  const [onboardingStatus, setOnboardingStatus] = React.useState(null);
   const [returnScreen, setReturnScreen] = React.useState('landing');
   const [authReady, setAuthReady] = React.useState(false);
   const [theme, setTheme] = React.useState(() => localStorage.getItem('wafli:theme') || 'system');
@@ -108,7 +110,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
     maintenance: flagState === 'maintenance',
     maintenanceReason: 'Mejora de infraestructura',
     maintenanceUntil: Date.now() + (45 * 60 * 1000),
-    systemError: flagState === 'error' ? 'No pudimos completar la accion. Reintenta.' : null,
+    systemError: flagState === 'error' ? 'No hemos podido completar la acción. Inténtalo de nuevo.' : null,
   });
   const [whatsappState, setWhatsappState] = React.useState({
     ready: false,
@@ -175,10 +177,13 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
         if (shouldRoute && alive) {
           if (sessionStorage.getItem('wafli:forceOnboardingFlow') === '1') {
             sessionStorage.removeItem('wafli:forceOnboardingFlow');
-            goTo('legal');
+            const status = await WaFliAPI.me.onboardingStatus().catch(() => null);
+            setOnboardingStatus(status);
+            goTo(screenForOnboardingStep(status?.nextStep || 'legal'));
             return;
           }
           const status = await WaFliAPI.me.onboardingStatus().catch(() => null);
+          setOnboardingStatus(status);
           goTo(screenForOnboardingStep(status?.nextStep));
         } else if (alive) {
           goTo('landing', { replace: true });
@@ -232,7 +237,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       setNotificationPermission('granted');
     }).then((handle) => registrations.push(handle)).catch(() => {});
     PushNotifications.addListener('registrationError', () => {
-      if (!cancelled) showToast('No pudimos registrar notificaciones en este dispositivo.');
+      if (!cancelled) showToast('No hemos podido registrar notificaciones en este dispositivo.');
     }).then((handle) => registrations.push(handle)).catch(() => {});
     PushNotifications.addListener('pushNotificationActionPerformed', ({ notification }) => {
       const data = notification?.data || {};
@@ -348,7 +353,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       }
       if (summary.warning80 && localStorage.getItem(warningKey) !== '1') {
         localStorage.setItem(warningKey, '1');
-        showToast('Ya usaste el 80% de tu cuota IA');
+        showToast('Ya has usado el 80% de tu cuota IA');
       }
     };
     window.addEventListener('wafli:quota-consumed', handleQuotaConsumed);
@@ -610,7 +615,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       setNotificationPrefs((prev) => ({ ...prev, global: true }));
       await WaFliAPI?.push?.updatePreferences?.({ global_enabled: true }).catch(() => {});
       const ok = await registerNativePushSubscription().catch(() => false);
-      showToast(ok ? 'Notificaciones Android activadas' : 'No pudimos activar notificaciones Android.');
+      showToast(ok ? 'Notificaciones Android activadas' : 'No hemos podido activar notificaciones Android.');
       return ok;
     }
     if (typeof Notification === 'undefined') {
@@ -635,17 +640,20 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       }
       return false;
     } catch (e) {
-      showToast('No se pudo activar notificaciones. Reintenta.');
+      showToast('No se han podido activar las notificaciones. Inténtalo de nuevo.');
       return false;
     }
   };
   const handleAuthReady = async (options = {}) => {
     if (options.forceOnboardingFlow || options.firstTime) {
-      goTo('legal');
+      const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
+      setOnboardingStatus(status);
+      goTo(screenForOnboardingStep(status?.nextStep || 'legal'));
       return;
     }
     try {
       const status = await WaFliAPI?.me?.onboardingStatus?.();
+      setOnboardingStatus(status);
       goTo(screenForOnboardingStep(status?.nextStep));
     } catch (_) {
       goTo('legal');
@@ -658,7 +666,9 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       if (WaFliAPI?.client?.isAuthenticated?.()) showToast(WaFliAPI.client.toUserMessage(error));
       return;
     }
-    goTo('spanish-variant');
+    const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
+    if (status) setOnboardingStatus(status);
+    goTo(screenForOnboardingStep(status?.nextStep || 'profile'));
   };
   const handleSpanishContinue = async (spanishVariant = 'España') => {
     try {
@@ -667,16 +677,20 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       if (WaFliAPI?.client?.isAuthenticated?.()) showToast(WaFliAPI.client.toUserMessage(error));
       return;
     }
-    goTo('tone-base');
+    const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
+    if (status) setOnboardingStatus(status);
+    goTo(screenForOnboardingStep(status?.nextStep || 'tone'));
   };
-  const handleToneContinue = async (baseTone = 'Desenfadado') => {
+  const handleToneContinue = async (baseTone = 'Ligoteo') => {
     try {
       await WaFliAPI?.me?.updateProfile?.({ baseTone });
     } catch (error) {
       if (WaFliAPI?.client?.isAuthenticated?.()) showToast(WaFliAPI.client.toUserMessage(error));
       return;
     }
-    goTo('connect');
+    const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
+    if (status) setOnboardingStatus(status);
+    goTo(screenForOnboardingStep(status?.nextStep || 'whatsapp'));
   };
   const openNotificationPrePrompt = () => {
     if (isCapacitorNative) {
@@ -684,8 +698,8 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       setNotificationPrefs((prev) => ({ ...prev, global: true }));
       WaFliAPI?.push?.updatePreferences?.({ global_enabled: true }).catch(() => {});
       registerNativePushSubscription()
-        .then((ok) => showToast(ok ? 'Notificaciones Android activadas' : 'No pudimos activar notificaciones Android.'))
-        .catch(() => showToast('No pudimos activar notificaciones Android.'));
+        .then((ok) => showToast(ok ? 'Notificaciones Android activadas' : 'No hemos podido activar notificaciones Android.'))
+        .catch(() => showToast('No hemos podido activar notificaciones Android.'));
       return;
     }
     if (notificationPermission === 'granted') return;
@@ -699,8 +713,8 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
         setNotificationPrefs((prev) => ({ ...prev, global: true }));
         WaFliAPI?.push?.updatePreferences?.({ global_enabled: true }).catch(() => {});
         registerNativePushSubscription()
-          .then((ok) => showToast(ok ? 'Notificaciones Android activadas' : 'No pudimos activar notificaciones Android.'))
-          .catch(() => showToast('No pudimos activar notificaciones Android.'));
+          .then((ok) => showToast(ok ? 'Notificaciones Android activadas' : 'No hemos podido activar notificaciones Android.'))
+          .catch(() => showToast('No hemos podido activar notificaciones Android.'));
         return;
       }
       if (turningOn && notificationPermission !== 'granted') {
@@ -730,6 +744,26 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
     if (PRIVATE_SCREENS.has(screen) && !WaFliAPI?.client?.isAuthenticated?.()) {
       goTo('landing');
     }
+  }, [authReady, screen]);
+  React.useEffect(() => {
+    if (!authReady || !WaFliAPI?.client?.isAuthenticated?.() || !ONBOARDING_FLOW_SCREENS.has(screen)) return undefined;
+    let alive = true;
+    const guardCompletedOnboardingStep = async () => {
+      const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
+      if (!alive || !status) return;
+      setOnboardingStatus(status);
+      const target = screenForOnboardingStep(status.nextStep);
+      const stepAlreadyDone =
+        (screen === 'legal' && status.legalDone) ||
+        (screen === 'spanish-variant' && status.spanishVariantDone) ||
+        (screen === 'tone-base' && status.baseToneDone) ||
+        (screen === 'connect' && status.whatsappDone);
+      if (stepAlreadyDone && target !== screen) {
+        goTo(target, { replace: true });
+      }
+    };
+    guardCompletedOnboardingStep();
+    return () => { alive = false; };
   }, [authReady, screen]);
   React.useEffect(() => {
     if (!authReady || !WaFliAPI?.client?.isAuthenticated?.() || !WHATSAPP_REQUIRED_SCREENS.has(screen)) return undefined;
@@ -829,7 +863,6 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
     const target = tweakHook.screen;
     if (target === 'chats-empty') { goTo('chats'); return; }
     if (target === 'suggest') { setActiveChat(''); setScreen('chat'); setSheet('suggest'); setModal(null); return; }
-    if (target === 'opener') { setActiveChat(''); setScreen('chat-empty'); setSheet('opener'); setModal(null); return; }
     if (target === 'quota') { setScreen('chats'); setSheet(null); setModal('quota'); return; }
     if (target === 'chat') { setActiveChat(''); setScreen('chat'); setSheet(null); setModal(null); return; }
     setScreen(target); setSheet(null); setModal(null);
@@ -874,9 +907,9 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       onReconnectWhatsApp={reconnectWhatsApp}
     />;
   } else if (effectiveScreen === 'chat') {
-    body = <ChatScreen matchId={activeChat} composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onOpener={() => setSheet('opener')} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '') => { setComposerSeed(sourceText); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage((LOCAL_CONVERSATIONS.find(m => m.id === activeChat)?.messages || []).slice(-1)[0]?.text || ''); setSheet('analysis'); }} offline={systemState.offline || whatsappUnavailable} showInstallShortcut={Boolean(!isCapacitorNative && whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat' })} aiSheetOpen={Boolean(sheet)} />;
+    body = <ChatScreen matchId={activeChat} composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '') => { setComposerSeed(sourceText); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage((LOCAL_CONVERSATIONS.find(m => m.id === activeChat)?.messages || []).slice(-1)[0]?.text || ''); setSheet('analysis'); }} offline={systemState.offline || whatsappUnavailable} showInstallShortcut={Boolean(!isCapacitorNative && whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat' })} aiSheetOpen={Boolean(sheet)} />;
   } else if (effectiveScreen === 'chat-empty') {
-    body = <ChatScreen matchId="" composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onOpener={() => setSheet('opener')} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '') => { setComposerSeed(sourceText); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage(''); setSheet('analysis'); }} offline={systemState.offline || whatsappUnavailable} showInstallShortcut={Boolean(!isCapacitorNative && whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat-empty' })} aiSheetOpen={Boolean(sheet)} />;
+    body = <ChatScreen matchId="" composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '') => { setComposerSeed(sourceText); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage(''); setSheet('analysis'); }} offline={systemState.offline || whatsappUnavailable} showInstallShortcut={Boolean(!isCapacitorNative && whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat-empty' })} aiSheetOpen={Boolean(sheet)} />;
   } else if (effectiveScreen === 'plan') {
     body = <PlanScreen
       onNavigate={navigate}
@@ -904,28 +937,25 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
         {body}
       </main>
 
-      <BottomSheet open={sheet === 'suggest'} onClose={() => { setAiContext(null); setSheet(null); }} height="78%">
-        <SuggestSheet chatId={activeChat} quotedMessage={aiContext?.quotedMessage || null} mediaContext={aiContext?.mediaContext || null} onClose={() => { setAiContext(null); setSheet(null); }} onQuota={() => { setAiContext(null); setSheet(null); setModal('quota'); }} onSent={() => { setAiContext(null); setSheet(null); showToast('Mensaje enviado OK'); }} />
+      <BottomSheet open={sheet === 'suggest'} onClose={() => { setAiContext(null); setSheet(null); }} height="88%">
+        <SuggestSheet chatId={activeChat} quotedMessage={aiContext?.quotedMessage || null} mediaContext={aiContext?.mediaContext || null} onClose={() => { setAiContext(null); setSheet(null); }} onQuota={() => { setAiContext(null); setSheet(null); setModal('quota'); }} onSent={() => { setAiContext(null); setSheet(null); showToast('Mensaje enviado correctamente'); }} />
       </BottomSheet>
 
-      <BottomSheet open={sheet === 'reactivate'} onClose={() => { setAiContext(null); setSheet(null); }} height="78%">
-        <SuggestSheet chatId={activeChat} action="reactivate" title="Reactivar hilo" caption="Una vuelta suave para retomar sin presionar." mediaContext={aiContext?.mediaContext || null} onClose={() => { setAiContext(null); setSheet(null); }} onQuota={() => { setAiContext(null); setSheet(null); setModal('quota'); }} onSent={() => { setAiContext(null); setSheet(null); showToast('Mensaje enviado OK'); }} />
+      <BottomSheet open={sheet === 'reactivate'} onClose={() => { setAiContext(null); setSheet(null); }} height="88%">
+        <SuggestSheet chatId={activeChat} action="reactivate" title="Reactivar conversación" caption="Una forma sencilla de retomar sin presión." mediaContext={aiContext?.mediaContext || null} onClose={() => { setAiContext(null); setSheet(null); }} onQuota={() => { setAiContext(null); setSheet(null); setModal('quota'); }} onSent={() => { setAiContext(null); setSheet(null); showToast('Mensaje enviado correctamente'); }} />
       </BottomSheet>
 
-      <BottomSheet open={sheet === 'opener'} onClose={() => setSheet(null)} height="88%">
-        <OpenerSheet chatId={activeChat} matchName={LOCAL_CONVERSATIONS.find(m => m.id === activeChat)?.name || 'Chat'} onClose={() => setSheet(null)} onQuota={() => { setSheet(null); setModal('quota'); }} onUse={(text) => { setComposerSeed(text || ''); setSheet(null); showToast('Apertura insertada en el composer'); }} />
-      </BottomSheet>
-      <BottomSheet open={sheet === 'rewrite'} onClose={() => setSheet(null)} height="82%">
-        <RewriteSheet chatId={activeChat} sourceText={composerSeed} onQuota={() => { setSheet(null); setModal('quota'); }} onUse={(text) => { setComposerSeed(text || ''); setSheet(null); showToast('Texto reescrito cargado en composer'); }} />
+      <BottomSheet open={sheet === 'rewrite'} onClose={() => setSheet(null)} height="88%">
+        <RewriteSheet chatId={activeChat} sourceText={composerSeed} onQuota={() => { setSheet(null); setModal('quota'); }} onUse={(text) => { setComposerSeed(text || ''); setSheet(null); showToast('Texto reescrito cargado en el campo de mensaje'); }} />
       </BottomSheet>
       <BottomSheet open={sheet === 'analysis'} onClose={() => setSheet(null)} height="78%">
         <AnalysisSheet chatId={activeChat} message={analysisMessage} onQuota={() => { setSheet(null); setModal('quota'); }} onSuggest={() => setSheet('suggest')} />
       </BottomSheet>
       <BottomSheet open={billingSheet === 'plans'} onClose={() => setBillingSheet(null)} height="84%">
-        <PlanSelectorSheet onChoose={() => { setBillingSheet('success'); showToast('Compra confirmada. Actualizando cuota...'); }} />
+        <PlanSelectorSheet onChoose={() => { setBillingSheet('success'); showToast('Compra confirmada. Actualizando la cuota...'); }} />
       </BottomSheet>
       <BottomSheet open={billingSheet === 'packs'} onClose={() => setBillingSheet(null)} height="74%">
-        <PackSelectorSheet onBuy={() => { setBillingSheet('success'); showToast('Compra confirmada. Actualizando cuota...'); }} />
+        <PackSelectorSheet onBuy={() => { setBillingSheet('success'); showToast('Compra confirmada. Actualizando la cuota...'); }} />
       </BottomSheet>
       <BottomSheet open={billingSheet === 'history'} onClose={() => setBillingSheet(null)} height="90%">
         <UsageHistorySheet />
@@ -1016,7 +1046,7 @@ function NativePaymentsNotice() {
     <div className="card" style={{padding: 12, borderColor: 'rgba(14, 165, 143, 0.18)', background: 'var(--accent-soft)'}}>
       <div className="t-small" style={{fontWeight: 800, color: 'var(--accent)', marginBottom: 4}}>Compras nativas</div>
       <div className="t-caption" style={{color: 'var(--text-secondary)'}}>
-        Las compras dentro de {platformName} se gestionan con {storeName}. Esta version no abre pagos externos.
+        Las compras dentro de {platformName} se gestionan con {storeName}. Esta versión no abre pagos externos.
       </div>
     </div>
   );
@@ -1039,7 +1069,7 @@ function PlanSelectorSheet({ onChoose }) {
   }, []);
   const plans = [
     { id: 'free', name: 'Gratis', monthly: '€0', quota: '5 generaciones/día', features: ['Plan básico incluido', 'Sugerir y reescribir', 'Para volver a Gratis, cancela Plus/Pro desde la tienda'] },
-    { id: 'plus', name: 'Plus', monthly: nativeOptions?.plus?.price ? `${nativeOptions.plus.price}/mes` : '€4.99/mes', quota: '150 generaciones/mes', features: ['Más generaciones mensuales', 'Sugerir, reescribir y abrir'] },
+    { id: 'plus', name: 'Plus', monthly: nativeOptions?.plus?.price ? `${nativeOptions.plus.price}/mes` : '€4.99/mes', quota: '150 generaciones/mes', features: ['Más generaciones mensuales', 'Sugerir, reescribir y reactivar'] },
     { id: 'pro', name: 'Pro', monthly: nativeOptions?.pro?.price ? `${nativeOptions.pro.price}/mes` : '€9.99/mes', quota: `${proMonthlyMessages} generaciones/mes`, features: ['Mayor cupo mensual', 'Pensado para uso intensivo', 'Packs extra compatibles'] },
   ];
   return (
@@ -1072,7 +1102,7 @@ function PlanSelectorSheet({ onChoose }) {
                 }
                 setError('Para volver a Gratis, cancela la suscripción activa desde la tienda o portal de pagos.');
               } catch (apiError) {
-                setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos abrir la gestion de suscripcion.');
+                setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido abrir la gestión de suscripción.');
               } finally {
                 setLoadingManage(false);
               }
@@ -1080,7 +1110,7 @@ function PlanSelectorSheet({ onChoose }) {
           ) : (
             <button className="btn btn--primary btn--md" style={{marginTop: 10}} disabled={loadingPlan === p.id} onClick={async () => {
               if (blocked) {
-                setError('No pudimos cargar las compras nativas en esta instalación.');
+                setError('No hemos podido cargar las compras nativas en esta instalación.');
                 return;
               }
               setLoadingPlan(p.id);
@@ -1099,7 +1129,7 @@ function PlanSelectorSheet({ onChoose }) {
                 }
                 onChoose && onChoose({ type: 'plan', plan: p.id });
               } catch (apiError) {
-                setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos abrir el checkout.');
+                setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido abrir el pago.');
               } finally {
                 setLoadingPlan('');
               }
@@ -1141,7 +1171,7 @@ function PackSelectorSheet({ onBuy }) {
           <p className="t-caption" style={{margin: '4px 0 10px'}}>No caducan nunca.</p>
           <button className="btn btn--primary btn--md" disabled={loadingPack === String(p.qty)} onClick={async () => {
             if (blocked) {
-              setError('No pudimos cargar las compras nativas en esta instalación.');
+              setError('No hemos podido cargar las compras nativas en esta instalación.');
               return;
             }
             setLoadingPack(String(p.qty));
@@ -1160,7 +1190,7 @@ function PackSelectorSheet({ onBuy }) {
               }
               onBuy && onBuy({ type: 'pack', packSize: p.qty });
             } catch (apiError) {
-              setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos abrir el checkout.');
+              setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido abrir el pago.');
             } finally {
               setLoadingPack('');
             }
@@ -1184,7 +1214,7 @@ function usageActionLabel(action = '') {
   return {
     suggest: 'Sugerencia de respuesta',
     rewrite: 'Reescritura de texto',
-    opener: 'Apertura de conversación',
+    opener: 'Sugerencia de respuesta',
     reactivate: 'Reactivación de hilo',
     analyze: 'Análisis de mensaje'
   }[key] || 'Generación IA';
@@ -1216,8 +1246,8 @@ function formatUsageRow(row = {}) {
   const reason = {
     suggest: 'Se gastó al pedir una respuesta sugerida.',
     rewrite: 'Se gastó al reescribir un texto.',
-    opener: 'Se gastó al pedir una apertura.',
-    reactivate: 'Se gastó al reactivar un hilo frío.',
+    opener: 'Se gastó al pedir una respuesta sugerida.',
+    reactivate: 'Se gastó al reactivar una conversación.',
     analyze: 'Se gastó al analizar un mensaje.'
   }[String(row.action || '').toLowerCase()] || 'Se gastó al usar una acción de IA.';
   return { detail, reason, statusLabel };
@@ -1243,7 +1273,7 @@ function UsageHistorySheet() {
         }));
         if (alive) setRows(recent);
       } catch (apiError) {
-        if (alive) setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No pudimos cargar el historial.');
+        if (alive) setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido cargar el historial.');
       } finally {
         if (alive) setLoading(false);
       }
@@ -1335,5 +1365,3 @@ Object.assign(window, {
   PaymentSuccessSheet,
   RuntimeErrorBoundary,
 });
-
-

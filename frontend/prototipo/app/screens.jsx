@@ -1,4 +1,4 @@
-﻿// screens.jsx â€” All 9 WaFli screens
+// screens.jsx â€” All 9 WaFli screens
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // SCREEN 1 Â· Landing pÃºblica
@@ -477,13 +477,13 @@ function AddToHomeScreen({ onBack, onDone, onLater }) {
           <p style={{margin: '0 0 8px', fontWeight: 600}}>{isIOS ? 'iOS Safari' : 'Android Chrome'}</p>
           {isIOS ? (
             <ol className="t-small" style={{margin: 0, paddingLeft: 18}}>
-              <li>Toca el botón Compartir.</li>
+              <li>Pulsa el botón Compartir.</li>
               <li>Elige Añadir a pantalla de inicio.</li>
               <li>Confirma con Añadir.</li>
             </ol>
           ) : (
             <ol className="t-small" style={{margin: 0, paddingLeft: 18}}>
-              <li>Toca el menú de tres puntos.</li>
+              <li>Pulsa el menú de tres puntos.</li>
               <li>Elige Añadir a pantalla de inicio.</li>
               <li>Confirma la instalación.</li>
             </ol>
@@ -612,10 +612,10 @@ function ConnectScreen({ onBack, onConnected }) {
               <ol style={{margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 14}}>
                 {[
                   <>Abre <b>WhatsApp</b> en tu móvil.</>,
-                  <>Toca <b>Configuración</b> (o <b>Ajustes</b> según versión).</>,
-                  <>Toca <b>Dispositivos vinculados</b>.</>,
-                  <>Toca <b>Vincular un dispositivo</b>.</>,
-                  <>Toca <b>Vincular con número de teléfono</b>.</>,
+                  <>Pulsa <b>Configuración</b> (o <b>Ajustes</b> según versión).</>,
+                  <>Pulsa <b>Dispositivos vinculados</b>.</>,
+                  <>Pulsa <b>Vincular un dispositivo</b>.</>,
+                  <>Pulsa <b>Vincular con número de teléfono</b>.</>,
                   <>Introduce el código de arriba.</>,
                 ].map((item, i) => (
                   <li key={i} style={{display: 'flex', gap: 14, alignItems: 'flex-start'}}>
@@ -665,7 +665,7 @@ function ConnectScreen({ onBack, onConnected }) {
                   Simular vinculación exitosa
                 </button>
                 <button className="btn btn--text" onClick={() => setModal('timeout')}>Simular código caducado (+3 min)</button>
-                <button className="btn btn--text" onClick={() => setBackendError('No pudimos validar la vinculación. Inténtalo de nuevo.')}>Simular error de backend</button>
+                <button className="btn btn--text" onClick={() => setBackendError('No hemos podido validar la vinculación. Inténtalo de nuevo.')}>Simular error de backend</button>
                 <button className="btn btn--text" onClick={() => { setBackendError(''); }}>Reintentar</button>
               </div>
             </>
@@ -1800,7 +1800,7 @@ function SettingsScreen({ onNavigate, notificationPermission, notificationPrefs,
             {item(<Icons.User size={17} />, 'Perfil', `${spanishVariant} · ${toneBase}`, () => setSheet('profile'))}
             {item(<Icons.Card size={17} />, 'Plan y facturación', 'Atajo a plan + pago + facturas', () => setSheet('billing'))}
             {item(<Icons.Lock size={17} />, 'Privacidad', 'Datos, exportación y eliminación', () => setSheet('privacy'))}
-            {item(<Icons.Bell size={17} />, 'Notificaciones', notifications.global ? 'Encendidas' : 'Apagadas', () => setSheet('notifications'))}
+            {item(<Icons.Bell size={17} />, 'Notificaciones', notifications.global ? 'Activadas' : 'Desactivadas', () => setSheet('notifications'))}
             {item(<Icons.Globe size={17} />, 'Idioma de la app', language, () => setSheet('language'))}
             {item(<Icons.Help size={17} />, 'Soporte', 'FAQ, contacto y estado del servicio', () => setSheet('support'))}
             {item(<Icons.Doc size={17} />, 'Términos legales', 'T&C, privacidad, cookies y DPA', () => setSheet('terms'), true)}

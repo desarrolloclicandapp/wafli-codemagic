@@ -18,7 +18,7 @@ function errorPayload(source, error, extra = {}) {
     url: window.location.href,
     route: window.location.pathname + window.location.search,
     userAgent: navigator.userAgent,
-    appVersion: import.meta.env.VITE_APP_ENV || "",
+    appVersión: import.meta.env.VITE_APP_ENV || "",
     extra
   };
 }

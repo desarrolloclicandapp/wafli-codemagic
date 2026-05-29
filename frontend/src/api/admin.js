@@ -57,7 +57,7 @@ async function adminRequest(path, options = {}) {
       if (error.status === 401) clearAdminSession();
       throw error;
     }
-    throw new ApiClientError(0, "network_error", "No pudimos conectar con el servidor.");
+    throw new ApiClientError(0, "network_error", "No hemos podido conectar con el servidor.");
   }
 }
 
@@ -79,6 +79,21 @@ const extendTrial = (userId, days) => adminRequest(`/users/${userId}/trial`, { m
 const addGenerations = (userId, amount) => adminRequest(`/users/${userId}/generations`, { method: "POST", body: { amount } });
 const suspendUser = (userId, days, reason) => adminRequest(`/users/${userId}/suspend`, { method: "POST", body: { days, reason } });
 const deleteUser = (userId, confirmation) => adminRequest(`/users/${userId}`, { method: "DELETE", body: { confirmation } });
+const listAiReports = ({ status = "new", page = 1, limit = 50 } = {}) => {
+  const params = new URLSearchParams();
+  params.set("status", status);
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  return adminRequest(`/ai-reports?${params.toString()}`);
+};
+const listAiQuality = ({ status = "all", days = 30, limit = 20 } = {}) => {
+  const params = new URLSearchParams();
+  params.set("status", status);
+  params.set("days", String(days));
+  params.set("limit", String(limit));
+  return adminRequest(`/ai-quality?${params.toString()}`);
+};
+const updateAiReportStatus = (reportId, status) => adminRequest(`/ai-reports/${reportId}`, { method: "PATCH", body: { status } });
 
 export {
   addGenerations,
@@ -87,7 +102,10 @@ export {
   extendTrial,
   getAdminUsername,
   getToken,
+  listAiQuality,
   listUsers,
+  listAiReports,
   login,
   suspendUser,
+  updateAiReportStatus,
 };

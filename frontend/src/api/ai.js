@@ -5,8 +5,14 @@ async function trackAiAction(action, promise) {
   trackEvent("ai_action_requested", { action }).catch(() => {});
   try {
     const result = await promise;
+    const meta = result?.meta || {};
     trackEvent("ai_action_completed", {
       action,
+      agent: meta.agent || result?.agent || "",
+      objective: meta.objective || result?.objective || "",
+      variant: meta.variant || result?.variant || "",
+      model: meta.model || result?.model || "",
+      context_copilot_hints: Number(meta.contextCopilotHints || 0),
       quota_exhausted: Boolean(result?.quota?.exhausted || result?.usage?.summary?.exhausted),
       quota_warning: Boolean(result?.quota?.warning80 || result?.usage?.summary?.warning80),
     }).catch(() => {});
@@ -31,11 +37,13 @@ const reportGeneratedContent = async (payload) => {
   trackEvent("ai_content_report_started", {
     action: payload?.action || "unknown",
     reason: payload?.reason || "other",
+    note_length: String(payload?.note || "").trim().length,
   }).catch(() => {});
   const result = await request("/ai/reports", { method: "POST", body: payload });
   trackEvent("ai_content_report_submitted", {
     action: payload?.action || "unknown",
     reason: payload?.reason || "other",
+    note_length: String(payload?.note || "").trim().length,
   }).catch(() => {});
   return result;
 };

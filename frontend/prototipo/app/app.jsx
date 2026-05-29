@@ -1,4 +1,4 @@
-﻿// app.jsx Ã¢â‚¬â€ main WaFli app (navigation state machine + tweaks)
+// app.jsx Ã¢â‚¬â€ main WaFli app (navigation state machine + tweaks)
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "accentColor": "#5B5FE0",
@@ -33,7 +33,7 @@ const ACCENT_OPTIONS = [
 ];
 
 function applyAccent(hex) {
-  // derive softer/600 versions
+  // derive softer/600 versións
   const root = document.documentElement;
   root.style.setProperty('--accent', hex);
   // Generate a soft + softer + 600 by mixing with white/black
@@ -446,7 +446,7 @@ function PrototypeRoot() {
             <span className="t-caption" style={{textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, color: 'var(--text-tertiary)'}}>Prototipo navegable</span>
             <h2 style={{margin: '4px 0 16px', fontSize: 22, fontWeight: 600, letterSpacing: '-0.015em'}}>PruÃƒÂ©balo aquÃƒÂ­ mismo</h2>
             <p style={{margin: '0 0 24px', color: 'var(--text-secondary)', fontSize: 15, textWrap: 'pretty'}}>
-              Empieza en Chats. Toca cualquier conversaciÃƒÂ³n para entrar, abre la sugerencia con el botÃƒÂ³n violeta, prueba las pestaÃƒÂ±as Plan y Ajustes en la barra inferior. La pantalla "Apertura para X" se abre desde una conversaciÃƒÂ³n vacÃƒÂ­a. La cuota agotada y el cÃƒÂ³digo de vinculaciÃƒÂ³n los expongo en el canvas y vÃƒÂ­a Tweaks.
+              Empieza en Chats. Pulsa cualquier conversaciÃƒÂ³n para entrar, abre la sugerencia con el botÃƒÂ³n violeta, prueba las pestaÃƒÂ±as Plan y Ajustes en la barra inferior. La pantalla "Apertura para X" se abre desde una conversaciÃƒÂ³n vacÃƒÂ­a. La cuota agotada y el cÃƒÂ³digo de vinculaciÃƒÂ³n los expongo en el canvas y vÃƒÂ­a Tweaks.
             </p>
             <div style={{display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: 18, rowGap: 10, fontSize: 14}}>
               <span className="t-mono" style={{color: 'var(--text-tertiary)', fontSize: 13}}>Color</span>

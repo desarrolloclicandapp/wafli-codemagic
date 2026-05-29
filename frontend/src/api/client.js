@@ -1,4 +1,4 @@
-﻿const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/$/, "");
 const APP_ENV = import.meta.env.VITE_APP_ENV || "local";
 const PUBLIC_URL = (import.meta.env.VITE_PUBLIC_URL || (typeof window !== "undefined" ? window.location.origin : "")).replace(/\/$/, "");
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
@@ -73,14 +73,14 @@ function setRefreshCooldown(ms) {
 async function refreshSession() {
   const cooldownUntil = getRefreshCooldownUntil();
   if (cooldownUntil > Date.now()) {
-    throw new ApiClientError(429, "refresh_rate_limited", "Estamos renovando tu sesion. Espera unos segundos y vuelve a intentar.");
+    throw new ApiClientError(429, "refresh_rate_limited", "Estamos renovando tu sesión. Espera unos segundos y vuelve a intentarlo.");
   }
 
   if (refreshPromise) return refreshPromise;
 
   const token = getRefreshToken();
   if (!token) {
-    throw new ApiClientError(400, "missing_refresh", "No hay una sesion para renovar.");
+    throw new ApiClientError(400, "missing_refresh", "No hay una sesión para renovar.");
   }
 
   refreshPromise = (async () => {
@@ -149,7 +149,7 @@ async function apiFetch(path, options = {}, retry = true) {
     return parseResponse(response);
   } catch (error) {
     if (error instanceof ApiClientError) throw error;
-    throw new ApiClientError(0, "network_error", "No pudimos conectar con el servidor. Revisa tu conexion.");
+    throw new ApiClientError(0, "network_error", "No hemos podido conectar con el servidor. Revisa tu conexión.");
   }
 }
 
@@ -159,21 +159,22 @@ async function request(path, options = {}, retry = true) {
 }
 
 function toUserMessage(error) {
-  if (!error) return "No pudimos completar la accion.";
+  if (!error) return "No hemos podido completar la acción.";
   if (error.code === "quota_exhausted") return "No quedan mensajes IA disponibles.";
-  if (error.code === "native_payments_not_configured") return "Falta configurar pagos nativos para esta version de la app.";
-  if (error.code === "native_payments_server_not_configured") return "Falta configurar la verificacion de pagos en el servidor.";
-  if (error.code === "native_product_not_found") return "Ese producto todavia no esta activo para esta version de la app.";
-  if (error.code === "native_purchase_failed") return "No pudimos completar la compra nativa.";
+  if (error.code === "native_payments_not_configured") return "Falta configurar pagos nativos para esta versión de la app.";
+  if (error.code === "native_payments_server_not_configured") return "Falta configurar la verificación de pagos en el servidor.";
+  if (error.code === "native_product_not_configured") return "Ese producto todavía no está configurado en la tienda de esta versión.";
+  if (error.code === "native_product_not_found") return "Ese producto todavía no está activo para esta versión de la app.";
+  if (error.code === "native_purchase_failed") return "No hemos podido completar la compra nativa.";
   if (error.code === "whatsapp_required") return "Conecta tu WhatsApp para continuar.";
   if (error.code === "account_pending_deletion") return "Esta cuenta tiene una eliminacion pendiente.";
   if (error.code === "whatsapp_phone_already_registered") return "Este número de WhatsApp ya está asociado a otra cuenta. Inicia sesión con el correo original o usa otro número.";
   if (error.code === "network_error") return error.message;
-  if (error.status === 401) return "Tu sesion expiro. Vuelve a iniciar sesion.";
-  if (error.status === 409) return error.message || "La conexion no esta lista todavia.";
+  if (error.status === 401) return "Tu sesi?n expir?. Vuelve a iniciar sesi?n.";
+  if (error.status === 409) return error.message || "La conexión no está lista todavía.";
   if (error.status === 429) return "Demasiados intentos. Prueba de nuevo en unos minutos.";
-  if (error.status === 503) return "Servicio temporalmente no disponible. Reintenta en un momento.";
-  return error.message || "No pudimos completar la accion.";
+  if (error.status === 503) return error.message || "Servicio temporalmente no disponible. Inténtalo de nuevo en un momento.";
+  return error.message || "No hemos podido completar la acción.";
 }
 
 function isAuthenticated() {

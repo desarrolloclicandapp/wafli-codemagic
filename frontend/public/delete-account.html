@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Eliminación de cuenta y datos | WaFli</title>
+    <meta name="description" content="Página pública de WaFli para solicitar eliminación de cuenta y datos asociados, con pasos, datos eliminados, datos retenidos y plazos." />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f2e9;
+        --paper: #fffaf2;
+        --ink: #241f18;
+        --muted: #6e6255;
+        --accent: #e06f3e;
+        --line: rgba(36, 31, 24, 0.14);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top right, rgba(224, 111, 62, 0.2), transparent 30rem), var(--bg);
+        color: var(--ink);
+        font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+        line-height: 1.62;
+      }
+      main {
+        width: min(920px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 42px 0 64px;
+      }
+      header, section {
+        background: rgba(255, 250, 242, 0.9);
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        box-shadow: 0 20px 64px rgba(36, 31, 24, 0.07);
+      }
+      header { padding: clamp(24px, 5vw, 46px); }
+      section { margin-top: 18px; padding: clamp(20px, 4vw, 30px); }
+      .brand {
+        display: inline-flex;
+        color: var(--accent);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 14px 0 8px;
+        font-size: clamp(36px, 7vw, 68px);
+        line-height: 0.95;
+        letter-spacing: -0.055em;
+      }
+      h2 {
+        margin: 0 0 10px;
+        font-size: clamp(23px, 4vw, 34px);
+        line-height: 1.08;
+        letter-spacing: -0.035em;
+      }
+      p, li { font-size: 17px; }
+      a { color: #a94924; font-weight: 700; }
+      .updated {
+        margin: 0;
+        color: var(--muted);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 14px;
+      }
+      ol, ul { padding-left: 22px; }
+      .action {
+        border-color: rgba(224, 111, 62, 0.36);
+        background: rgba(224, 111, 62, 0.1);
+      }
+      .button {
+        display: inline-flex;
+        margin-top: 8px;
+        padding: 12px 16px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        text-decoration: none;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+      }
+      footer {
+        margin-top: 28px;
+        color: var(--muted);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="brand">WaFli · eliminación</span>
+        <h1>Eliminación de cuenta y datos</h1>
+        <p class="updated">Última actualización: 26 de mayo de 2026</p>
+        <p>Esta página pública explica cómo solicitar la eliminación de tu cuenta de WaFli y de los datos asociados, incluso si ya desinstalaste la app o no puedes iniciar sesión.</p>
+      </header>
+
+      <section class="action">
+        <h2>1. Solicitar eliminación de cuenta</h2>
+        <ol>
+          <li>Desde la app: abre WaFli, entra en Ajustes, ve a Privacidad y datos y elige Solicitar eliminación de cuenta.</li>
+          <li>Sin acceso a la app: escribe desde el correo asociado a tu cuenta a <a href="mailto:soporte@wafli.ai?subject=Solicitud%20de%20eliminaci%C3%B3n%20de%20cuenta%20WaFli">soporte@wafli.ai</a> con el asunto “Solicitud de eliminación de cuenta WaFli”.</li>
+          <li>Incluye el correo de tu cuenta y, si lo sabes, el método con el que iniciaste sesión. No envíes contraseñas, códigos, contenido íntimo ni datos de pago completos.</li>
+        </ol>
+        <a class="button" href="mailto:soporte@wafli.ai?subject=Solicitud%20de%20eliminaci%C3%B3n%20de%20cuenta%20WaFli">solicitar por correo</a>
+      </section>
+
+      <section>
+        <h2>2. Solicitar eliminación de datos sin eliminar la cuenta</h2>
+        <p>Puedes pedir eliminación parcial de datos sin cerrar tu cuenta. Desde la app puedes borrar historial en caché, desconectar conversaciones conectadas o gestionar notificaciones. También puedes escribir a <a href="mailto:soporte@wafli.ai?subject=Solicitud%20de%20eliminaci%C3%B3n%20de%20datos%20WaFli">soporte@wafli.ai</a> con el asunto “Solicitud de eliminación de datos WaFli” e indicar qué datos quieres eliminar.</p>
+      </section>
+
+      <section>
+        <h2>3. Datos que se eliminan al cerrar la cuenta</h2>
+        <ul>
+          <li>Sesiones activas, tokens de acceso y vínculos de inicio de sesión.</li>
+          <li>Datos de perfil, preferencias de uso, idioma, tono y onboarding.</li>
+          <li>Conexión con servicios de mensajería, credenciales técnicas de sesión, contactos, chats, mensajes, metadatos, medios en cachés y perfiles de conversación.</li>
+          <li>Tokens de notificaciones push y preferencias de notificaciones.</li>
+          <li>Historial técnico asociado a cuota y uso que no sea necesario conservar por seguridad, pagos, fraude, cumplimiento o soporte.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>4. Datos que pueden conservarse temporalmente</h2>
+        <p>Podemos conservar registros mínimos cuando sea necesario por seguridad, prevención de abuso o fraude, resolución de disputas, soporte, obligaciones fiscales, contables, legales, cumplimiento de políticas de tienda, comprobantes de compra o integridad del servicio. Los proveedores de pago y tiendas pueden conservar sus propios registros según sus políticas.</p>
+      </section>
+
+      <section>
+        <h2>5. Plazos</h2>
+        <ul>
+          <li>Solicitud desde la app: la desconexión, revocación de sesiones, borrado de cachés de conversación y eliminación de tokens de notificación se inicia inmediatamente.</li>
+          <li>Periodo de gracia: la cuenta queda pendiente de eliminación durante 7 días para evitar cierres accidentales. Durante ese periodo puedes recuperarla iniciando sesión y confirmando recuperación.</li>
+          <li>Cierre definitivo: después del periodo de gracia, los datos personales asociados a la cuenta se eliminan o anonimizan, salvo retenciones limitadas indicadas arriba.</li>
+          <li>Solicitudes por correo: podemos verificar identidad antes de actuar. Normalmente procesamos la solicitud en un plazo máximo de 30 días desde la verificación.</li>
+          <li>Copias de seguridad: algunos datos residuales pueden permanecer en backups cifrados hasta 90 días antes de rotar o eliminarse.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>6. Suscripciones y compras</h2>
+        <p>Eliminar la cuenta de WaFli no siempre cancela automáticamente una suscripción gestionada por una tienda o proveedor externo. Si tienes una suscripción activa de Google Play, cancélala desde Google Play &gt; Pagos y suscripciones &gt; Suscripciones. Si necesitas ayuda, escribe a soporte.</p>
+      </section>
+
+      <section>
+        <h2>7. Política de privacidad</h2>
+        <p>Consulta la <a href="/privacy.html">Política de Privacidad de WaFli</a> para conocer el detalle de datos tratados, finalidades, proveedores, seguridad, derechos y contacto.</p>
+      </section>
+
+      <footer>WaFli · soporte@wafli.ai</footer>
+    </main>
+  </body>
+</html>

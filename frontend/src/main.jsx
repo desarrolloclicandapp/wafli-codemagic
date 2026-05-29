@@ -16,7 +16,10 @@ import './screens/screens.jsx'; // LandingScreen, AuthScreen, ..., SuggestSheet,
 import './screens/app.jsx';     // WaFliApp, Phone, PlanSelectorSheet, ..., RuntimeErrorBoundary
 
 import { App } from './App.jsx';
-import { AdminPanelApp } from './admin/AdminPanelApp.jsx';
+
+const AdminPanelApp = React.lazy(() =>
+  import('./admin/AdminPanelApp.jsx').then((module) => ({ default: module.AdminPanelApp }))
+);
 
 const KEYBOARD_OFFSET_THRESHOLD = 80;
 const KEYBOARD_FOCUS_SELECTOR = 'input, textarea, select, [contenteditable="true"], [contenteditable=""]';
@@ -32,6 +35,11 @@ const detectMobilePlatform = () => {
   const isIPadOSDesktopMode = platform === 'MacIntel' && navigator.maxTouchPoints > 1;
   const isIOS = /iPad|iPhone|iPod/.test(ua) || isIPadOSDesktopMode;
   const isAndroid = /Android/i.test(ua);
+  const isNative = Boolean(window.WaFliAPI?.client?.IS_CAPACITOR_NATIVE);
+  const coarsePointer = Boolean(window.matchMedia?.('(pointer: coarse)')?.matches);
+  const narrowViewport = Math.min(window.innerWidth || 0, window.innerHeight || 0) <= 820;
+  const mobileBrowser = /Mobile|Android|iPhone|iPod|IEMobile|Opera Mini/i.test(ua) || (isIOS && coarsePointer);
+  const isMobileWeb = !isNative && Boolean(coarsePointer && narrowViewport && (mobileBrowser || isIOS || isAndroid));
   const isStandalone = Boolean(
     window.navigator?.standalone ||
     window.matchMedia?.('(display-mode: standalone)')?.matches ||
@@ -39,16 +47,21 @@ const detectMobilePlatform = () => {
   );
   const root = document.documentElement;
   const body = document.body;
-  const classTargets = [root, body].filter(Boolean);
+  const appRoot = document.getElementById('root');
+  const classTargets = [root, body, appRoot].filter(Boolean);
 
   classTargets.forEach((target) => {
     target.classList.toggle('cap-ios', isIOS);
     target.classList.toggle('cap-android', isAndroid);
-    target.classList.toggle('cap-native', Boolean(window.WaFliAPI?.client?.IS_CAPACITOR_NATIVE));
+    target.classList.toggle('cap-native', isNative);
+    target.classList.toggle('web-mobile', isMobileWeb);
+    target.classList.toggle('web-ios', isMobileWeb && isIOS);
+    target.classList.toggle('web-android', isMobileWeb && isAndroid);
     target.classList.toggle('pwa-standalone', isStandalone);
   });
   root.dataset.mobilePlatform = isIOS ? 'ios' : isAndroid ? 'android' : 'web';
   if (body) body.dataset.mobilePlatform = root.dataset.mobilePlatform;
+  if (appRoot) appRoot.dataset.mobilePlatform = root.dataset.mobilePlatform;
 };
 
 const hasKeyboardFocus = () => {
@@ -105,6 +118,7 @@ const resetStableViewportBounds = () => {
 
 window.addEventListener('load', syncViewportBounds, { passive: true });
 window.addEventListener('resize', syncViewportBounds, { passive: true });
+window.addEventListener('resize', detectMobilePlatform, { passive: true });
 window.addEventListener('focusin', syncViewportBounds, { passive: true });
 window.addEventListener('focusout', () => window.setTimeout(syncViewportBounds, 80), { passive: true });
 if (window.visualViewport) {
@@ -112,6 +126,7 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('scroll', syncViewportBounds, { passive: true });
 }
 window.addEventListener('orientationchange', resetStableViewportBounds, { passive: true });
+window.addEventListener('orientationchange', detectMobilePlatform, { passive: true });
 if (window.WaFliAPI?.client?.IS_CAPACITOR_NATIVE) {
   Keyboard.setAccessoryBarVisible?.({ isVisible: false }).catch(() => {});
   Keyboard.addListener('keyboardWillShow', (info) => {
@@ -140,6 +155,11 @@ detectMobilePlatform();
 syncViewportBounds();
 installClientMonitoring();
 initializeAnalytics().catch(() => {});
+
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault?.();
+  window.location.reload();
+});
 
 const isCapacitorNativeRuntime = Boolean(window.WaFliAPI?.client?.IS_CAPACITOR_NATIVE);
 const isAdminPanelRoute = window.location.pathname.replace(/\/+$/, '') === '/adminpanel';
@@ -188,7 +208,11 @@ if (Object.keys(socialLoginConfig).length) {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {isAdminPanelRoute ? <AdminPanelApp nativeBlocked={isCapacitorNativeRuntime} /> : <App />}
+    {isAdminPanelRoute ? (
+      <React.Suspense fallback={<main className="admin-shell admin-shell--center">Cargando admin...</main>}>
+        <AdminPanelApp nativeBlocked={isCapacitorNativeRuntime} />
+      </React.Suspense>
+    ) : <App />}
   </React.StrictMode>
 );
 

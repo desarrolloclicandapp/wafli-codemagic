@@ -28,7 +28,7 @@ const media = async (chatId, messageId) => {
   );
   if (!response.ok) {
     const payload = await response.clone().json().catch(() => ({}));
-    const error = new Error(payload.message || "Media no disponible");
+    const error = new Error(payload.message || "Archivo multimedia no disponible");
     error.status = response.status;
     error.code = payload.error || payload.code || "media_unavailable";
     throw error;
@@ -71,7 +71,7 @@ const sendMedia = async (chatId, file, options = {}) => {
   );
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(payload.message || "No pudimos enviar el archivo.");
+    const error = new Error(payload.message || "No hemos podido enviar el archivo.");
     error.status = response.status;
     error.code = payload.error;
     throw error;
@@ -80,6 +80,9 @@ const sendMedia = async (chatId, file, options = {}) => {
 };
 const updateMeta = (chatId, patch) => request(`/chats/${encodeURIComponent(chatId)}/meta`, { method: "PATCH", body: patch });
 const updateContact = (chatId, patch) => request(`/chats/${encodeURIComponent(chatId)}/contact`, { method: "PATCH", body: patch });
+const getAiProfile = (chatId) => request(`/chats/${encodeURIComponent(chatId)}/ai-profile`);
+const updateAiProfile = (chatId, patch) => request(`/chats/${encodeURIComponent(chatId)}/ai-profile`, { method: "PATCH", body: patch });
+const resetAiProfile = (chatId) => request(`/chats/${encodeURIComponent(chatId)}/ai-profile/reset`, { method: "POST" });
 
 const realtimeSubscribers = new Set();
 let realtimeController = null;
@@ -144,6 +147,7 @@ function parseRealtimeChunk(chunk) {
 function openRealtimeStream() {
   if (!realtimeSubscribers.size || realtimeConnecting || realtimeController) return;
   if (typeof fetch !== "function" || typeof TextDecoder === "undefined") return;
+  notifyRealtimeSubscribers({ event: "realtime.status", data: { status: "connecting" } });
   const token = getAccessToken();
   if (!token) {
     if (getRefreshToken()) {
@@ -182,11 +186,12 @@ function openRealtimeStream() {
     }
     if (response.status === 401) {
       clearSession();
-      throw new Error("Realtime no autorizado");
+      throw new Error("Conexión en tiempo real no autorizada");
     }
-    if (!response.ok || !response.body) throw new Error("Realtime no disponible");
+    if (!response.ok || !response.body) throw new Error("Conexión en tiempo real no disponible");
     realtimeAttempts = 0;
     realtimeConnecting = false;
+    notifyRealtimeSubscribers({ event: "realtime.status", data: { status: "open" } });
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -198,11 +203,12 @@ function openRealtimeStream() {
       buffer = chunks.pop() || "";
       chunks.map(parseRealtimeChunk).filter(Boolean).forEach(notifyRealtimeSubscribers);
     }
-    throw new Error("Realtime desconectado");
+    throw new Error("Conexión en tiempo real desconectada");
   }).catch((error) => {
     if (controller.signal.aborted) return;
     if (realtimeController === controller) realtimeController = null;
     realtimeConnecting = false;
+    notifyRealtimeSubscribers({ event: "realtime.status", data: { status: "reconnecting", message: error?.message || "Conexión en tiempo real desconectada" } });
     notifyRealtimeError(error);
     scheduleRealtimeReconnect();
   });
@@ -246,5 +252,8 @@ export {
   sendMedia,
   updateMeta,
   updateContact,
+  getAiProfile,
+  updateAiProfile,
+  resetAiProfile,
   subscribeEvents,
 };
