@@ -26,7 +26,7 @@ const PRIVATE_SCREENS = new Set([
   'legal', 'spanish-variant', 'tone-base', 'connect', 'connected', 'install',
   'chats', 'chats-empty', 'chat', 'chat-empty', 'plan', 'settings'
 ]);
-const WHATSAPP_REQUIRED_SCREENS = new Set(['chats', 'chats-empty', 'chat', 'chat-empty']);
+const WHATSAPP_REQUIRED_SCREENS = new Set(['chat', 'chat-empty']);
 const ONBOARDING_FLOW_SCREENS = new Set(['legal', 'spanish-variant', 'tone-base', 'connect']);
 const PWA_INSTALL_SEEN_KEY = 'wafli:pwaInstallOpportunitySeen';
 const PWA_INSTALLED_KEY = 'wafli:pwaInstalled';
@@ -44,7 +44,7 @@ const screenForOnboardingStep = (nextStep) => {
   if (step === 'legal') return 'legal';
   if (step === 'profile' || step === 'spanish-variant') return 'spanish-variant';
   if (step === 'tone' || step === 'tone-base' || step === 'base-tone' || step === 'basetone') return 'tone-base';
-  if (step === 'whatsapp' || step === 'connect') return 'connect';
+  if (step === 'whatsapp' || step === 'connect') return 'chats-empty';
   return 'chats';
 };
 
@@ -886,7 +886,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   } else if (effectiveScreen === 'tone-base') {
     body = <ToneBaseScreen onBack={() => goTo('spanish-variant')} onContinue={handleToneContinue} />;
   } else if (effectiveScreen === 'connect') {
-    body = <ConnectScreen onBack={() => goTo('tone-base')} onConnected={() => { showToast('Tu WhatsApp quedó vinculado'); goTo('connected'); }} />;
+    body = <ConnectScreen onBack={() => goTo('chats-empty')} onConnected={() => { showToast('Tu WhatsApp quedó vinculado'); goTo('connected'); }} onContinueWithoutWhatsApp={() => goTo('plan')} />;
   } else if (effectiveScreen === 'connected') {
     body = <ConnectedSuccessScreen isNativeApp={isCapacitorNative} onContinue={() => { markInstallOpportunitySeen(); goTo('chats'); }} onInstall={openInstallGuide} onInstallOpportunitySeen={markInstallOpportunitySeen} />;
   } else if (effectiveScreen === 'install') {
@@ -903,7 +903,8 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       onOpenQuota={() => goTo('plan')}
       onNavigate={navigate}
       whatsappInterrupted={systemState.whatsappInterrupted || whatsappUnavailable}
-      offline={systemState.offline || whatsappUnavailable}
+      offline={systemState.offline}
+      whatsappUnavailable={whatsappUnavailable}
       onReconnectWhatsApp={reconnectWhatsApp}
     />;
   } else if (effectiveScreen === 'chat') {

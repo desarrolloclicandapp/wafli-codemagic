@@ -194,10 +194,11 @@ if (canInitializeGoogleSocialLogin) {
 
 if (window.WaFliAPI?.client?.APPLE_CLIENT_ID || (isCapacitorNativeRuntime && nativePlatform === 'ios' && window.WaFliAPI?.client?.APPLE_IOS_CLIENT_ID)) {
   socialLoginConfig.apple = nativePlatform === 'ios'
-    ? { clientId: window.WaFliAPI.client.APPLE_IOS_CLIENT_ID }
+    ? {}
     : {
       clientId: window.WaFliAPI.client.APPLE_CLIENT_ID,
       redirectUrl: window.WaFliAPI.client.APPLE_REDIRECT_URI,
+      useProperTokenExchange: true,
     };
 }
 

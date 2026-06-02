@@ -10,7 +10,7 @@ const REVENUECAT_ENTITLEMENT_PRO = import.meta.env.VITE_REVENUECAT_ENTITLEMENT_P
 const REVENUECAT_OFFERING_ID = import.meta.env.VITE_REVENUECAT_OFFERING_ID || "";
 const REVENUECAT_PLUS_PRODUCT_ID = import.meta.env.VITE_REVENUECAT_PLUS_PRODUCT_ID || "wafli_plus_monthly:monthly";
 const REVENUECAT_PRO_PRODUCT_ID = import.meta.env.VITE_REVENUECAT_PRO_PRODUCT_ID || "wafli_pro_monthly:monthly";
-const REVENUECAT_PACK_50_PRODUCT_ID = import.meta.env.VITE_REVENUECAT_PACK_50_PRODUCT_ID || "";
+const REVENUECAT_PACK_50_PRODUCT_ID = import.meta.env.VITE_REVENUECAT_PACK_50_PRODUCT_ID || "wafli_pack_50";
 
 let configuredAppUserId = "";
 let configurePromise = null;

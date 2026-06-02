@@ -672,22 +672,16 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
     if (!isIOSNative || !appleIosClientId || !window.WaFliSocialLogin?.login) return;
     setError('');
     setLoadingProvider('apple');
-    const nonce = createOauthNonce();
     try {
       const response = await window.WaFliSocialLogin.login({
         provider: 'apple',
-        options: {
-          scopes: ['email', 'name'],
-          nonce,
-          state: createOauthNonce(),
-        },
+        options: {},
       });
       const result = response?.result || {};
       if (!result?.idToken) throw new Error('Apple no devolvio un token valido.');
       const profile = result?.profile || {};
       await finishProviderLogin('apple', {
         idToken: result.idToken,
-        nonce,
         profile: {
           email: profile.email || null,
           name: {
@@ -764,6 +758,17 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
                 onClick={() => finishProviderLogin(pendingRecovery.provider, { ...pendingRecovery.payload, recoverAccount: true })}
               >
                 {loadingProvider ? 'Recuperando...' : 'Recuperar cuenta'}
+              </button>
+            </div>
+          ) : null}
+
+          {typeof onContinueWithoutWhatsApp === 'function' ? (
+            <div className="card" style={{padding: 12, marginTop: 18, display: 'grid', gap: 8}}>
+              <span className="t-small" style={{color: 'var(--text-secondary)'}}>
+                También puedes entrar ahora, revisar planes y conectar WhatsApp más tarde.
+              </span>
+              <button type="button" className="btn btn--secondary btn--full" onClick={onContinueWithoutWhatsApp}>
+                Continuar sin WhatsApp por ahora
               </button>
             </div>
           ) : null}
@@ -1606,7 +1611,7 @@ function buildAiMediaContext(messages = [], quotedMessage = null) {
           : 'Ej. El documento es una factura / la ubicación es el punto de encuentro / solo quiero confirmar recibido...'
   };
 }// SCREEN 2 · Conexión WhatsApp con QR desktop + pairing code mobile
-function ConnectScreen({ onBack, onConnected }) {
+function ConnectScreen({ onBack, onConnected, onContinueWithoutWhatsApp }) {
   const defaultMethod = React.useMemo(() => {
     const ua = navigator.userAgent || '';
     const isNative = Boolean(WaFliAPI?.client?.IS_CAPACITOR_NATIVE);
@@ -1980,7 +1985,7 @@ function Spinner({ size = 18 }) {
 }
 
 // SCREEN 3 · Lista de conversaciones (Chats)
-function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, whatsappInterrupted = false, offline = false, onReconnectWhatsApp }) {
+function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, whatsappInterrupted = false, offline = false, whatsappUnavailable = false, onReconnectWhatsApp }) {
   const [searching, setSearching] = React.useState(false);
   const [q, setQ] = React.useState('');
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -2324,11 +2329,23 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
           </div>
         )}
         {empty ? (
-          <EmptyState
-            icon={<Icons.Empty size={32} sw={1.4} />}
-            title="Aún no tienes chats activos"
-            subtitle="Cuando hables con alguien desde tu WhatsApp aparecerán aquí."
-          />
+          <>
+            <EmptyState
+              icon={<Icons.Empty size={32} sw={1.4} />}
+              title="Aún no tienes chats activos"
+              subtitle={whatsappUnavailable ? "Puedes revisar planes, compras y ajustes ahora. Conecta WhatsApp cuando quieras para activar tus chats." : "Cuando hables con alguien desde tu WhatsApp aparecerán aquí."}
+            />
+            <div className="card" style={{margin: '0 16px 16px', padding: 12, display: 'grid', gap: 10}}>
+              <button type="button" className="btn btn--primary btn--full" onClick={() => onOpenQuota && onOpenQuota()}>
+                Ver planes y compras
+              </button>
+              {onReconnectWhatsApp && (
+                <button type="button" className="btn btn--secondary btn--full" onClick={onReconnectWhatsApp}>
+                  Conectar WhatsApp
+                </button>
+              )}
+            </div>
+          </>
         ) : (
           <div>
             {filteredForList.map(m => (
