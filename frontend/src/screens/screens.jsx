@@ -552,12 +552,12 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
   const googleClientId = WaFliAPI?.client?.GOOGLE_CLIENT_ID || '';
   const googleIosClientId = WaFliAPI?.client?.GOOGLE_IOS_CLIENT_ID || '';
   const appleClientId = WaFliAPI?.client?.APPLE_CLIENT_ID || '';
-  const appleIosClientId = WaFliAPI?.client?.APPLE_IOS_CLIENT_ID || '';
+  const appleIosClientId = WaFliAPI?.client?.APPLE_IOS_CLIENT_ID || 'com.wafli.app';
   const isCapacitorNative = Boolean(WaFliAPI?.client?.IS_CAPACITOR_NATIVE);
   const nativePlatform = window.Capacitor?.getPlatform?.() || '';
   const isIOSNative = Boolean(isCapacitorNative && nativePlatform === 'ios');
   const canUseNativeGoogle = Boolean(isCapacitorNative && googleClientId && (!isIOSNative || googleIosClientId));
-  const providerAvailable = Boolean((isCapacitorNative ? canUseNativeGoogle : googleClientId) || appleClientId || (isIOSNative && appleIosClientId));
+  const providerAvailable = Boolean((isCapacitorNative ? canUseNativeGoogle : googleClientId) || appleClientId || isIOSNative);
   const openLegal = (type) => {
     if (onOpenLegal) onOpenLegal(type);
     else setDoc(type);
@@ -669,13 +669,15 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
   };
 
   const continueWithNativeApple = async () => {
-    if (!isIOSNative || !appleIosClientId || !window.WaFliSocialLogin?.login) return;
+    if (!isIOSNative || !window.WaFliSocialLogin?.login) return;
     setError('');
     setLoadingProvider('apple');
     try {
       const response = await window.WaFliSocialLogin.login({
         provider: 'apple',
-        options: {},
+        options: {
+          clientId: appleIosClientId,
+        },
       });
       const result = response?.result || {};
       if (!result?.idToken) throw new Error('Apple no devolvio un token valido.');
@@ -720,7 +722,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
           {!isCapacitorNative && googleClientId ? (
             <div style={{minHeight: 44, display: 'grid', placeItems: 'center', marginBottom: 10}} ref={googleButtonRef} />
           ) : null}
-          {isIOSNative && appleIosClientId ? (
+          {isIOSNative ? (
             <button
               className="btn btn--ghost btn--full"
               style={{height: 44, border: '1px solid var(--border-strong)', color: 'var(--text)', opacity: loadingProvider === 'apple' ? 0.7 : 1}}
