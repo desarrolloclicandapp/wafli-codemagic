@@ -683,10 +683,15 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
         },
       });
       const result = response?.result || {};
-      if (!result?.idToken) throw new Error('Apple no devolvio un token valido.');
+      const nativeAppleToken = String(result?.accessToken?.token || '').split('.').length === 3
+        ? result.accessToken.token
+        : String(result?.idToken || '').split('.').length === 3
+          ? result.idToken
+          : '';
+      if (!nativeAppleToken) throw new Error('Apple no devolvio un token valido.');
       const profile = result?.profile || {};
       await finishProviderLogin('apple', {
-        idToken: result.idToken,
+        idToken: nativeAppleToken,
         profile: {
           email: profile.email || null,
           name: {
