@@ -70,6 +70,17 @@ function emailVerified(value) {
   return value === true || String(value).toLowerCase() === "true";
 }
 
+function oauthDebugDetails(parsed, allowedAudiences = []) {
+  return {
+    providerAudiencesConfigured: allowedAudiences.length,
+    tokenAudience: parsed?.payload?.aud || null,
+    tokenIssuer: parsed?.payload?.iss || null,
+    tokenAlgorithm: parsed?.header?.alg || null,
+    tokenKeyIdPresent: Boolean(parsed?.header?.kid),
+    tokenSubjectPresent: Boolean(parsed?.payload?.sub)
+  };
+}
+
 async function verifyProviderIdToken(provider, idToken, options = {}) {
   const normalizedProvider = String(provider || "").trim().toLowerCase();
   const providerConfig = PROVIDERS[normalizedProvider];
@@ -82,30 +93,30 @@ async function verifyProviderIdToken(provider, idToken, options = {}) {
 
   const parsed = splitJwt(idToken);
   if (!providerConfig.algorithms.includes(parsed.header.alg)) {
-    throw new ApiError(401, "invalid_oauth_token", "Algoritmo de token no soportado");
+    throw new ApiError(401, "invalid_oauth_token", "Algoritmo de token no soportado", oauthDebugDetails(parsed, allowedAudiences));
   }
 
   const keys = await getJwks(normalizedProvider, providerConfig);
   const jwk = keys.find((key) => key.kid === parsed.header.kid && (!key.alg || key.alg === parsed.header.alg));
   if (!jwk || !verifySignature(parsed.header, parsed.signingInput, parsed.signature, jwk)) {
-    throw new ApiError(401, "invalid_oauth_token", "Firma de proveedor invalida");
+    throw new ApiError(401, "invalid_oauth_token", "Firma de proveedor invalida", oauthDebugDetails(parsed, allowedAudiences));
   }
 
   const now = Math.floor(Date.now() / 1000);
   if (!providerConfig.issuers.includes(String(parsed.payload.iss || ""))) {
-    throw new ApiError(401, "invalid_oauth_issuer", "Emisor de proveedor invalido");
+    throw new ApiError(401, "invalid_oauth_issuer", "Emisor de proveedor invalido", oauthDebugDetails(parsed, allowedAudiences));
   }
   if (!audienceAllowed(parsed.payload.aud, allowedAudiences)) {
-    throw new ApiError(401, "invalid_oauth_audience", "Token emitido para otro cliente");
+    throw new ApiError(401, "invalid_oauth_audience", "Token emitido para otro cliente", oauthDebugDetails(parsed, allowedAudiences));
   }
   if (!parsed.payload.exp || now > Number(parsed.payload.exp) + CLOCK_SKEW_SECONDS) {
-    throw new ApiError(401, "expired_oauth_token", "Token de proveedor expirado");
+    throw new ApiError(401, "expired_oauth_token", "Token de proveedor expirado", oauthDebugDetails(parsed, allowedAudiences));
   }
   if (parsed.payload.nbf && now + CLOCK_SKEW_SECONDS < Number(parsed.payload.nbf)) {
-    throw new ApiError(401, "invalid_oauth_token", "Token de proveedor aun no valido");
+    throw new ApiError(401, "invalid_oauth_token", "Token de proveedor aun no valido", oauthDebugDetails(parsed, allowedAudiences));
   }
   if (options.nonce && parsed.payload.nonce !== options.nonce) {
-    throw new ApiError(401, "invalid_oauth_nonce", "Nonce de proveedor invalido");
+    throw new ApiError(401, "invalid_oauth_nonce", "Nonce de proveedor invalido", oauthDebugDetails(parsed, allowedAudiences));
   }
 
   return {

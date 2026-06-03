@@ -641,7 +641,10 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
   }, [isCapacitorNative, googleClientId, handleGoogleCredential]);
 
   const continueWithApple = async () => {
-    if (!appleClientId) return;
+    if (!appleClientId) {
+      setError('Falta configurar VITE_APPLE_CLIENT_ID para probar Apple Sign-In en web.');
+      return;
+    }
     setError('');
     setLoadingProvider('apple');
     try {
@@ -732,7 +735,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
               {loadingProvider === 'apple' ? 'Conectando...' : 'Continuar con Apple'}
             </button>
           ) : null}
-          {!isCapacitorNative && appleClientId ? (
+          {!isCapacitorNative ? (
             <button
               className="btn btn--ghost btn--full"
               style={{height: 44, border: '1px solid var(--border-strong)', color: 'var(--text)', opacity: loadingProvider === 'apple' ? 0.7 : 1}}

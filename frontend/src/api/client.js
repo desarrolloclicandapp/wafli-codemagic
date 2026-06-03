@@ -170,6 +170,7 @@ function toUserMessage(error) {
   if (error.code === "account_pending_deletion") return "Esta cuenta tiene una eliminacion pendiente.";
   if (error.code === "whatsapp_phone_already_registered") return "Este número de WhatsApp ya está asociado a otra cuenta. Inicia sesión con el correo original o usa otro número.";
   if (error.code === "network_error") return error.message;
+  if (String(error.code || "").includes("oauth")) return error.message || "No pudimos validar este inicio de sesión.";
   if (error.status === 401) return "Tu sesi?n expir?. Vuelve a iniciar sesi?n.";
   if (error.status === 409) return error.message || "La conexión no está lista todavía.";
   if (error.status === 429) return "Demasiados intentos. Prueba de nuevo en unos minutos.";

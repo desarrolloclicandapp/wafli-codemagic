@@ -393,6 +393,18 @@ async function cacheIncomingMediaBinary({
   const declaredSize = Number(metadata.sizeBytes || media?.sizeBytes || 0);
   const baseContext = { userId, chatId, messageId, mediaType, mimeType, declaredSize: declaredSize || null, maxBytes };
 
+  if (!config.whatsapp.incomingMediaAutoCache) {
+    await markMediaCacheMetadata(userId, chatId, messageId, {
+      mediaHotCacheStatus: "descriptor_only",
+      mediaSkipReason: "auto_cache_disabled",
+      mediaSizeBytes: declaredSize || null
+    }).catch(() => {});
+    logger.info("whatsapp-media", "Incoming media kept as descriptor only", {
+      context: { ...baseContext, reason: "auto_cache_disabled" }
+    }).catch(() => {});
+    return { cached: false, reason: "auto_cache_disabled" };
+  }
+
   if (!HOT_CACHE_MEDIA_TYPES.has(mediaType)) {
     logger.info("whatsapp-media", "Incoming media kept as descriptor only", {
       context: { ...baseContext, reason: "unsupported_v0" }
@@ -615,6 +627,72 @@ function extractQuotedMessageInfo(content = {}) {
   };
 }
 
+function formatStubPhone(value = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const candidate = raw.split("@")[0] || raw;
+  const digits = candidate.replace(/\D+/g, "");
+  if (!digits) return candidate || raw;
+  return `+${digits}`;
+}
+
+function systemInfoFromMessageStub(message = {}) {
+  const rawType = message?.messageStubType ?? message?.message?.protocolMessage?.type ?? "";
+  const rawName = message?.messageStubTypeName || message?.messageStubTypeLabel || "";
+  const label = `${rawName} ${rawType}`.toLowerCase();
+  const parameters = Array.isArray(message?.messageStubParameters) ? message.messageStubParameters : [];
+  const readableParameters = parameters.map((value) => formatStubPhone(value)).filter(Boolean);
+
+  if (!rawType && !rawName && !parameters.length) {
+    return { body: "", metadata: {} };
+  }
+
+  if (/change.*number|number.*change|participant_change_number|change_number/.test(label)) {
+    const oldNumber = readableParameters[0] || "";
+    const newNumber = readableParameters[1] || readableParameters[0] || "";
+    const body = newNumber
+      ? `Este contacto cambio de numero. Nuevo numero: ${newNumber}`
+      : "Este contacto cambio de numero.";
+    return {
+      body,
+      metadata: {
+        systemEvent: true,
+        systemType: "number_change",
+        oldNumber,
+        newNumber,
+        messageStubType: rawType,
+        messageStubTypeName: rawName || null,
+        messageStubParameters: parameters,
+      },
+    };
+  }
+
+  if (/security|identity|verified/.test(label)) {
+    return {
+      body: "Cambio el codigo de seguridad de este chat.",
+      metadata: {
+        systemEvent: true,
+        systemType: "security_notice",
+        messageStubType: rawType,
+        messageStubTypeName: rawName || null,
+        messageStubParameters: parameters,
+      },
+    };
+  }
+
+  return {
+    body: "Aviso de WhatsApp",
+    metadata: {
+      systemEvent: true,
+      systemType: "whatsapp_stub",
+      messageStubType: rawType,
+      messageStubTypeName: rawName || null,
+      messageStubParameters: parameters,
+      readableParameters,
+    },
+  };
+}
+
 function extractMessageInfo(message = {}) {
   const content = unwrapMessageContent(message);
   const viewOnce = isViewOnceMessage(message);
@@ -673,15 +751,23 @@ function extractMessageInfo(message = {}) {
     });
   }
   if (content.documentMessage) {
+    const fileName = String(content.documentMessage.fileName || content.documentMessage.title || content.documentMessage.caption || "Documento").trim();
+    const sizeBytes = numberFromProto(content.documentMessage.fileLength);
     return withQuoted({
-      body: content.documentMessage.fileName || content.documentMessage.caption || "Documento",
+      body: fileName,
       messageType: "document",
       media: {
         mediaType: "document",
         mimeType: content.documentMessage.mimetype || "application/octet-stream",
-        fileName: content.documentMessage.fileName || null,
+        fileName,
+        sizeBytes,
       },
       metadata: {
+        hasMedia: true,
+        mediaType: "document",
+        mimeType: content.documentMessage.mimetype || null,
+        fileName,
+        sizeBytes,
         title: content.documentMessage.title || null,
         pageCount: content.documentMessage.pageCount || null
       }
@@ -719,7 +805,28 @@ function extractMessageInfo(message = {}) {
   }
   if (content.reactionMessage) return withQuoted({ body: content.reactionMessage.text || "Reaccion", messageType: "reaction" });
   const firstKey = Object.keys(content)[0] || "";
-  return withQuoted(firstKey ? { body: firstKey.replace(/Message$/i, ""), messageType: "unknown" } : { body: "", messageType: "unknown" });
+  const technicalKeys = new Set([
+    "messageContextInfo",
+    "senderKeyDistributionMessage",
+    "protocolMessage",
+    "deviceSentMessage",
+    "keepInChatMessage"
+  ]);
+  if (!firstKey || technicalKeys.has(firstKey)) {
+    return withQuoted({
+      body: "",
+      messageType: "technical",
+      metadata: firstKey ? { ignoredTechnicalMessageType: firstKey } : {}
+    });
+  }
+  return withQuoted({
+    body: "Mensaje no compatible",
+    messageType: "unsupported",
+    metadata: {
+      unsupportedMessageType: firstKey,
+      requiresWhatsappReview: true
+    }
+  });
 }
 
 function messageTimestampToDate(timestamp) {
@@ -730,6 +837,7 @@ function messageTimestampToDate(timestamp) {
 }
 
 function displayNameForMessage(message = {}, chatId = "", knownContact = {}) {
+  knownContact = knownContact || {};
   const isGroup = String(chatId).endsWith("@g.us");
   const contactDisplay = String(knownContact.subject || knownContact.name || knownContact.verifiedName || knownContact.notify || "").trim();
   const contactPush = String(knownContact.pushName || "").trim();
@@ -791,14 +899,17 @@ function contactName(contact = {}, jid = "") {
 }
 
 function contactPushName(contact = {}) {
+  contact = contact || {};
   return String(contact.pushName || contact.verifiedName || "").trim() || null;
 }
 
 function contactNotifyName(contact = {}) {
+  contact = contact || {};
   return String(contact.notify || contact.short || "").trim() || null;
 }
 
 async function resolveContactAvatarUrl(contact = {}, source = "contacts", options = {}) {
+  contact = contact || {};
   const chatId = contact.id || contact.jid;
   const existing = contact.imgUrl || contact.avatar || contact.avatarUrl || null;
   if (existing) return existing;
@@ -1552,7 +1663,15 @@ async function startWhatsApp(userId, options = {}) {
           }).catch(() => {});
           chatId = await chatService.resolveCanonicalChatId(userId, remoteJid, { phone: chatPhone }).catch(() => remoteJid);
         }
-        const { body, messageType, media, metadata: extractedMetadata = {} } = extractMessageInfo(message);
+      const extractedInfo = extractMessageInfo(message);
+      const systemInfo = systemInfoFromMessageStub(message);
+      const body = extractedInfo.body || systemInfo.body || "";
+      const messageType = systemInfo.body && !extractedInfo.media ? "system" : extractedInfo.messageType;
+      const media = extractedInfo.media;
+      const extractedMetadata = {
+        ...(extractedInfo.metadata || {}),
+        ...(systemInfo.metadata || {}),
+      };
         const sentAt = messageTimestampToDate(message?.messageTimestamp);
         if (fromMe) {
           const consumedEcho = consumeSentMessageEcho(messageId);
