@@ -1129,6 +1129,12 @@ async function ensureRuntimeOpenForSend(userId, timeoutMs = config.whatsapp.send
   return session;
 }
 
+function hasOpenRuntimeSession(userId) {
+  const sessionId = sessionIdForUser(userId);
+  const session = sessions.get(sessionId);
+  return Boolean(session?.hasEverOpened && session?.sock && isSocketOpen(session.sock));
+}
+
 async function purgeAuthState(sessionId) {
   await pool.query(`DELETE FROM baileys_auth WHERE session_id = $1`, [sessionId]);
 }
@@ -1610,6 +1616,9 @@ async function startWhatsApp(userId, options = {}) {
         }
         await purgeCacheIfPhoneChanged(userId, phone);
         await updateConnection(userId, { status: "connected", phone, pairing_code: null, pairing_code_expires_at: null, qr: null, qr_updated_at: null, last_heartbeat_at: new Date(), reconnect_attempts: 0 });
+        logger.info("whatsapp-worker", "WhatsApp session opened", {
+          context: { userId, sessionId, phone }
+        }).catch(() => {});
         await logConnectivity(userId, sessionId, "open", { phone });
       }
       if (connection === "close") {
@@ -2565,6 +2574,7 @@ module.exports = {
   streamMessageMedia,
   queueReconnection,
   sessionIdForUser,
+  hasOpenRuntimeSession,
   normalizeCustomPairingCode,
   getRuntimeDiagnostics,
 };

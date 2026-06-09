@@ -89,7 +89,24 @@ async function getFlags() {
 
 async function getStatus() {
   const flags = await getFlags();
-  return { ok: true, runtimeMode: RUNTIME_MODE, corsOrigins: config.corsOrigins, appPublicUrl: config.appPublicUrl, flags };
+  return {
+    ok: true,
+    runtimeMode: RUNTIME_MODE,
+    corsOrigins: config.corsOrigins,
+    appPublicUrl: config.appPublicUrl,
+    ai: getAiDiagnostics(),
+    flags
+  };
+}
+
+function getAiDiagnostics() {
+  return {
+    provider: config.ai.provider,
+    openaiConfigured: Boolean(config.openai.apiKey),
+    model: config.openai.model,
+    models: config.openai.models,
+    timeoutMs: config.openai.timeoutMs
+  };
 }
 
 async function healthExtended() {
@@ -108,6 +125,7 @@ async function healthExtended() {
     runtimeMode: RUNTIME_MODE,
     corsOrigins: config.corsOrigins,
     appPublicUrl: config.appPublicUrl,
+    ai: getAiDiagnostics(),
     dbMs,
     db: dbInfo,
     counts: counts.rows[0],

@@ -1,4 +1,4 @@
-﻿require("dotenv").config();
+require("dotenv").config({ quiet: true });
 
 function readBool(name, fallback = false) {
   const raw = process.env[name];
@@ -44,13 +44,18 @@ function normalizeOrigin(value) {
 
 const appPublicUrl = normalizeOrigin(process.env.APP_PUBLIC_URL || "http://localhost:5173");
 const apiPublicUrl = normalizeOrigin(process.env.API_PUBLIC_URL || "http://localhost:3001");
-const nativeAppOrigins = ["capacitor://localhost", "ionic://localhost", "http://localhost"].map(normalizeOrigin);
+const nativeAppOrigins = ["capacitor://localhost", "ionic://localhost", "http://localhost", "https://localhost"].map(normalizeOrigin);
+const wafliPublicOrigins = [
+  "https://app.wafli.ai",
+  "https://test-development-wafli-frontend.lrkqbo.easypanel.host"
+].map(normalizeOrigin);
 const corsOrigins = Array.from(new Set([
   ...String(process.env.CORS_ORIGINS || "http://localhost:5173,http://127.0.0.1:5173")
     .split(",")
     .map(normalizeOrigin)
     .filter(Boolean),
   ...nativeAppOrigins,
+  ...wafliPublicOrigins,
   appPublicUrl
 ]));
 
@@ -109,9 +114,12 @@ const config = {
     reconnectBaseDelayMs: readInt("WA_RECONNECT_BASE_DELAY_MS", 5000),
     reconnectMaxAttempts: readInt("WA_RECONNECT_MAX_ATTEMPTS", 6),
     restoreConnectedSessions: readBool("WA_RESTORE_CONNECTED_SESSIONS", true),
+    restoreConnectedSessionsIntervalMs: Math.max(30000, readInt("WA_RESTORE_CONNECTED_SESSIONS_INTERVAL_MS", 60000)),
     contentCachePolicy: process.env.WA_CONTENT_CACHE_POLICY || "ephemeral_ttl",
     messageCacheRetentionDays: Math.max(1, readInt("WA_MESSAGE_CACHE_RETENTION_DAYS", 7)),
     messageBodyMaxChars: Math.max(280, readInt("WA_MESSAGE_BODY_MAX_CHARS", 4000)),
+    incomingMediaAutoCache: readBool("WA_INCOMING_MEDIA_AUTO_CACHE", false),
+    mediaCacheRetentionHours: Math.max(1, readInt("WA_MEDIA_CACHE_RETENTION_HOURS", 12)),
     mediaCacheMaxBytes: Math.max(0, readInt("WA_MEDIA_CACHE_MAX_BYTES", 5 * 1024 * 1024)),
     mediaDownloadTimeoutMs: Math.max(5000, readInt("WA_MEDIA_DOWNLOAD_TIMEOUT_MS", 45000)),
     fetchLatestVersion: readBool("WA_FETCH_LATEST_VERSION", true),
@@ -142,19 +150,20 @@ const config = {
       analyze: process.env.OPENAI_MODEL_ANALYZE || process.env.OPENAI_MODEL || "gpt-4.1-mini",
       recommend: process.env.OPENAI_MODEL_RECOMMEND || process.env.OPENAI_MODEL || "gpt-4.1-mini"
     },
-    contextMessageLimit: readInt("AI_CONTEXT_MESSAGE_LIMIT", 20),
+    contextMessageLimit: readInt("AI_CONTEXT_MESSAGE_LIMIT", 24),
     contextLimits: {
-      suggest: readInt("AI_CONTEXT_LIMIT_SUGGEST", 12),
-      rewrite: readInt("AI_CONTEXT_LIMIT_REWRITE", 8),
-      opener: readInt("AI_CONTEXT_LIMIT_OPENER", 6),
-      reactivate: readInt("AI_CONTEXT_LIMIT_REACTIVATE", 8),
-      analyze: readInt("AI_CONTEXT_LIMIT_ANALYZE", 10),
-      recommend: readInt("AI_CONTEXT_LIMIT_RECOMMEND", 14)
+      suggest: readInt("AI_CONTEXT_LIMIT_SUGGEST", 24),
+      rewrite: readInt("AI_CONTEXT_LIMIT_REWRITE", 12),
+      opener: readInt("AI_CONTEXT_LIMIT_OPENER", 12),
+      reactivate: readInt("AI_CONTEXT_LIMIT_REACTIVATE", 30),
+      analyze: readInt("AI_CONTEXT_LIMIT_ANALYZE", 24),
+      recommend: readInt("AI_CONTEXT_LIMIT_RECOMMEND", 24)
     },
     mediaContextLimit: readInt("AI_MEDIA_CONTEXT_LIMIT", 3),
-    attachImagesToContext: readBool("AI_ATTACH_IMAGES_TO_CONTEXT", false),
+    attachImagesToContext: readBool("AI_ATTACH_IMAGES_TO_CONTEXT", true),
     imageContextMaxFiles: Math.max(0, readInt("AI_IMAGE_CONTEXT_MAX_FILES", 1)),
-    imageContextMaxBytes: Math.max(0, readInt("AI_IMAGE_CONTEXT_MAX_BYTES", 120000)),
+    imageContextMaxBytes: Math.max(0, readInt("AI_IMAGE_CONTEXT_MAX_BYTES", 350000)),
+    timeoutMs: Math.max(1000, readInt("OPENAI_TIMEOUT_MS", 25000)),
     transcriptionModel: process.env.OPENAI_TRANSCRIPTION_MODEL || "gpt-4o-mini-transcribe"
   },
   quota: {

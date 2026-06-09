@@ -33,6 +33,15 @@ const analyze = (payload) => trackAiAction("analyze", request("/ai/analyze", { m
 const opener = (payload) => trackAiAction("opener", request("/ai/opener", { method: "POST", body: payload }));
 const reactivate = (payload) => trackAiAction("reactivate", request("/ai/reactivate", { method: "POST", body: payload }));
 const regenerate = (payload) => trackAiAction("regenerate", request("/ai/regenerate", { method: "POST", body: payload }));
+const toolReply = (payload) => trackAiAction("tool_reply", request("/ai/tools/reply", { method: "POST", body: payload }));
+const toolIcebreakers = (payload) => trackAiAction("tool_icebreakers", request("/ai/tools/icebreakers", { method: "POST", body: payload }));
+const savedLines = (params = {}) => {
+  const search = String(params.q || params.search || "").trim();
+  const qs = search ? `?q=${encodeURIComponent(search)}` : "";
+  return request(`/ai/tools/saved-lines${qs}`);
+};
+const saveLine = (payload) => request("/ai/tools/saved-lines", { method: "POST", body: payload });
+const deleteLine = (id) => request(`/ai/tools/saved-lines/${encodeURIComponent(id)}`, { method: "DELETE" });
 const reportGeneratedContent = async (payload) => {
   trackEvent("ai_content_report_started", {
     action: payload?.action || "unknown",
@@ -48,4 +57,17 @@ const reportGeneratedContent = async (payload) => {
   return result;
 };
 
-export { suggest, rewrite, analyze, opener, reactivate, regenerate, reportGeneratedContent };
+export {
+  suggest,
+  rewrite,
+  analyze,
+  opener,
+  reactivate,
+  regenerate,
+  toolReply,
+  toolIcebreakers,
+  savedLines,
+  saveLine,
+  deleteLine,
+  reportGeneratedContent
+};

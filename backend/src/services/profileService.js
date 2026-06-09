@@ -1,10 +1,23 @@
 ﻿const { pool } = require("../config/db");
 const { ApiError } = require("../utils/responses");
 
+function cleanLimitedText(value = "", max = 240) {
+  return String(value || "").trim().replace(/\s+/g, " ").slice(0, max);
+}
+
+function normalizeAiStyleProfile(input = {}) {
+  const source = input && typeof input === "object" ? input : {};
+  return {
+    wordsUse: cleanLimitedText(source.wordsUse || source.words_use || source.useWords || source.usualWords, 240),
+    wordsAvoid: cleanLimitedText(source.wordsAvoid || source.words_avoid || source.avoidWords || source.excludedWords, 240),
+    examples: cleanLimitedText(source.examples || source.writingExamples || source.styleExamples || source.messageExamples, 700)
+  };
+}
+
 async function getProfile(userId) {
   const result = await pool.query(
     `SELECT u.id, u.email, u.phone, u.status, u.onboarding_status, u.default_plan,
-            p.alias, p.spanish_variant, p.base_tone, p.ui_language,
+            p.alias, p.spanish_variant, p.base_tone, p.ui_language, p.ai_style_profile,
             p.profile_completed, p.spanish_variant_completed, p.base_tone_completed
      FROM users u
      LEFT JOIN user_profiles p ON p.user_id = u.id
@@ -21,33 +34,42 @@ async function updateProfile(userId, data = {}) {
     Object.prototype.hasOwnProperty.call(data, "spanish_variant");
   const hasBaseTone =
     Object.prototype.hasOwnProperty.call(data, "baseTone") ||
-    Object.prototype.hasOwnProperty.call(data, "base_tone");
+    Object.prototype.hasOwnProperty.call(data, "base_tone") ||
+    Object.prototype.hasOwnProperty.call(data, "agent") ||
+    Object.prototype.hasOwnProperty.call(data, "aiAgent");
   const hasUiLanguage =
     Object.prototype.hasOwnProperty.call(data, "uiLanguage") ||
     Object.prototype.hasOwnProperty.call(data, "ui_language");
+  const hasAiStyleProfile =
+    Object.prototype.hasOwnProperty.call(data, "aiStyleProfile") ||
+    Object.prototype.hasOwnProperty.call(data, "ai_style_profile");
 
   const alias = hasAlias ? String(data.alias || "").trim() || null : null;
   const spanishVariant = hasSpanishVariant
     ? String(data.spanishVariant || data.spanish_variant || "Neutro").trim()
     : "Neutro";
   const baseTone = hasBaseTone
-    ? String(data.baseTone || data.base_tone || "Desenfadado").trim()
-    : "Desenfadado";
+    ? String(data.baseTone || data.base_tone || data.agent || data.aiAgent || "Ligoteo").trim()
+    : "Ligoteo";
   const uiLanguage = hasUiLanguage
     ? String(data.uiLanguage || data.ui_language || "ES").trim().toUpperCase()
     : "ES";
+  const aiStyleProfile = hasAiStyleProfile
+    ? normalizeAiStyleProfile(data.aiStyleProfile || data.ai_style_profile || {})
+    : {};
 
   await pool.query(
     `INSERT INTO user_profiles (
-       user_id, alias, spanish_variant, base_tone, ui_language,
+       user_id, alias, spanish_variant, base_tone, ui_language, ai_style_profile,
        spanish_variant_completed, base_tone_completed, profile_completed, updated_at
      )
-     VALUES ($1, $2, $3, $4, $5, $7, $8, ($7 AND $8), NOW())
+     VALUES ($1, $2, $3, $4, $5, $10::jsonb, $7, $8, ($7 AND $8), NOW())
      ON CONFLICT (user_id) DO UPDATE SET
        alias = CASE WHEN $6 THEN EXCLUDED.alias ELSE user_profiles.alias END,
        spanish_variant = CASE WHEN $7 THEN EXCLUDED.spanish_variant ELSE user_profiles.spanish_variant END,
        base_tone = CASE WHEN $8 THEN EXCLUDED.base_tone ELSE user_profiles.base_tone END,
        ui_language = CASE WHEN $9 THEN EXCLUDED.ui_language ELSE user_profiles.ui_language END,
+       ai_style_profile = CASE WHEN $11 THEN EXCLUDED.ai_style_profile ELSE user_profiles.ai_style_profile END,
        spanish_variant_completed = user_profiles.spanish_variant_completed OR EXCLUDED.spanish_variant_completed,
        base_tone_completed = user_profiles.base_tone_completed OR EXCLUDED.base_tone_completed,
        profile_completed = (
@@ -56,7 +78,7 @@ async function updateProfile(userId, data = {}) {
          (user_profiles.base_tone_completed OR EXCLUDED.base_tone_completed)
        ),
        updated_at = NOW()`,
-    [userId, alias, spanishVariant, baseTone, uiLanguage, hasAlias, hasSpanishVariant, hasBaseTone, hasUiLanguage]
+    [userId, alias, spanishVariant, baseTone, uiLanguage, hasAlias, hasSpanishVariant, hasBaseTone, hasUiLanguage, JSON.stringify(aiStyleProfile), hasAiStyleProfile]
   );
   await updateOnboardingStatus(userId);
   return getProfile(userId);

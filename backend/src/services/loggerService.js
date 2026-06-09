@@ -1,4 +1,5 @@
 const { pool } = require("../config/db");
+const monitoringService = require("./monitoringService");
 
 const levels = new Set(["debug", "info", "warn", "error"]);
 

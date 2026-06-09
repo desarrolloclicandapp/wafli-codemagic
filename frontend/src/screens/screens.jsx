@@ -144,6 +144,96 @@ function sanitizeLocalPhoneInput(rawPhone, countryValue) {
 const CHAT_LIST_LIMIT = 60;
 const CONTACT_SEARCH_LIMIT = 20;
 const CONTACT_SEARCH_MIN_LENGTH = 2;
+const MANUAL_AI_CHAT_ID = 'wafli-ai-manual';
+const MANUAL_AI_CONTEXT_STORAGE_KEY = 'wafli:manualAiContext';
+const MANUAL_AI_CONTEXT_EVENT = 'wafli:manual-ai-context-updated';
+
+function isManualAiChatId(id) {
+  return String(id || '').trim() === MANUAL_AI_CHAT_ID;
+}
+
+function normalizeManualAiContext(source = {}) {
+  const ctx = source && typeof source === 'object' ? source : {};
+  return {
+    message: String(ctx.message || ctx.messageToReply || '').trim(),
+    additionalContext: String(ctx.additionalContext || ctx.context || '').trim(),
+    captureName: String(ctx.captureName || '').trim(),
+    updatedAt: ctx.updatedAt || null,
+  };
+}
+
+function loadManualAiContext() {
+  if (typeof window === 'undefined') return normalizeManualAiContext();
+  try {
+    return normalizeManualAiContext(JSON.parse(localStorage.getItem(MANUAL_AI_CONTEXT_STORAGE_KEY) || '{}'));
+  } catch (_) {
+    return normalizeManualAiContext();
+  }
+}
+
+function saveManualAiContext(context = {}) {
+  if (typeof window === 'undefined') return normalizeManualAiContext(context);
+  const next = normalizeManualAiContext({ ...context, updatedAt: new Date().toISOString() });
+  localStorage.setItem(MANUAL_AI_CONTEXT_STORAGE_KEY, JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent(MANUAL_AI_CONTEXT_EVENT, { detail: next }));
+  return next;
+}
+
+function clearManualAiContext() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(MANUAL_AI_CONTEXT_STORAGE_KEY);
+  window.dispatchEvent(new CustomEvent(MANUAL_AI_CONTEXT_EVENT, { detail: normalizeManualAiContext() }));
+}
+
+function createManualAiChat(context = {}) {
+  const manualContext = normalizeManualAiContext(context);
+  return {
+    id: MANUAL_AI_CHAT_ID,
+    canonicalChatId: MANUAL_AI_CHAT_ID,
+    name: 'WaFli AI',
+    phone: '',
+    avatar: '',
+    last: manualContext.message ? `mensaje: ${manualContext.message.slice(0, 80)}` : 'genera respuestas sin conectar whatsapp',
+    time: '',
+    unread: 0,
+    muted: false,
+    excluded: false,
+    favorite: false,
+    hasConversation: true,
+    manualAi: true,
+  };
+}
+
+function manualAiQuotedMessage(context = {}) {
+  const manualContext = normalizeManualAiContext(context);
+  if (!manualContext.message) return null;
+  return {
+    id: 'manual-ai-message',
+    chatId: MANUAL_AI_CHAT_ID,
+    sender: 'match',
+    fromMe: false,
+    authorName: 'contacto',
+    messageType: 'text',
+    type: 'text',
+    text: manualContext.message,
+    body: manualContext.message,
+    sentAt: manualContext.updatedAt || new Date().toISOString(),
+  };
+}
+
+function manualAiMediaContext(context = {}) {
+  const manualContext = normalizeManualAiContext(context);
+  if (!manualContext.captureName) return null;
+  return `captura de conversación adjunta: ${manualContext.captureName}. Usa solo detalles descritos por el usuario; no inventes contenido visual.`;
+}
+
+function manualAiUserContext(context = {}) {
+  const manualContext = normalizeManualAiContext(context);
+  return [
+    manualContext.additionalContext ? `contexto adicional manual: ${manualContext.additionalContext}` : '',
+    manualContext.captureName ? `el usuario añadió una captura llamada "${manualContext.captureName}".` : '',
+  ].filter(Boolean).join('\n');
+}
 
 function chatIdentityValue(item) {
   return String(item?.canonicalChatId || item?.id || '').trim().toLowerCase();
@@ -162,7 +252,8 @@ function isLidOnlyItem(item) {
 
 function isUsefulConversationItem(item) {
   const id = chatIdentityValue(item);
-  if (isSystemChatId(id) || isLidOnlyItem(item)) return false;
+  const hasActiveConversation = Boolean(item?.hasConversation || item?.last || item?.time || Number(item?.unread || 0));
+  if (isSystemChatId(id) || (isLidOnlyItem(item) && !hasActiveConversation)) return false;
   if (id.endsWith('@g.us') && !item?.last && !item?.time && !Number(item?.unread || 0)) return false;
   return true;
 }
@@ -310,8 +401,8 @@ function LandingScreen({ onStart, onLogin }) {
       {/* CTA secundario */}
       <div style={{padding: '36px 22px 24px', textAlign: 'center'}}>
         <h2 className="t-h2" style={{margin: '0 0 8px'}}>¿Listo para probarlo?</h2>
-        <p className="t-small" style={{color: 'var(--text-secondary)', margin: '0 0 20px'}}>Configurar lleva menos de 2 minutos.</p>
-        <button className="btn btn--primary btn--full" onClick={onStart}>Conectar mi WhatsApp</button>
+        <p className="t-small" style={{color: 'var(--text-secondary)', margin: '0 0 20px'}}>Empieza ahora. WhatsApp se puede conectar despues.</p>
+        <button className="btn btn--primary btn--full" onClick={onStart}>Empezar gratis</button>
       </div>
 
       {/* Footer */}
@@ -775,7 +866,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
           {typeof onContinueWithoutWhatsApp === 'function' ? (
             <div className="card" style={{padding: 12, marginTop: 18, display: 'grid', gap: 8}}>
               <span className="t-small" style={{color: 'var(--text-secondary)'}}>
-                También puedes entrar ahora, revisar planes y conectar WhatsApp más tarde.
+                También puedes entrar ahora, usar Herramientas y conectar WhatsApp más tarde.
               </span>
               <button type="button" className="btn btn--secondary btn--full" onClick={onContinueWithoutWhatsApp}>
                 Continuar sin WhatsApp por ahora
@@ -875,13 +966,7 @@ function LegalAcceptanceScreen({ onBack, onContinue }) {
 }
 
 function SpanishVariantScreen({ onBack, onContinue }) {
-  const options = [
-    { id: 'España', badge: 'ES', title: 'España', sample: 'Natural, directo y con ritmo peninsular.' },
-    { id: 'México', badge: 'MX', title: 'México', sample: 'Cercano, cálido y sin sonar forzado.' },
-    { id: 'Argentina', badge: 'AR', title: 'Argentina', sample: 'Suena suelto, conversado y con confianza.' },
-    { id: 'Chile', badge: 'CL', title: 'Chile', sample: 'Más cotidiano, breve y aterrizado.' },
-    { id: 'Neutro', badge: 'ES', title: 'Neutro', sample: 'Español claro si prefieres evitar localismos.' },
-  ];
+  const options = SPANISH_VARIANT_OPTIONS;
   const [selected, setSelected] = React.useState('España');
   return (
     <>
@@ -1866,21 +1951,32 @@ function ConnectScreen({ onBack, onConnected, onContinueWithoutWhatsApp }) {
   return (
     <>
       <AppHeader
-        title="Conectemos tu WhatsApp"
+        title="Conectar WhatsApp opcional"
         leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
       />
       <div className="scroll-y">
         <div style={{padding: '20px 22px 32px'}}>
           <div className="onboarding-progress">
-            <span>Paso 4 de 5</span>
+            <span>WhatsApp opcional</span>
             <span className="onboarding-progress__bar"><span style={{width: '80%'}} /></span>
-            <span>{method === 'qr' ? '<60s' : '<90s'}</span>
+            <span>Cuando quieras</span>
           </div>
           <p className="t-body" style={{color: 'var(--text-secondary)', margin: '0 0 24px', textWrap: 'pretty'}}>
             {method === 'qr'
               ? 'Escanea un QR desde WhatsApp para vincular este navegador en menos de un minuto.'
               : 'Introduce tu número y te damos un código para vincular desde el móvil.'}
           </p>
+
+          {typeof onContinueWithoutWhatsApp === 'function' ? (
+            <div className="card" style={{padding: 12, marginBottom: 16, background: 'var(--accent-soft)', borderColor: 'rgba(0,0,0,0.06)', display: 'grid', gap: 10}}>
+              <p className="t-small" style={{margin: 0, color: 'var(--text-secondary)', textWrap: 'pretty'}}>
+                No necesitas instalar WhatsApp para usar WaFli. Puedes usar Herramientas ahora y conectar chats cuando quieras.
+              </p>
+              <button type="button" className="btn btn--secondary btn--full" onClick={onContinueWithoutWhatsApp}>
+                Usar WaFli sin WhatsApp
+              </button>
+            </div>
+          ) : null}
 
           {step === 'number' ? (
             <div className="card" style={{padding: 14}}>
@@ -2017,6 +2113,13 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
   const [contacts, setContacts] = React.useState([]);
   const [loadingChats, setLoadingChats] = React.useState(false);
   const [apiError, setApiError] = React.useState('');
+  const [manualAiContextVersion, setManualAiContextVersion] = React.useState(0);
+  const [manualAiFallbackActive, setManualAiFallbackActive] = React.useState(false);
+  React.useEffect(() => {
+    const handleManualContextUpdate = () => setManualAiContextVersion((value) => value + 1);
+    window.addEventListener(MANUAL_AI_CONTEXT_EVENT, handleManualContextUpdate);
+    return () => window.removeEventListener(MANUAL_AI_CONTEXT_EVENT, handleManualContextUpdate);
+  }, []);
   React.useEffect(() => {
     if (!filterOptions.some(([key]) => key === activeFilter)) setActiveFilter('all');
   }, [activeFilter]);
@@ -2051,8 +2154,15 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
         .map(mapApiChat)
         .map(chat => ({ ...chat, hasConversation: true }))
         .filter(isUsefulConversationItem);
+      setManualAiFallbackActive(false);
       setContacts(mergeCanonicalChats(chats));
     } catch (error) {
+      if (error?.code === 'whatsapp_required') {
+        setContacts([]);
+        setManualAiFallbackActive(true);
+        if (!silent) setApiError('');
+        return;
+      }
       if (!silent) setApiError(WaFliAPI.client.toUserMessage(error));
     } finally {
       if (!silent) setLoadingChats(false);
@@ -2130,7 +2240,10 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
     item.canonicalChatId,
     ...normalizeApiAliases(item.aliases).map(alias => alias.id),
   ].some(value => String(value || '').toLowerCase().includes(query.toLowerCase()));
-  const filtered = q ? contacts.filter(m => matchesSearch(m, q)) : contacts;
+  const manualAiContext = React.useMemo(() => loadManualAiContext(), [manualAiContextVersion]);
+  const manualAiChat = null;
+  const chatSource = contacts;
+  const filtered = q ? chatSource.filter(m => matchesSearch(m, q)) : chatSource;
   const withConversation = filtered.filter(m => m.hasConversation && !m.excluded);
   const filterByMode = (items) => {
     switch (activeFilter) {
@@ -2141,7 +2254,9 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
       default: return items;
     }
   };
-  const filteredForList = filterByMode(withConversation);
+  const filteredForListBase = filterByMode(withConversation);
+  const filteredForList = filteredForListBase;
+  const showStandaloneEmptyState = !q && (empty || ((whatsappUnavailable || manualAiFallbackActive) && contacts.length === 0 && !loadingChats));
   const contactQuery = contactSearch.trim();
   const recentConversationContacts = contacts
     .filter(m => m.hasConversation && !m.excluded && isUsefulConversationItem(m))
@@ -2279,7 +2394,7 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
           </>}
         />
       )}
-      {whatsappInterrupted && (
+      {(whatsappInterrupted || manualAiFallbackActive) && (
         <div style={{
           margin: '10px 16px 0',
           borderRadius: 12,
@@ -2291,8 +2406,8 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
           justifyContent: 'space-between',
           gap: 10,
         }}>
-          <span className="t-small" style={{color: '#7a4d0b'}}>Reconecta tu WhatsApp</span>
-          <button className="btn btn--text" style={{height: 26, color: '#7a4d0b', fontWeight: 600}} onClick={onReconnectWhatsApp}>Reconectar</button>
+          <span className="t-small" style={{color: '#7a4d0b'}}>Puedes usar Herramientas sin WhatsApp. Conecta WhatsApp solo para traer tus chats reales.</span>
+          <button className="btn btn--text" style={{height: 26, color: '#7a4d0b', fontWeight: 600}} onClick={onReconnectWhatsApp}>Conectar</button>
         </div>
       )}
       {offline && (
@@ -2338,16 +2453,16 @@ function ChatsListScreen({ onOpenChat, onOpenQuota, empty = false, onNavigate, w
             </div>
           </div>
         )}
-        {empty ? (
+        {showStandaloneEmptyState ? (
           <>
             <EmptyState
               icon={<Icons.Empty size={32} sw={1.4} />}
-              title="Aún no tienes chats activos"
-              subtitle={whatsappUnavailable ? "Puedes revisar planes, compras y ajustes ahora. Conecta WhatsApp cuando quieras para activar tus chats." : "Cuando hables con alguien desde tu WhatsApp aparecerán aquí."}
+              title={whatsappUnavailable ? "WhatsApp es opcional" : "Aún no tienes chats activos"}
+              subtitle={whatsappUnavailable ? "Puedes usar Herramientas para generar respuestas sin conectar WhatsApp. Conecta WhatsApp cuando quieras para traer tus chats reales." : "Cuando hables con alguien desde tu WhatsApp aparecerán aquí."}
             />
             <div className="card" style={{margin: '0 16px 16px', padding: 12, display: 'grid', gap: 10}}>
-              <button type="button" className="btn btn--primary btn--full" onClick={() => onOpenQuota && onOpenQuota()}>
-                Ver planes y compras
+              <button type="button" className="btn btn--primary btn--full" onClick={() => onNavigate && onNavigate('tools')}>
+                Ir a Herramientas
               </button>
               {onReconnectWhatsApp && (
                 <button type="button" className="btn btn--secondary btn--full" onClick={onReconnectWhatsApp}>
@@ -2626,21 +2741,23 @@ function ConvCard({ match, onClick, onToggleFavorite, onLongPress }) {
         </div>
       </div>
       </button>
-      <button
-        onClick={(event) => {
-          event.stopPropagation();
-          onToggleFavorite && onToggleFavorite();
-        }}
-        aria-label={match.favorite ? 'Quitar de favoritas' : 'Marcar como favorita'}
-        style={{
-          border: 'none', background: 'transparent', cursor: 'pointer',
-          color: match.favorite ? 'var(--warning)' : 'var(--text-tertiary)',
-          fontSize: 20, lineHeight: 1, padding: '6px 4px',
-          minWidth: 32, minHeight: 32, borderRadius: 999,
-        }}
-      >
-        {match.favorite ? '★' : '☆'}
-      </button>
+      {!match.manualAi && (
+        <button
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleFavorite && onToggleFavorite();
+          }}
+          aria-label={match.favorite ? 'Quitar de favoritas' : 'Marcar como favorita'}
+          style={{
+            border: 'none', background: 'transparent', cursor: 'pointer',
+            color: match.favorite ? 'var(--warning)' : 'var(--text-tertiary)',
+            fontSize: 20, lineHeight: 1, padding: '6px 4px',
+            minWidth: 32, minHeight: 32, borderRadius: 999,
+          }}
+        >
+          {match.favorite ? '★' : '☆'}
+        </button>
+      )}
     </div>
   );
 }
@@ -2664,12 +2781,16 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
   const [loadingMessages, setLoadingMessages] = React.useState(false);
   const [chatError, setChatError] = React.useState('');
   const [sending, setSending] = React.useState(false);
+  const sendingRef = React.useRef(false);
   const [audioDraft, setAudioDraft] = React.useState(null);
   const [recordingAudio, setRecordingAudio] = React.useState(false);
   const [replyTo, setReplyTo] = React.useState(null);
   const [selectedMessage, setSelectedMessage] = React.useState(null);
   const [editingMessage, setEditingMessage] = React.useState(null);
   const [editMessageText, setEditMessageText] = React.useState('');
+  const [editAiAgent, setEditAiAgent] = React.useState(DEFAULT_AI_AGENT);
+  const [editAiObjective, setEditAiObjective] = React.useState(AI_AUTO_OBJECTIVE);
+  const [editAiCustomObjective, setEditAiCustomObjective] = React.useState('');
   const [messageActionLoading, setMessageActionLoading] = React.useState('');
   const [imageViewer, setImageViewer] = React.useState(null);
   const imageViewerTouchStartRef = React.useRef(null);
@@ -2690,14 +2811,50 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
   const [newMessagesBelow, setNewMessagesBelow] = React.useState(false);
   const lastSeenMessageCountRef = React.useRef(0);
   const wasNearBottomRef = React.useRef(true);
+  const manualMode = isManualAiChatId(matchId);
+  const [manualContext, setManualContext] = React.useState(() => loadManualAiContext());
+  const [manualContextOpen, setManualContextOpen] = React.useState(false);
+  const [manualContextStatus, setManualContextStatus] = React.useState('');
+  const [manualMessage, setManualMessage] = React.useState('');
+  const [manualAdditionalContext, setManualAdditionalContext] = React.useState('');
+  const [manualCaptureName, setManualCaptureName] = React.useState('');
+  const [manualLocalMessages, setManualLocalMessages] = React.useState([]);
 
-  const match = remoteChat || LOCAL_CONVERSATIONS.find(m => m.id === matchId) || { id: matchId, name: 'Chat', phone: '', messages: [] };
+  const manualReady = Boolean(manualContext.message);
+  const manualContextMessage = manualReady ? {
+    id: 'manual-ai-message',
+    chatId: MANUAL_AI_CHAT_ID,
+    from: 'them',
+    type: 'text',
+    text: manualContext.message,
+    t: 'contexto',
+    sentAt: manualContext.updatedAt || new Date().toISOString(),
+    senderName: 'contacto',
+  } : null;
+  const manualMessages = [manualContextMessage, ...manualLocalMessages].filter(Boolean);
+  const match = manualMode
+    ? createManualAiChat(manualContext)
+    : remoteChat || LOCAL_CONVERSATIONS.find(m => m.id === matchId) || { id: matchId, name: 'Chat', phone: '', messages: [] };
   const activeChatId = match.canonicalChatId || match.id || canonicalChatIdRef.current || matchId;
-  const messages = remoteMessages || match.messages || [];
-  const buildAiContext = (extra = {}) => ({
-    ...extra,
-    mediaContext: buildAiMediaContext(messages, extra.quotedMessage || null)
-  });
+  const messages = manualMode ? manualMessages : (remoteMessages || match.messages || []);
+  const buildAiContext = (extra = {}) => {
+    if (!manualMode) {
+      return {
+        ...extra,
+        mediaContext: buildAiMediaContext(messages, extra.quotedMessage || null)
+      };
+    }
+    const quotedMessage = extra.quotedMessage || manualAiQuotedMessage(manualContext);
+    const baseUserContext = manualAiUserContext(manualContext);
+    const extraUserContext = String(extra.userContext || '').trim();
+    return {
+      ...extra,
+      quotedMessage,
+      manualContext,
+      mediaContext: extra.mediaContext || manualAiMediaContext(manualContext),
+      userContext: [baseUserContext, extraUserContext].filter(Boolean).join('\n')
+    };
+  };
   const isEmpty = messages.length === 0;
   const isNativeIOS = Boolean(WaFliAPI?.client?.IS_CAPACITOR_NATIVE && window.Capacitor?.getPlatform?.() === 'ios');
   const canRecordInlineAudio = Boolean(!isNativeIOS && navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined');
@@ -2716,6 +2873,27 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
     const active = document.activeElement;
     if (active && active !== document.body && typeof active.blur === 'function') active.blur();
   }, []);
+  const openManualContextForm = React.useCallback((context = manualContext) => {
+    const current = normalizeManualAiContext(context);
+    setManualMessage(current.message);
+    setManualAdditionalContext(current.additionalContext);
+    setManualCaptureName(current.captureName);
+    setManualContextStatus('');
+    setManualContextOpen(true);
+  }, [manualContext]);
+  React.useEffect(() => {
+    if (!manualMode) return undefined;
+    canonicalChatIdRef.current = MANUAL_AI_CHAT_ID;
+    setRemoteMessages(null);
+    setRemoteChat(null);
+    setLoadingMessages(false);
+    setChatError('');
+    const syncManualContext = (event) => {
+      setManualContext(normalizeManualAiContext(event?.detail || loadManualAiContext()));
+    };
+    window.addEventListener(MANUAL_AI_CONTEXT_EVENT, syncManualContext);
+    return () => window.removeEventListener(MANUAL_AI_CONTEXT_EVENT, syncManualContext);
+  }, [manualMode]);
   const lastMessage = isEmpty ? null : messages[messages.length - 1];
   const lastSentAt = lastMessage?.sentAt ? new Date(lastMessage.sentAt).getTime() : 0;
   const inactiveHours = lastSentAt ? (Date.now() - lastSentAt) / 36e5 : 0;
@@ -2727,7 +2905,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
     let alive = true;
     setChatAiProfileStatus('');
     setChatAiProfile(normalizeAiManualProfile());
-    if (!activeChatId || !WaFliAPI?.chats?.getAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return () => { alive = false; };
+    if (manualMode || !activeChatId || !WaFliAPI?.chats?.getAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return () => { alive = false; };
     WaFliAPI.chats.getAiProfile(activeChatId)
       .then(result => {
         if (!alive) return;
@@ -2735,7 +2913,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
       })
       .catch(() => {});
     return () => { alive = false; };
-  }, [activeChatId]);
+  }, [activeChatId, manualMode]);
 
   React.useEffect(() => {
     lastSeenMessageCountRef.current = 0;
@@ -2782,6 +2960,13 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
   }, [matchId, refreshKey, match.name, match.phone, match.muted]);
   React.useEffect(() => {
     let alive = true;
+    if (manualMode) {
+      setRemoteMessages(null);
+      setRemoteChat(null);
+      setLoadingMessages(false);
+      setChatError('');
+      return () => { alive = false; };
+    }
     const loadConversation = async (options = {}) => {
       if (!WaFliAPI?.chats?.messages || !WaFliAPI?.client?.isAuthenticated?.()) return;
       const silent = options.silent === true;
@@ -2867,7 +3052,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
       window.removeEventListener('focus', handleFocus);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [matchId]);
+  }, [matchId, manualMode]);
 
   const saveContactEdits = async () => {
     const name = editName.trim();
@@ -2893,7 +3078,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
     onBack();
   };
   const saveChatAiProfile = async () => {
-    if (!WaFliAPI?.chats?.updateAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return;
+    if (manualMode || !WaFliAPI?.chats?.updateAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return;
     setChatAiProfileStatus('Guardando...');
     try {
       const payload = normalizeAiManualProfile(chatAiProfile);
@@ -2917,7 +3102,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
     }
   }, []);
   const sendPresenceUpdate = React.useCallback((presenceType) => {
-    if (offline || !WaFliAPI?.chats?.presence || !WaFliAPI?.client?.isAuthenticated?.()) return;
+    if (manualMode || offline || !WaFliAPI?.chats?.presence || !WaFliAPI?.client?.isAuthenticated?.()) return;
     const chatId = canonicalChatIdRef.current || activeChatId || matchId;
     if (!chatId) return;
     const safePresence = presenceType === 'composing' || presenceType === 'recording' ? presenceType : 'paused';
@@ -2928,7 +3113,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
     }
     presenceStateRef.current = safePresence;
     WaFliAPI.chats.presence(chatId, safePresence).catch(() => {});
-  }, [activeChatId, matchId, offline]);
+  }, [activeChatId, matchId, offline, manualMode]);
   const handleDraftChange = React.useCallback((event) => {
     const value = event.target.value;
     setDraft(value);
@@ -3082,9 +3267,29 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
   };
   const sendDraft = async () => {
     const text = draft.trim();
-    if (!text || offline || sending) return;
+    if (!text || offline || sending || sendingRef.current) return;
+    sendingRef.current = true;
     clearPresenceIdleTimer();
     sendPresenceUpdate('paused');
+    if (manualMode) {
+      const quotedMessage = replyTo ? quotedMessagePayload(replyTo, match) : null;
+      const sent = {
+        id: `manual-me-${Date.now()}`,
+        chatId: MANUAL_AI_CHAT_ID,
+        from: 'me',
+        type: 'text',
+        status: 'sent',
+        quotedMessage,
+        text,
+        t: `hoy ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} · enviado`,
+        sentAt: new Date().toISOString(),
+      };
+      setManualLocalMessages((prev) => [...prev, sent]);
+      setDraft('');
+      setReplyTo(null);
+      sendingRef.current = false;
+      return;
+    }
     setSending(true);
     setChatError('');
     const quotedMessage = replyTo ? quotedMessagePayload(replyTo, match) : null;
@@ -3116,6 +3321,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
     } catch (error) {
       setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido enviar el mensaje.');
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
@@ -3125,7 +3331,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
     return mimeType === 'image/webp' ? 'sticker' : mimeType.startsWith('audio/') ? 'audio' : mimeType.startsWith('image/') ? 'image' : mimeType.startsWith('video/') ? 'video' : '';
   };
   const sendMediaFile = async (file, options = {}) => {
-    if (!file || offline || sending) return;
+    if (!file || offline || sending || sendingRef.current) return false;
     const mimeType = file.type || 'application/octet-stream';
     const mediaType = inferUploadMediaType(file, options.mediaType);
     if (!mediaType) {
@@ -3139,6 +3345,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
     }
     clearPresenceIdleTimer();
     sendPresenceUpdate('paused');
+    sendingRef.current = true;
     setSending(true);
     setChatError('');
     const captionText = options.captionOverride !== undefined ? String(options.captionOverride || '').trim() : draft.trim();
@@ -3185,6 +3392,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
       setChatError(WaFliAPI?.client?.toUserMessage?.(error) || 'No hemos podido enviar el archivo.');
       return false;
     } finally {
+      sendingRef.current = false;
       setSending(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -3331,6 +3539,14 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
   };
   const beginEditSelectedMessage = () => {
     if (!selectedMessage || selectedMessage.from !== 'me' || selectedMessage.type !== 'text' || selectedMessage.deleted) return;
+    const manualProfile = normalizeAiManualProfile(chatAiProfile);
+    const initialAgent = manualProfile.preferredAgent && manualProfile.preferredAgent !== 'auto'
+      ? getAiAgentConfig(manualProfile.preferredAgent).id
+      : DEFAULT_AI_AGENT;
+    const initialObjective = normalizeAiObjectiveForAgent(initialAgent, manualProfile.preferredObjective);
+    setEditAiAgent(initialAgent);
+    setEditAiObjective(initialObjective);
+    setEditAiCustomObjective(initialObjective === 'Personalizado' ? manualProfile.notes || '' : '');
     setEditMessageText(selectedMessage.text || '');
     setEditingMessage(selectedMessage);
     setSelectedMessage(null);
@@ -3370,6 +3586,9 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
       setChatError('Inicia sesión y conecta tu WhatsApp para reescribir con IA.');
       return;
     }
+    const editAiProfile = normalizeAiManualProfile(chatAiProfile);
+    const editAgent = getAiAgentConfig(editAiAgent).id;
+    const editObjective = normalizeAiObjectiveForAgent(editAgent, editAiObjective);
     setMessageActionLoading('rewrite-edit');
     setChatError('');
     try {
@@ -3379,8 +3598,11 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
         message: sourceText,
         editingMessage: true,
         contextMode: 'edit_message',
-        agent: 'Amistoso',
-        objective: 'Responder natural',
+        agent: editAgent,
+        tone: editAgent,
+        objective: editObjective,
+        intensity: editAiProfile.intensity || 'auto',
+        customObjective: editObjective === 'Personalizado' ? editAiCustomObjective.trim() : '',
         userContext: 'La persona usuaria está editando un mensaje propio ya enviado. Reescribe solo ese mensaje para que suene natural, fiel al contexto y listo para guardar como edición.'
       });
       if (result?.text) setEditMessageText(result.text);
@@ -3423,12 +3645,12 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
       <AppHeader
         title={match.name}
         showQuota
-        subtitle={String(match.id || '').endsWith('@g.us') ? 'Grupo de tu WhatsApp' : (match.phone || 'tu WhatsApp')}
+        subtitle={manualMode ? 'genera respuestas sin conectar whatsapp' : String(match.id || '').endsWith('@g.us') ? 'Grupo de tu WhatsApp' : (match.phone || 'tu WhatsApp')}
         leading={<>
           <IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>
           <Avatar name={match.name} src={match.avatar} size={32} />
         </>}
-        trailing={
+        trailing={manualMode ? null :
           <div style={{position: 'relative', display: 'flex', alignItems: 'center', gap: 6}}>
             {showInstallShortcut ? (
               <button className="appheader__install-btn" onClick={onInstallApp} aria-label="Instalar WaFli">
@@ -3487,7 +3709,48 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
             <span className="t-small" style={{color: 'var(--danger)'}}>{chatError}</span>
           </div>
         )}
-        {isEmpty ? (
+        {manualContextStatus ? (
+          <div style={{margin: '0 0 10px', borderRadius: 12, border: '1px solid rgba(20,120,80,0.22)', background: 'rgba(20,120,80,0.08)', padding: '8px 10px'}}>
+            <span className="t-small" style={{color: 'var(--success, #147850)'}}>{manualContextStatus}</span>
+          </div>
+        ) : null}
+        {manualMode && manualReady ? (
+          <div className="card" style={{margin: '0 0 12px', padding: 12, display: 'grid', gap: 8}}>
+            <div className="row" style={{justifyContent: 'space-between', gap: 10, alignItems: 'center'}}>
+              <span className="t-small" style={{fontWeight: 800}}>contexto activo</span>
+              <div className="row gap-2" style={{flexShrink: 0}}>
+                <button className="btn btn--ghost btn--sm" style={{height: 30}} onClick={() => openManualContextForm()}>editar contexto</button>
+                <button className="btn btn--text" style={{height: 30, color: 'var(--danger)'}} onClick={() => {
+                  clearManualAiContext();
+                  setManualContext(normalizeManualAiContext());
+                  setManualLocalMessages([]);
+                  setManualContextStatus('');
+                }}>borrar contexto</button>
+              </div>
+            </div>
+            <span className="t-small" style={{color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+              mensaje: {manualContext.message}
+            </span>
+          </div>
+        ) : null}
+        {manualMode && !manualReady ? (
+          <div style={{padding: '44px 16px', textAlign: 'center'}}>
+            <div style={{
+              width: 56, height: 56, margin: '0 auto 16px', borderRadius: 18,
+              background: 'var(--accent-soft)', color: 'var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              <Icons.Sparkles size={24} />
+            </div>
+            <div className="t-h3" style={{margin: '0 0 8px'}}>WaFli AI</div>
+            <div className="t-small" style={{color: 'var(--text-secondary)', maxWidth: 300, margin: '0 auto 18px'}}>
+              para generar respuestas necesito saber qué mensaje quieres responder.
+            </div>
+            <button className="btn btn--primary btn--md" onClick={() => openManualContextForm()}>
+              añadir contexto
+            </button>
+          </div>
+        ) : isEmpty ? (
           <div style={{padding: '32px 16px', textAlign: 'center'}}>
             <div style={{
               display: 'inline-flex', padding: '4px 10px', borderRadius: 'var(--r-pill)',
@@ -3529,7 +3792,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
         )}
       </div>
 
-      {!(aiSheetOpen || aiMenuOpen || editOpen || aiProfileOpen || selectedMessage || editingMessage || imageViewer) ? (
+      {manualMode && !manualReady ? null : !(aiSheetOpen || aiMenuOpen || editOpen || aiProfileOpen || selectedMessage || editingMessage || imageViewer) ? (
       <div className="chat-fixed-composer" style={{position: 'relative', zIndex: 130, width: '100%', maxWidth: '100%', boxSizing: 'border-box', flexShrink: 0, minHeight: 'fit-content', maxHeight: 'min(calc(var(--visual-viewport-height) - 120px), 320px)', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--bg)', borderTop: '1px solid var(--border)', boxShadow: '0 -10px 24px rgba(15, 23, 42, 0.10)'}}>
         {/* Contextual CTA bar */}
         {showContextualCta && (
@@ -3583,8 +3846,8 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
             />
             <button
               className="appheader__icon-btn"
-              disabled={offline || sending || recordingAudio || Boolean(audioDraft)}
-              style={{color: 'var(--text-secondary)', opacity: offline || sending || recordingAudio || audioDraft ? 0.45 : 1}}
+              disabled={manualMode || offline || sending || recordingAudio || Boolean(audioDraft)}
+              style={{color: 'var(--text-secondary)', opacity: manualMode || offline || sending || recordingAudio || audioDraft ? 0.45 : 1}}
               aria-label="Adjuntar imagen, sticker o audio"
               onClick={() => fileInputRef.current?.click()}
             >
@@ -3629,7 +3892,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
               <button className="appheader__icon-btn" disabled={offline || sending} onClick={sendDraft} style={{background: !offline ? 'var(--accent)' : 'var(--gray-200)', color: !offline ? 'white' : 'var(--text-tertiary)', transition: 'all 150ms', opacity: !offline ? 1 : 0.7}} aria-label="Enviar">
                 <Icons.Send size={18} sw={2} />
               </button>
-            ) : (
+            ) : !manualMode ? (
               <button
                 className="appheader__icon-btn"
                 disabled={offline || sending}
@@ -3652,11 +3915,76 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
                   </svg>
                 )}
               </button>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
       ) : null}
+      <BottomSheet open={manualContextOpen} onClose={() => setManualContextOpen(false)} height="78%">
+        <form
+          style={{display: 'flex', flexDirection: 'column', gap: 14, padding: '4px 18px 18px'}}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const message = manualMessage.trim();
+            if (!message) {
+              setManualContextStatus('');
+              setChatError('Escribe el mensaje a responder.');
+              return;
+            }
+            const next = saveManualAiContext({
+              message,
+              additionalContext: manualAdditionalContext,
+              captureName: manualCaptureName,
+            });
+            setManualContext(next);
+            setManualContextOpen(false);
+            setChatError('');
+            setManualContextStatus('contexto actualizado');
+          }}
+        >
+          <div className="row gap-2" style={{alignItems: 'center'}}>
+            <Icons.Sparkles size={18} style={{color: 'var(--accent)'}} />
+            <span className="t-h3">añadir contexto</span>
+          </div>
+          <div>
+            <label className="t-caption" style={{display: 'block', marginBottom: 6, fontWeight: 700}}>mensaje a responder</label>
+            <textarea
+              className="textarea"
+              rows={4}
+              value={manualMessage}
+              onChange={(event) => setManualMessage(event.target.value)}
+              placeholder="Pega aquí el mensaje que quieres responder"
+              style={{fontSize: 16, lineHeight: 1.45}}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="t-caption" style={{display: 'block', marginBottom: 6, fontWeight: 700}}>captura de conversación <span style={{fontWeight: 400, color: 'var(--text-tertiary)'}}>(opcional)</span></label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => setManualCaptureName(event.target.files?.[0]?.name || '')}
+              style={{width: '100%', fontSize: 14}}
+            />
+            {manualCaptureName ? <span className="t-caption" style={{display: 'block', marginTop: 6}}>archivo: {manualCaptureName}</span> : null}
+          </div>
+          <div>
+            <label className="t-caption" style={{display: 'block', marginBottom: 6, fontWeight: 700}}>contexto adicional <span style={{fontWeight: 400, color: 'var(--text-tertiary)'}}>(opcional)</span></label>
+            <textarea
+              className="textarea"
+              rows={3}
+              value={manualAdditionalContext}
+              onChange={(event) => setManualAdditionalContext(event.target.value)}
+              placeholder="Ej. quién escribe, qué quieres lograr o cualquier detalle útil"
+              style={{fontSize: 16, lineHeight: 1.45}}
+            />
+          </div>
+          <div className="row gap-2" style={{justifyContent: 'flex-end', flexWrap: 'wrap'}}>
+            <button type="button" className="btn btn--secondary btn--md" onClick={() => setManualContextOpen(false)}>cancelar</button>
+            <button type="submit" className="btn btn--primary btn--md">guardar contexto</button>
+          </div>
+        </form>
+      </BottomSheet>
       {imageViewer ? (
         <div
           className="chat-image-viewer"
@@ -3765,9 +4093,17 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
           ) : null}
         </div>
       </BottomSheet>
-      <BottomSheet open={Boolean(editingMessage)} onClose={() => { setEditingMessage(null); setEditMessageText(''); }} height="72%">
+      <BottomSheet open={Boolean(editingMessage)} onClose={() => { setEditingMessage(null); setEditMessageText(''); setEditAiCustomObjective(''); }} height="82%">
         <div style={{display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '8px 18px 0', gap: 10}}>
           <div className="t-h3">Editar mensaje</div>
+          <AiAgentControls
+            agent={editAiAgent}
+            setAgent={setEditAiAgent}
+            objective={editAiObjective}
+            setObjective={setEditAiObjective}
+            customObjective={editAiCustomObjective}
+            setCustomObjective={setEditAiCustomObjective}
+          />
           <button
             className="btn btn--secondary btn--full"
             disabled={!editMessageText.trim() || Boolean(messageActionLoading)}
@@ -3798,7 +4134,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
             }}
           />
           <div style={{display: 'flex', gap: 8, position: 'sticky', bottom: 0, zIndex: 80, flexShrink: 0, margin: '8px -18px 0', padding: '10px 18px calc(12px + var(--safe-bottom))', background: 'var(--bg)', borderTop: '1px solid var(--border)'}}>
-            <button className="btn btn--ghost btn--full" onClick={() => { setEditingMessage(null); setEditMessageText(''); }}>
+            <button className="btn btn--ghost btn--full" onClick={() => { setEditingMessage(null); setEditMessageText(''); setEditAiCustomObjective(''); }}>
               Cancelar
             </button>
             <button className="btn btn--primary btn--full" disabled={!editMessageText.trim() || Boolean(messageActionLoading)} onClick={saveEditedMessage}>
@@ -3812,7 +4148,7 @@ function ChatScreen({ matchId, onBack, onSuggest, onRewrite, onReactivate, onAna
           <div className="t-h3" style={{marginBottom: 12}}>Acciones IA</div>
           <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onSuggest && onSuggest(buildAiContext(replyTo ? { quotedMessage: quotedMessagePayload(replyTo, match) } : {})); }}><Icons.Sparkles size={16} /> {replyTo ? 'Sugerir respuesta al mensaje' : 'Sugerir respuesta'}</button>
           <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onReactivate && onReactivate(buildAiContext()); }}><Icons.Refresh size={16} /> Reactivar conversación</button>
-          <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onRewrite && onRewrite(draft); }}><Icons.Edit size={16} /> Reescribir mensaje propio</button>
+          <button style={menuActionStyle} onClick={() => { dismissComposerKeyboard(); setAiMenuOpen(false); onRewrite && onRewrite(draft, buildAiContext()); }}><Icons.Edit size={16} /> Reescribir mensaje propio</button>
         </div>
       </BottomSheet>
       <BottomSheet open={aiProfileOpen} onClose={() => setAiProfileOpen(false)} height="76%">
@@ -4367,6 +4703,12 @@ function defaultObjectiveForAgent(agent) {
   return AI_AUTO_OBJECTIVE;
 }
 
+function normalizeAiObjectiveForAgent(agent, objective) {
+  const selectedAgent = getAiAgentConfig(agent);
+  const allowed = [AI_AUTO_OBJECTIVE, ...(selectedAgent.objectives || [])];
+  return allowed.includes(objective) ? objective : AI_AUTO_OBJECTIVE;
+}
+
 function normalizeAiManualProfile(profile = {}) {
   const source = profile && typeof profile === 'object' ? profile : {};
   return {
@@ -4804,7 +5146,7 @@ function AiReportButton({ chatId, action = 'unknown', text = '', originalText = 
 }
 
 
-function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerir respuesta', caption = '', matchContext = '', mediaContext = null, quotedMessage = null, onClose, onSent, onQuota, canSend = true }) {
+function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerir respuesta', caption = '', matchContext = '', mediaContext = null, quotedMessage = null, manualContext = null, onClose, onSent, onQuota, canSend = true }) {
   const [agent, setAgent] = React.useState(DEFAULT_AI_AGENT);
   const [objective, setObjective] = React.useState(defaultObjectiveForAgent(DEFAULT_AI_AGENT));
   const [customObjective, setCustomObjective] = React.useState('');
@@ -4815,15 +5157,23 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerir respuesta',
   const [text, setText] = React.useState('');
   const [generated, setGenerated] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [sendingResult, setSendingResult] = React.useState(false);
+  const [sentResult, setSentResult] = React.useState(false);
   const [error, setError] = React.useState('');
   const generatedTextRef = React.useRef('');
   const generationMetaRef = React.useRef(null);
+  const sendResultLockRef = React.useRef(false);
   const hasResult = generated && Boolean(text.trim());
   const isReactivate = action === 'reactivate';
 
   React.useEffect(() => {
+    setSentResult(false);
+    sendResultLockRef.current = false;
+  }, [text]);
+
+  React.useEffect(() => {
     let alive = true;
-    if (!chatId || !WaFliAPI?.chats?.getAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return () => { alive = false; };
+    if (manualContext || !chatId || !WaFliAPI?.chats?.getAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return () => { alive = false; };
     WaFliAPI.chats.getAiProfile(chatId)
       .then(result => {
         if (!alive) return;
@@ -4833,10 +5183,10 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerir respuesta',
       })
       .catch(() => {});
     return () => { alive = false; };
-  }, [chatId]);
+  }, [chatId, manualContext]);
 
   const saveAiProfile = async () => {
-    if (!WaFliAPI?.chats?.updateAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return;
+    if (manualContext || !WaFliAPI?.chats?.updateAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return;
     setProfileStatus('Guardando...');
     try {
       const payload = normalizeAiManualProfile({ ...aiProfile, intensity });
@@ -4856,7 +5206,8 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerir respuesta',
     objective,
     intensity,
     customObjective: objective === 'Personalizado' ? customObjective.trim() : '',
-    userContext: userContext.trim(),
+    userContext: [manualAiUserContext(manualContext), userContext.trim()].filter(Boolean).join('\n'),
+    manualContext: manualContext ? normalizeManualAiContext(manualContext) : undefined,
     matchContext,
     quotedMessage,
     mediaContext,
@@ -4869,7 +5220,7 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerir respuesta',
       const isRegeneration = hasResult;
       const endpoint = isRegeneration ? (WaFliAPI?.ai?.regenerate || baseEndpoint) : baseEndpoint;
     if (!endpoint || !WaFliAPI?.client?.isAuthenticated?.()) {
-      setError('Inicia sesión y conecta tu WhatsApp para generar con IA.');
+      setError('Inicia sesión para generar con IA.');
       return;
     }
     stopAiSpeechDictation();
@@ -5010,32 +5361,42 @@ function SuggestSheet({ chatId, action = 'suggest', title = 'Sugerir respuesta',
 
       {hasResult && canSend ? (
         <div className="ai-sheet__footer">
-          <button className="btn btn--primary btn--full" disabled={loading} onClick={async () => {
+          <button className="btn btn--primary btn--full" disabled={loading || sendingResult || sentResult} onClick={async () => {
+            if (sendResultLockRef.current || sentResult) return;
+            sendResultLockRef.current = true;
+            setSendingResult(true);
+            let sentOk = false;
             try {
-              if (!text.trim()) {
+              const outgoingText = text.trim();
+              if (!outgoingText) {
                 setError('Genera un mensaje antes de enviarlo.');
                 return;
               }
               if (WaFliAPI?.chats?.send && WaFliAPI?.client?.isAuthenticated?.()) {
-                await WaFliAPI.chats.send(chatId, text, generationMetaRef.current ? {
+                await WaFliAPI.chats.send(chatId, outgoingText, generationMetaRef.current ? {
                   metadata: {
                     ...generationMetaRef.current,
-                    wasEditedBeforeSend: text.trim() !== String(generatedTextRef.current || '').trim()
+                    wasEditedBeforeSend: outgoingText !== String(generatedTextRef.current || '').trim()
                   }
                 } : {});
               }
-              onSent && onSent(text);
+              setSentResult(true);
+              sentOk = true;
+              onSent && onSent(outgoingText);
             } catch (apiError) {
               setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido enviar el mensaje.');
+            } finally {
+              if (!sentOk) sendResultLockRef.current = false;
+              setSendingResult(false);
             }
-          }}>Enviar</button>
+          }}>{sendingResult ? 'Enviando...' : sentResult ? 'Enviado' : 'Enviar'}</button>
         </div>
       ) : null}
     </div>
   );
 }
 
-function RewriteSheet({ chatId, sourceText = '', onUse, onQuota }) {
+function RewriteSheet({ chatId, sourceText = '', manualContext = null, onUse, onQuota }) {
   const [agent, setAgent] = React.useState(DEFAULT_AI_AGENT);
   const [objective, setObjective] = React.useState(defaultObjectiveForAgent(DEFAULT_AI_AGENT));
   const [customObjective, setCustomObjective] = React.useState('');
@@ -5060,7 +5421,7 @@ function RewriteSheet({ chatId, sourceText = '', onUse, onQuota }) {
 
   React.useEffect(() => {
     let alive = true;
-    if (!chatId || !WaFliAPI?.chats?.getAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return () => { alive = false; };
+    if (manualContext || !chatId || !WaFliAPI?.chats?.getAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return () => { alive = false; };
     WaFliAPI.chats.getAiProfile(chatId)
       .then(result => {
         if (!alive) return;
@@ -5070,10 +5431,10 @@ function RewriteSheet({ chatId, sourceText = '', onUse, onQuota }) {
       })
       .catch(() => {});
     return () => { alive = false; };
-  }, [chatId]);
+  }, [chatId, manualContext]);
 
   const saveAiProfile = async () => {
-    if (!WaFliAPI?.chats?.updateAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return;
+    if (manualContext || !WaFliAPI?.chats?.updateAiProfile || !WaFliAPI?.client?.isAuthenticated?.()) return;
     setProfileStatus('Guardando...');
     try {
       const payload = normalizeAiManualProfile({ ...aiProfile, intensity });
@@ -5094,7 +5455,7 @@ function RewriteSheet({ chatId, sourceText = '', onUse, onQuota }) {
     const isRegeneration = hasResult;
     const endpoint = isRegeneration ? (WaFliAPI?.ai?.regenerate || WaFliAPI?.ai?.rewrite) : WaFliAPI?.ai?.rewrite;
     if (!endpoint || !WaFliAPI?.client?.isAuthenticated?.()) {
-      setError('Inicia sesión y conecta tu WhatsApp para reescribir con IA.');
+      setError('Inicia sesión para reescribir con IA.');
       return;
     }
     stopAiSpeechDictation();
@@ -5111,7 +5472,8 @@ function RewriteSheet({ chatId, sourceText = '', onUse, onQuota }) {
         objective,
         intensity,
         customObjective: objective === 'Personalizado' ? customObjective.trim() : '',
-        userContext: userContext.trim(),
+        userContext: [manualAiUserContext(manualContext), userContext.trim()].filter(Boolean).join('\n'),
+        manualContext: manualContext ? normalizeManualAiContext(manualContext) : undefined,
         regeneration: isRegeneration,
         previousGeneratedText: isRegeneration ? String(generatedTextRef.current || rewritten || '').trim() : '',
         currentDraftText: isRegeneration ? String(rewritten || '').trim() : '',
@@ -5432,6 +5794,544 @@ function formatUsageRow(row = {}) {
   return { detail, reason, statusLabel };
 }
 
+const toolSelectStyle = {
+  width: '100%',
+  border: '1px solid var(--border-strong)',
+  borderRadius: 12,
+  padding: '10px 11px',
+  outline: 'none',
+  fontSize: 15,
+  fontFamily: 'inherit',
+  background: 'var(--surface)',
+};
+
+function firstToolVariant() {
+  return SPANISH_VARIANT_OPTIONS.find(option => option.id === 'Neutro')?.id || SPANISH_VARIANT_OPTIONS[0]?.id || 'Neutro';
+}
+
+function readToolImageFile(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve(null);
+    if (!String(file.type || '').startsWith('image/')) {
+      reject(new Error('Selecciona una imagen válida.'));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      reject(new Error('La imagen debe pesar menos de 5 MB.'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => resolve({
+      dataUrl: String(reader.result || ''),
+      fileName: file.name || 'captura',
+      mimeType: file.type || 'image/*',
+      sizeBytes: file.size || 0,
+    });
+    reader.onerror = () => reject(new Error('No hemos podido leer la imagen.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function copyStandaloneText(text, setStatus) {
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus && setStatus('Copiado');
+  } catch {
+    setStatus && setStatus('No hemos podido copiar automáticamente.');
+  }
+}
+
+function ToolSelectRow({ agent, onAgentChange, objective = AI_AUTO_OBJECTIVE, onObjectiveChange, customObjective = '', onCustomObjectiveChange, variant, onVariantChange }) {
+  const selectedAgent = getAiAgentConfig(agent);
+  const objectives = [AI_AUTO_OBJECTIVE, ...(selectedAgent.objectives || []).filter(item => item !== AI_AUTO_OBJECTIVE)];
+  const changeAgent = (nextAgent) => {
+    onAgentChange && onAgentChange(nextAgent);
+    onObjectiveChange && onObjectiveChange(AI_AUTO_OBJECTIVE);
+  };
+  return (
+    <div className="grid" style={{gridTemplateColumns: '1fr 1fr', gap: 10}}>
+      <label className="field">
+        <span className="field__label">Agente</span>
+        <select value={agent} onChange={(event) => changeAgent(event.target.value)} style={toolSelectStyle}>
+          {AI_AGENTS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
+        </select>
+      </label>
+      <label className="field">
+        <span className="field__label">Objetivo</span>
+        <select value={objective || AI_AUTO_OBJECTIVE} onChange={(event) => onObjectiveChange && onObjectiveChange(event.target.value)} style={toolSelectStyle}>
+          {objectives.map(option => <option key={option} value={option}>{option}</option>)}
+        </select>
+      </label>
+      <label className="field" style={{gridColumn: '1 / -1'}}>
+        <span className="field__label">Español</span>
+        <select value={variant} onChange={(event) => onVariantChange(event.target.value)} style={toolSelectStyle}>
+          {SPANISH_VARIANT_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.title || option.id}</option>)}
+        </select>
+      </label>
+      {objective === 'Personalizado' ? (
+        <label className="field" style={{gridColumn: '1 / -1'}}>
+          <span className="field__label">Objetivo personalizado</span>
+          <input
+            value={customObjective}
+            onChange={(event) => onCustomObjectiveChange && onCustomObjectiveChange(event.target.value)}
+            placeholder="Ej. responder con más seguridad sin sonar seco"
+            maxLength={180}
+            style={toolSelectStyle}
+          />
+        </label>
+      ) : null}
+    </div>
+  );
+}
+
+function ToolImageInput({ label, image, onChange, onClear, required = false }) {
+  return (
+    <div className="field">
+      <span className="field__label">{label}{required ? '' : ' (opcional)'}</span>
+      <label
+        className="card"
+        style={{
+          padding: 12,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          cursor: 'pointer',
+          border: '1px dashed var(--border-strong)',
+          background: 'var(--gray-50)',
+        }}
+      >
+        <span className="row gap-2" style={{minWidth: 0}}>
+          <span style={{width: 32, height: 32, borderRadius: 10, background: 'var(--accent-soft)', color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}}>
+            <Icons.Doc size={16} />
+          </span>
+          <span className="col" style={{gap: 2, minWidth: 0}}>
+            <span className="t-small" style={{fontWeight: 700}}>{image ? 'Cambiar captura' : 'Añadir captura'}</span>
+            <span className="t-caption" style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+              {image?.fileName || 'PNG, JPG o HEIC'}
+            </span>
+          </span>
+        </span>
+        <span className="btn btn--secondary btn--sm" style={{pointerEvents: 'none', flexShrink: 0}}>Elegir</span>
+        <input
+          type="file"
+          accept="image/*"
+          style={{display: 'none'}}
+          onChange={async (event) => {
+            const file = event.target.files?.[0] || null;
+            try {
+              const next = await readToolImageFile(file);
+              onChange(next);
+            } catch (error) {
+              onChange(null, error?.message || 'No hemos podido leer la imagen.');
+            } finally {
+              event.target.value = '';
+            }
+          }}
+        />
+      </label>
+      {image ? (
+        <div className="card" style={{marginTop: 8, padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10}}>
+          <span className="t-small" style={{minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+            {image.fileName || 'Captura adjunta'}
+          </span>
+          <button type="button" className="btn btn--text" style={{height: 28}} onClick={(event) => { event.preventDefault(); event.stopPropagation(); onClear(); }}>Quitar</button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ToolCard({ icon, title, subtitle, onClick, disabled = false }) {
+  return (
+    <button
+      type="button"
+      className="card"
+      disabled={disabled}
+      onClick={onClick}
+      style={{
+        padding: 16,
+        textAlign: 'left',
+        display: 'flex',
+        gap: 12,
+        alignItems: 'center',
+        border: '1px solid var(--border)',
+        background: disabled ? 'var(--gray-50)' : 'var(--surface)',
+        opacity: disabled ? 0.7 : 1,
+        cursor: disabled ? 'default' : 'pointer'
+      }}
+    >
+      <span style={{width: 42, height: 42, borderRadius: 14, background: 'var(--accent-soft)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0}}>
+        {icon}
+      </span>
+      <span className="col" style={{gap: 3, minWidth: 0}}>
+        <span className="t-h3" style={{fontSize: 16}}>{title}</span>
+        <span className="t-small" style={{color: 'var(--text-secondary)'}}>{subtitle}</span>
+      </span>
+    </button>
+  );
+}
+
+function ToolsHomeScreen({ onNavigate, onOpenReplyTool, onOpenIcebreakers, onOpenSavedLines, onConnectWhatsApp, onOpenProfileSettings, whatsappConnected = false }) {
+  return (
+    <>
+      <AppHeader title="Herramientas" showQuota />
+      <div className="scroll-y" style={{padding: '14px 16px 96px'}}>
+        <div className="card" style={{padding: 16, marginBottom: 12, background: 'linear-gradient(135deg, rgba(77,91,246,0.12), rgba(20,184,166,0.10))'}}>
+          <div className="row gap-2" style={{marginBottom: 6}}>
+            <Icons.Sparkles size={20} style={{color: 'var(--accent)'}} />
+            <span className="t-h3">IA útil sin conectar WhatsApp</span>
+          </div>
+          <p className="t-small" style={{margin: 0, color: 'var(--text-secondary)'}}>
+            Pega una conversación o sube una captura para generar respuestas, entender mensajes y romper el hielo.
+          </p>
+        </div>
+
+        <div className="grid gap-3">
+          <ToolCard
+            icon={<Icons.Chats size={22} />}
+            title="¿Qué le respondo?"
+            subtitle="Sube una captura o pega el chat y recibe una respuesta lista para copiar."
+            onClick={onOpenReplyTool}
+          />
+          <ToolCard
+            icon={<Icons.Sparkles size={22} />}
+            title="Rompe el hielo"
+            subtitle="Genera tres aperturas distintas para iniciar una conversación."
+            onClick={onOpenIcebreakers}
+          />
+          <ToolCard
+            icon={<Icons.Settings size={22} />}
+            title="Mejora tu perfil"
+            subtitle="Ajusta tu forma de hablar para que WaFli escriba más parecido a ti."
+            onClick={onOpenProfileSettings}
+          />
+          {!whatsappConnected ? (
+            <div className="card" style={{padding: 14, display: 'grid', gap: 10}}>
+              <div>
+                <span className="t-h3" style={{fontSize: 16}}>Conecta tu WhatsApp</span>
+                <p className="t-small" style={{margin: '4px 0 0', color: 'var(--text-secondary)'}}>
+                  Opcional: trae tus chats reales para responder desde WaFli.
+                </p>
+              </div>
+              <div className="row gap-2">
+                <button type="button" className="btn btn--secondary btn--md" onClick={onConnectWhatsApp}>Conectar</button>
+                <button type="button" className="btn btn--text btn--md">Ahora no</button>
+              </div>
+            </div>
+          ) : null}
+          <div className="card" style={{padding: 14, display: 'grid', gap: 10}}>
+            <div className="row" style={{justifyContent: 'space-between', gap: 10}}>
+              <div>
+                <span className="t-h3" style={{fontSize: 16}}>Mis líneas guardadas</span>
+                <p className="t-small" style={{margin: '4px 0 0', color: 'var(--text-secondary)'}}>Copia o borra aperturas que hayas guardado.</p>
+              </div>
+              <button type="button" className="btn btn--secondary btn--md" onClick={onOpenSavedLines}>Abrir</button>
+            </div>
+          </div>
+          <div style={{padding: '8px 2px 2px'}}>
+            <span className="t-caption" style={{fontWeight: 700, color: 'var(--text-secondary)'}}>Próximamente</span>
+          </div>
+          <ToolCard icon={<Icons.Sparkles size={22} />} title="Entrena conmigo" subtitle="Práctica conversacional para preparar mejores respuestas." disabled />
+        </div>
+      </div>
+      <BottomNav active="tools" onChange={onNavigate} />
+    </>
+  );
+}
+
+function ToolReplyScreen({ onBack, onNavigate, onQuota }) {
+  const [conversationText, setConversationText] = React.useState('');
+  const [screenshot, setScreenshot] = React.useState(null);
+  const [notes, setNotes] = React.useState('');
+  const [agent, setAgent] = React.useState(DEFAULT_AI_AGENT);
+  const [objective, setObjective] = React.useState(AI_AUTO_OBJECTIVE);
+  const [customObjective, setCustomObjective] = React.useState('');
+  const [variant, setVariant] = React.useState(firstToolVariant());
+  const [result, setResult] = React.useState('');
+  const [meta, setMeta] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [status, setStatus] = React.useState('');
+
+  React.useEffect(() => {
+    let alive = true;
+    WaFliAPI?.me?.getProfile?.().then(profile => {
+      if (!alive || !profile) return;
+      if (profile.spanish_variant || profile.variant) setVariant(profile.spanish_variant || profile.variant);
+      if (profile.base_tone || profile.baseTone) setAgent(getAiAgentConfig(profile.base_tone || profile.baseTone).id);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const generateReply = async (regenerate = false) => {
+    if (!conversationText.trim() && !screenshot) {
+      setError('Añade una captura o pega la conversación para continuar.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setStatus('');
+    try {
+      const response = await WaFliAPI?.ai?.toolReply?.({
+        mode: 'reply',
+        agent,
+        tone: agent,
+        objective,
+        customObjective,
+        variant,
+        conversationText,
+        screenshot,
+        notes,
+        previousGeneratedText: regenerate ? result : '',
+        regeneration: regenerate,
+      });
+      setResult(response?.text || '');
+      setMeta(response?.meta || null);
+      setStatus(regenerate ? 'Nueva versión generada' : 'Respuesta generada');
+    } catch (apiError) {
+      if (apiError?.code === 'quota_exhausted') onQuota && onQuota();
+      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido generar la respuesta.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const changeAgent = () => {
+    const currentIndex = AI_AGENTS.findIndex(item => item.id === agent);
+    const nextAgent = AI_AGENTS[(currentIndex + 1 + AI_AGENTS.length) % AI_AGENTS.length];
+    setAgent(nextAgent.id);
+    setObjective(AI_AUTO_OBJECTIVE);
+    setCustomObjective('');
+    setStatus('Agente cambiado. Pulsa Regenerar para crear otra versión.');
+  };
+
+  return (
+    <>
+      <AppHeader title="¿Qué le respondo?" showQuota leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>} />
+      <div className="scroll-y" style={{padding: '14px 16px 110px'}}>
+        <div className="grid gap-3">
+          <div className="card" style={{padding: 14}}>
+            <span className="t-h3" style={{fontSize: 16}}>Contexto</span>
+            <p className="t-small" style={{margin: '4px 0 12px', color: 'var(--text-secondary)'}}>
+              Sube una captura o pega la conversación. Una de las dos opciones es suficiente.
+            </p>
+            <ToolImageInput
+              label="Captura de conversación"
+              image={screenshot}
+              onChange={(image, imageError) => { setScreenshot(image); if (imageError) setError(imageError); }}
+              onClear={() => setScreenshot(null)}
+            />
+            <label className="field" style={{marginTop: 10}}>
+              <span className="field__label">Texto pegado de conversación</span>
+              <textarea className="textarea" value={conversationText} onChange={(event) => setConversationText(event.target.value)} rows={7} placeholder="Pega aquí el mensaje o la conversación..." />
+            </label>
+            <label className="field" style={{marginTop: 10}}>
+              <span className="field__label">Contexto adicional (opcional)</span>
+              <textarea className="textarea" value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} placeholder="Algo breve que ayude: intención, relación o detalle importante." />
+            </label>
+          </div>
+
+          <div className="card" style={{padding: 14}}>
+            <span className="t-h3" style={{fontSize: 16}}>Modo</span>
+            <div className="row gap-2" style={{marginTop: 10, flexWrap: 'wrap'}}>
+              <button type="button" className="btn btn--md btn--primary">Sugerirme respuesta</button>
+            </div>
+            <div style={{marginTop: 12}}>
+              <ToolSelectRow agent={agent} onAgentChange={setAgent} objective={objective} onObjectiveChange={(nextObjective) => { setObjective(nextObjective); if (nextObjective !== 'Personalizado') setCustomObjective(''); }} customObjective={customObjective} onCustomObjectiveChange={setCustomObjective} variant={variant} onVariantChange={setVariant} />
+            </div>
+          </div>
+
+          <button type="button" className="btn btn--primary btn--full" disabled={loading} onClick={() => generateReply(false)}>
+            {loading ? 'Generando...' : 'Generar respuesta'}
+          </button>
+
+          {error ? <div className="card" style={{padding: 10, borderColor: 'rgba(180,30,30,0.25)'}}><span className="t-small" style={{color: 'var(--danger)'}}>{error}</span></div> : null}
+
+          {result ? (
+            <div className="card" style={{padding: 14, display: 'grid', gap: 10}}>
+              <div className="row" style={{justifyContent: 'space-between', gap: 10}}>
+                <span className="t-h3" style={{fontSize: 16}}>Resultado</span>
+                {meta?.humanReplyScore ? <span className="t-caption">score {meta.humanReplyScore}</span> : null}
+              </div>
+              <textarea className="textarea" value={result} onChange={(event) => setResult(event.target.value)} rows={5} />
+              <div className="row gap-2" style={{flexWrap: 'wrap'}}>
+                <button type="button" className="btn btn--secondary btn--md" onClick={() => copyStandaloneText(result, setStatus)}><Icons.Copy size={15} /> Copiar</button>
+                <button type="button" className="btn btn--secondary btn--md" disabled={loading} onClick={() => generateReply(true)}><Icons.Refresh size={15} /> Regenerar</button>
+                <button type="button" className="btn btn--secondary btn--md" onClick={changeAgent}>Cambiar agente</button>
+              </div>
+            </div>
+          ) : null}
+          {status ? <span className="t-caption" style={{color: 'var(--text-secondary)'}}>{status}</span> : null}
+        </div>
+      </div>
+      <BottomNav active="tools" onChange={onNavigate} />
+    </>
+  );
+}
+
+function ToolIcebreakersScreen({ onBack, onNavigate, onQuota }) {
+  const [knownInfo, setKnownInfo] = React.useState('');
+  const [profileScreenshot, setProfileScreenshot] = React.useState(null);
+  const [agent, setAgent] = React.useState(DEFAULT_AI_AGENT);
+  const [objective, setObjective] = React.useState(AI_AUTO_OBJECTIVE);
+  const [customObjective, setCustomObjective] = React.useState('');
+  const [variant, setVariant] = React.useState(firstToolVariant());
+  const [alternatives, setAlternatives] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [status, setStatus] = React.useState('');
+
+  React.useEffect(() => {
+    let alive = true;
+    WaFliAPI?.me?.getProfile?.().then(profile => {
+      if (!alive || !profile) return;
+      if (profile.spanish_variant || profile.variant) setVariant(profile.spanish_variant || profile.variant);
+      if (profile.base_tone || profile.baseTone) setAgent(getAiAgentConfig(profile.base_tone || profile.baseTone).id);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const generateIcebreakers = async () => {
+    if (!knownInfo.trim() && !profileScreenshot) {
+      setError('Añade algo sobre la otra persona o una captura de perfil.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setStatus('');
+    try {
+      const response = await WaFliAPI?.ai?.toolIcebreakers?.({ knownInfo, profileScreenshot, agent, tone: agent, objective, customObjective, variant });
+      setAlternatives((response?.alternatives || []).filter(Boolean).slice(0, 3));
+      setStatus('Aperturas generadas');
+    } catch (apiError) {
+      if (apiError?.code === 'quota_exhausted') onQuota && onQuota();
+      setError(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido generar aperturas.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveAlternative = async (text) => {
+    try {
+      await WaFliAPI?.ai?.saveLine?.({ text, tone: agent, variant, source: 'icebreaker', metadata: { objective, customObjective } });
+      setStatus('Línea guardada');
+    } catch (apiError) {
+      setStatus(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido guardar la línea.');
+    }
+  };
+
+  return (
+    <>
+      <AppHeader title="Rompe el hielo" showQuota leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>} />
+      <div className="scroll-y" style={{padding: '14px 16px 110px'}}>
+        <div className="grid gap-3">
+          <div className="card" style={{padding: 14}}>
+            <span className="t-h3" style={{fontSize: 16}}>Punto de partida</span>
+            <p className="t-small" style={{margin: '4px 0 12px', color: 'var(--text-secondary)'}}>
+              Cuéntame algo de la otra persona o sube una captura de perfil.
+            </p>
+            <ToolImageInput
+              label="Captura de perfil"
+              image={profileScreenshot}
+              onChange={(image, imageError) => { setProfileScreenshot(image); if (imageError) setError(imageError); }}
+              onClear={() => setProfileScreenshot(null)}
+            />
+            <label className="field" style={{marginTop: 10}}>
+              <span className="field__label">Qué sabes de la otra persona</span>
+              <textarea className="textarea" value={knownInfo} onChange={(event) => setKnownInfo(event.target.value)} rows={5} placeholder="Ej. le gusta viajar, tiene una foto con su perro, estudia arquitectura..." />
+            </label>
+            <div style={{marginTop: 12}}>
+              <ToolSelectRow agent={agent} onAgentChange={setAgent} objective={objective} onObjectiveChange={(nextObjective) => { setObjective(nextObjective); if (nextObjective !== 'Personalizado') setCustomObjective(''); }} customObjective={customObjective} onCustomObjectiveChange={setCustomObjective} variant={variant} onVariantChange={setVariant} />
+            </div>
+          </div>
+          <button type="button" className="btn btn--primary btn--full" disabled={loading} onClick={generateIcebreakers}>
+            {loading ? 'Generando...' : alternatives.length ? 'Regenerar tanda' : 'Generar 3 aperturas'}
+          </button>
+          {error ? <div className="card" style={{padding: 10, borderColor: 'rgba(180,30,30,0.25)'}}><span className="t-small" style={{color: 'var(--danger)'}}>{error}</span></div> : null}
+          {alternatives.map((text, index) => (
+            <div key={`${text}-${index}`} className="card" style={{padding: 14, display: 'grid', gap: 10}}>
+              <span className="t-caption" style={{fontWeight: 700, color: 'var(--accent)'}}>{['Directa', 'Juguetona', 'Curiosa'][index] || `Opción ${index + 1}`}</span>
+              <p className="t-body" style={{margin: 0}}>{text}</p>
+              <div className="row gap-2" style={{flexWrap: 'wrap'}}>
+                <button type="button" className="btn btn--secondary btn--md" onClick={() => copyStandaloneText(text, setStatus)}><Icons.Copy size={15} /> Copiar</button>
+                <button type="button" className="btn btn--secondary btn--md" onClick={() => saveAlternative(text)}><Icons.Check size={15} /> Guardar</button>
+              </div>
+            </div>
+          ))}
+          {status ? <span className="t-caption" style={{color: 'var(--text-secondary)'}}>{status}</span> : null}
+        </div>
+      </div>
+      <BottomNav active="tools" onChange={onNavigate} />
+    </>
+  );
+}
+
+function SavedLinesScreen({ onBack, onNavigate }) {
+  const [lines, setLines] = React.useState([]);
+  const [q, setQ] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [status, setStatus] = React.useState('');
+
+  const loadLines = React.useCallback(async () => {
+    setLoading(true);
+    setStatus('');
+    try {
+      const result = await WaFliAPI?.ai?.savedLines?.({ q });
+      setLines(result?.lines || []);
+    } catch (apiError) {
+      setStatus(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido cargar tus líneas.');
+    } finally {
+      setLoading(false);
+    }
+  }, [q]);
+
+  React.useEffect(() => {
+    loadLines();
+  }, [loadLines]);
+
+  const deleteSavedLine = async (id) => {
+    try {
+      await WaFliAPI?.ai?.deleteLine?.(id);
+      setLines(prev => prev.filter(line => String(line.id) !== String(id)));
+      setStatus('Línea borrada');
+    } catch (apiError) {
+      setStatus(WaFliAPI?.client?.toUserMessage?.(apiError) || 'No hemos podido borrar la línea.');
+    }
+  };
+
+  return (
+    <>
+      <AppHeader title="Mis líneas guardadas" leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>} />
+      <div className="scroll-y" style={{padding: '14px 16px 110px'}}>
+        <div className="card" style={{padding: 12, marginBottom: 12}}>
+          <input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Buscar líneas guardadas" style={{width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: 16}} />
+        </div>
+        {loading ? <span className="t-caption">Cargando...</span> : null}
+        <div className="grid gap-3">
+          {lines.map(line => (
+            <div key={line.id} className="card" style={{padding: 14, display: 'grid', gap: 10}}>
+              <p className="t-body" style={{margin: 0}}>{line.text}</p>
+              <div className="row gap-2" style={{flexWrap: 'wrap', justifyContent: 'space-between'}}>
+                <span className="t-caption">{line.tone || 'Sin tono'} · {line.variant || 'Neutro'}</span>
+                <span className="row gap-2">
+                  <button type="button" className="btn btn--secondary btn--md" onClick={() => copyStandaloneText(line.text, setStatus)}><Icons.Copy size={15} /> Copiar</button>
+                  <button type="button" className="btn btn--text btn--md" onClick={() => deleteSavedLine(line.id)}>Borrar</button>
+                </span>
+              </div>
+            </div>
+          ))}
+          {!loading && lines.length === 0 ? (
+            <EmptyState icon={<Icons.Empty size={32} sw={1.4} />} title="Todavía no guardaste líneas" subtitle="Cuando guardes aperturas desde Rompe el hielo aparecerán aquí." />
+          ) : null}
+        </div>
+        {status ? <div style={{marginTop: 12}}><span className="t-caption" style={{color: 'var(--text-secondary)'}}>{status}</span></div> : null}
+      </div>
+      <BottomNav active="tools" onChange={onNavigate} />
+    </>
+  );
+}
+
 // SCREEN 7 · Pestaña Plan
 function PlanScreen({ onNavigate, onOpenPlans, onOpenPacks, onOpenHistory }) {
   const [remoteUsage, setRemoteUsage] = React.useState(null);
@@ -5612,7 +6512,7 @@ function QuotaExhausted({ onClose, onOpenPlans, onOpenPacks }) {
 }
 
 // SCREEN 9 · Pestaña Ajustes
-function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notificationPrefs, onToggleNotification, onRequestNotificationPrompt, theme = 'system', onThemeChange, isNativeApp = false }) {
+function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notificationPrefs, onToggleNotification, onRequestNotificationPrompt, theme = 'system', onThemeChange, isNativeApp = false, initialSheet = null, onInitialSheetConsumed }) {
   const SUPPORT_EMAIL = 'soporte@wafli.ai';
   const SUPPORT_URL = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Soporte WaFli')}`;
   const isNativeIOS = Boolean(isNativeApp && window.Capacitor?.getPlatform?.() === 'ios');
@@ -5646,6 +6546,11 @@ function SettingsScreen({ onNavigate, onShowToast, notificationPermission, notif
   React.useEffect(() => {
     if (notificationPrefs) setNotifications(notificationPrefs);
   }, [notificationPrefs]);
+  React.useEffect(() => {
+    if (!initialSheet) return;
+    setSheet(initialSheet);
+    onInitialSheetConsumed && onInitialSheetConsumed();
+  }, [initialSheet, onInitialSheetConsumed]);
   React.useEffect(() => {
     const handleNativeBack = (event) => {
       if (legalDoc) {
@@ -6344,6 +7249,7 @@ function PaymentSuccessSheet({ onBack }) {
 Object.assign(window, {
   LEGAL_DOCUMENTS, PublicLegalPage,
   LandingScreen, AuthScreen, LegalAcceptanceScreen, SpanishVariantScreen, ToneBaseScreen, ConnectScreen, ConnectedSuccessScreen, AddToHomeScreen, StaticInfoScreen, ChatsListScreen, ChatScreen,
+  ToolsHomeScreen, ToolReplyScreen, ToolIcebreakersScreen, SavedLinesScreen,
   SuggestSheet, RewriteSheet, AnalysisSheet, OpenerSheet, PlanScreen, QuotaExhausted, SettingsScreen,
   PlanSelectorSheet, PackSelectorSheet, UsageHistorySheet, PaymentSuccessSheet,
   Spinner,

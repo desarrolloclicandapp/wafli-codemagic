@@ -14,7 +14,20 @@
     "db:init": "node src/db/runInit.js",
     "chat:dedup:dry-run": "node scripts/chat-dedup-dry-run.js",
     "postinstall": "node scripts/patch-baileys.js",
-    "test": "node --test tests"
+    "test": "node --test tests",
+    "scan:mojibake": "node ../scan-mojibake.cjs",
+    "eval:ai:quality": "node ../wafli-ai-quality-eval.tmp.cjs",
+    "eval:ai:reports": "node ../wafli-ai-reports-eval.tmp.cjs",
+    "eval:ai:dataset": "node ../wafli-ai-report-dataset.tmp.cjs",
+    "eval:ai:multiturn": "node ../wafli-ai-multiturn-eval.tmp.cjs",
+    "eval:ai:regional:quality": "node ../wafli-ai-regional-quality-eval.tmp.cjs",
+    "eval:ai:regional:calibration": "node ../wafli-ai-regional-calibration-eval.tmp.cjs",
+    "eval:ai:agents": "node ../wafli-ai-agents-eval.tmp.cjs",
+    "eval:ai:wingman": "node ../wafli-ai-wingman-eval.tmp.cjs",
+    "eval:ai:context-intent": "node ../wafli-ai-context-intent-eval.tmp.cjs",
+    "eval:ai:regional": "node ../wafli-ai-regional-eval.tmp.cjs",
+    "eval:ai:regional:dense": "node ../wafli-ai-regional-dense-eval.tmp.cjs",
+    "eval:ai:regional:full": "node ../wafli-ai-regional-full-eval.tmp.cjs"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "file:vendor/baileys/baileys-7.0.0-rc.9.tgz",

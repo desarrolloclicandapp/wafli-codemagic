@@ -4,6 +4,7 @@ const { ApiError } = require("../utils/responses");
 const chatRealtime = require("./chatRealtimeService");
 const pushService = require("./pushService");
 const { logger } = require("./loggerService");
+const conversationProfileService = require("./conversationProfileService");
 
 const aliasMergeSweepAtByUser = new Map();
 
@@ -366,6 +367,13 @@ function messageExpiresAt(baseDate = new Date()) {
   return expiresAt;
 }
 
+function mediaExpiresAt(baseDate = new Date()) {
+  const base = baseDate instanceof Date ? baseDate : new Date(baseDate);
+  const expiresAt = new Date(Number.isFinite(base.getTime()) ? base.getTime() : Date.now());
+  expiresAt.setUTCHours(expiresAt.getUTCHours() + Math.max(1, Number(config.whatsapp.mediaCacheRetentionHours || 12)));
+  return expiresAt;
+}
+
 function minimizeMessageBody(value) {
   const text = String(value || "").trim();
   const maxChars = Math.max(280, Number(config.whatsapp.messageBodyMaxChars || 4000));
@@ -382,11 +390,13 @@ function contentCachePolicy() {
   return {
     policy: config.whatsapp.contentCachePolicy || "ephemeral_ttl",
     retentionDays: config.whatsapp.messageCacheRetentionDays,
+    incomingMediaAutoCache: Boolean(config.whatsapp.incomingMediaAutoCache),
+    mediaRetentionHours: config.whatsapp.mediaCacheRetentionHours,
     messageBodyMaxChars: config.whatsapp.messageBodyMaxChars,
     mediaMaxBytes: config.whatsapp.mediaCacheMaxBytes,
     storesMessageBodies: true,
-    storesMediaBlobs: false,
-    note: "Cache temporal para historial reciente e IA. Los adjuntos se sirven bajo demanda y no se guardan como binario permanente."
+    storesMediaBlobs: Number(config.whatsapp.mediaCacheMaxBytes || 0) > 0,
+    note: "Cache temporal para historial reciente e IA. Los adjuntos se sirven bajo demanda y los binarios multimedia expiran rapido."
   };
 }
 
@@ -575,7 +585,7 @@ async function listChats(userId, filters = {}) {
     where += ` AND (cm.external_chat_id NOT LIKE '%@g.us' OR cm.last_message_at IS NOT NULL OR cm.unread_count > 0 OR cm.favorite = TRUE)`;
   }
   if (filters.excludeLid === "true") {
-    where += ` AND cm.external_chat_id NOT LIKE '%@lid'`;
+    where += ` AND (cm.external_chat_id NOT LIKE '%@lid' OR cm.last_message_at IS NOT NULL OR cm.unread_count > 0)`;
   }
   params.push(limit);
   const result = await pool.query(
@@ -929,6 +939,24 @@ async function updateContact(userId, chatId, patch = {}) {
   const chat = await getChat(userId, canonicalChatId);
   chatRealtime.emitChatUpdated(userId, canonicalChatId, { reason: "contact_updated", chat });
   return chat;
+}
+
+async function getChatAiProfile(userId, chatId) {
+  const canonicalChatId = await resolveCanonicalChatId(userId, chatId);
+  const profile = await conversationProfileService.getPublicProfile(userId, canonicalChatId);
+  return { chatId: canonicalChatId, profile };
+}
+
+async function updateChatAiProfile(userId, chatId, patch = {}) {
+  const canonicalChatId = await resolveCanonicalChatId(userId, chatId);
+  const profile = await conversationProfileService.updateProfile(userId, canonicalChatId, patch);
+  return { chatId: canonicalChatId, profile };
+}
+
+async function resetChatAiProfile(userId, chatId) {
+  const canonicalChatId = await resolveCanonicalChatId(userId, chatId);
+  const profile = await conversationProfileService.resetProfile(userId, canonicalChatId);
+  return { chatId: canonicalChatId, profile };
 }
 
 function normalizeChatIdForSend(chatId) {
@@ -1586,7 +1614,7 @@ async function cacheMessageMedia({
     );
     return { cached: false, reason: "too_large", sizeBytes: buffer.length, maxBytes };
   }
-  const expiresAt = messageExpiresAt(sentAt);
+  const expiresAt = mediaExpiresAt(sentAt);
   const result = await pool.query(
     `INSERT INTO message_media_cache (
        user_id, external_chat_id, external_message_id, media_type, mime_type,
@@ -2048,8 +2076,9 @@ async function cacheMessage({
          WHEN conversation_meta.phone IS NOT NULL AND conversation_meta.display_name = conversation_meta.phone THEN COALESCE(EXCLUDED.display_name, conversation_meta.display_name)
          ELSE conversation_meta.display_name
        END,
-       phone = COALESCE(EXCLUDED.phone, conversation_meta.phone),
-       last_message_preview = CASE
+      phone = COALESCE(EXCLUDED.phone, conversation_meta.phone),
+      excluded = CASE WHEN $7::boolean THEN FALSE ELSE conversation_meta.excluded END,
+      last_message_preview = CASE
          WHEN conversation_meta.last_message_at IS NULL OR EXCLUDED.last_message_at >= conversation_meta.last_message_at
            THEN EXCLUDED.last_message_preview
          ELSE conversation_meta.last_message_preview
@@ -2124,6 +2153,9 @@ module.exports = {
   getChatCacheDiagnostics,
   getDuplicateChatDiagnostics,
   getChatSyncDiagnostics,
+  getChatAiProfile,
+  updateChatAiProfile,
+  resetChatAiProfile,
   contentCachePolicy,
   purgeExpiredMessages,
   cacheMessage

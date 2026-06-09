@@ -366,15 +366,32 @@ async function addPack(userId, amount) {
 
 async function applyPlan(userId, planName) {
   const normalized = String(planName || "free").toLowerCase();
-  if (!["free", "plus", "plus_trial"].includes(normalized)) throw new ApiError(400, "unsupported_plan", "Este plan no esta disponible en V0");
-  const included = normalized === "free" ? config.quota.freeDailyMessages : config.quota.plusMonthlyMessages;
+  if (!["free", "plus", "pro", "plus_trial"].includes(normalized)) throw new ApiError(400, "unsupported_plan", "Este plan no esta disponible en V0");
+  const included = normalized === "free"
+    ? config.quota.freeDailyMessages
+    : normalized === "pro"
+      ? config.quota.proMonthlyMessages
+      : config.quota.plusMonthlyMessages;
   const periodType = normalized === "free" ? "day" : normalized === "plus_trial" ? "trial" : "month";
   const nextResetSql = periodType === "day"
     ? "date_trunc('day', NOW()) + INTERVAL '1 day'"
     : periodType === "trial"
       ? `NOW() + (${Number(config.quota.trialDays)} * INTERVAL '1 day')`
       : "date_trunc('month', NOW()) + INTERVAL '1 month'";
-  await ensureBalance(userId);
+  const current = await ensureBalance(userId);
+  if (
+    current?.plan_name === normalized &&
+    current?.period_type === periodType &&
+    current?.next_reset_at &&
+    new Date(current.next_reset_at).getTime() > Date.now()
+  ) {
+    await pool.query(
+      `UPDATE quota_balances SET included_limit = $2, updated_at = NOW() WHERE user_id = $1`,
+      [userId, included]
+    );
+    await pool.query(`UPDATE users SET default_plan = $2, updated_at = NOW() WHERE id = $1`, [userId, normalized]).catch(() => {});
+    return;
+  }
   await pool.query(
     `UPDATE quota_balances SET plan_name = $2, included_limit = $3, used_in_period = 0, period_type = $4, period_started_at = NOW(), next_reset_at = ${nextResetSql}, updated_at = NOW() WHERE user_id = $1`,
     [userId, normalized, included, periodType]

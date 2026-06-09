@@ -5,18 +5,27 @@ const whatsappService = require("./whatsappService");
 const taskService = require("./whatsappTaskService");
 
 let timer = null;
+let restoreTimer = null;
 let running = false;
-let restoreStarted = false;
+let restoreRunning = false;
 
 async function executeTask(task) {
   const payload = task.payload || {};
   switch (task.task_type) {
-    case "start":
-      return whatsappService.startWhatsApp(task.user_id, {
+    case "start": {
+      logger.info("whatsapp-worker", "Starting WhatsApp session task", {
+        context: { taskId: task.id, userId: task.user_id, source: payload.source || null }
+      });
+      const result = await whatsappService.startWhatsApp(task.user_id, {
         force: payload.force === true,
         waitForOpen: payload.waitForOpen === true,
         waitForOpenTimeoutMs: payload.waitForOpenTimeoutMs
       });
+      logger.info("whatsapp-worker", "WhatsApp session task finished", {
+        context: { taskId: task.id, userId: task.user_id, source: payload.source || null, status: result?.status || null }
+      });
+      return result;
+    }
     case "pairing_code":
       return whatsappService.requestPairingCode(task.user_id, payload.phone, {
         customPairingCode: payload.customPairingCode,
@@ -92,41 +101,67 @@ async function tick() {
 
 function startWhatsAppWorker() {
   if (timer) return;
-  restoreConnectedSessions().catch((error) => logger.warn("whatsapp-worker", error.message, { context: { source: "restore_connected_sessions" } }));
+  restoreConnectedSessions({ source: "startup_restore" }).catch((error) => logger.warn("whatsapp-worker", error.message, { context: { source: "restore_connected_sessions" } }));
+  if (config.whatsapp.restoreConnectedSessions) {
+    restoreTimer = setInterval(() => {
+      restoreConnectedSessions({ source: "watchdog_restore" }).catch((error) => logger.warn("whatsapp-worker", error.message, { context: { source: "restore_connected_sessions_watchdog" } }));
+    }, config.whatsapp.restoreConnectedSessionsIntervalMs);
+  }
   timer = setInterval(() => tick().catch((error) => logger.error("whatsapp-worker", error.message)), config.whatsapp.taskPollIntervalMs);
   tick().catch((error) => logger.error("whatsapp-worker", error.message));
 }
 
 function stopWhatsAppWorker() {
-  if (!timer) return;
-  clearInterval(timer);
-  timer = null;
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+  if (restoreTimer) {
+    clearInterval(restoreTimer);
+    restoreTimer = null;
+  }
 }
 
-async function restoreConnectedSessions() {
-  if (restoreStarted || !config.whatsapp.restoreConnectedSessions) return { queued: 0 };
-  restoreStarted = true;
-  const result = await pool.query(
-    `SELECT user_id
-     FROM whatsapp_connections
-     WHERE status = 'connected'
-     ORDER BY updated_at ASC`
-  );
-  let queued = 0;
-  for (const row of result.rows) {
-    await taskService.enqueueWhatsappTask(row.user_id, "start", {
-      force: true,
-      source: "startup_restore",
-      waitForOpen: true
-    }, { priority: 20 });
-    queued += 1;
+async function restoreConnectedSessions(options = {}) {
+  if (restoreRunning || !config.whatsapp.restoreConnectedSessions) return { queued: 0, skipped: true };
+  restoreRunning = true;
+  const source = options.source || "restore_connected_sessions";
+  try {
+    const result = await pool.query(
+      `SELECT user_id, status, pause_reason
+       FROM whatsapp_connections
+       WHERE status = 'connected'
+          OR (status = 'connecting' AND updated_at < NOW() - INTERVAL '2 minutes')
+          OR (status = 'reconnect_paused' AND pause_reason = 'max_attempts')
+       ORDER BY updated_at ASC`
+    );
+    let queued = 0;
+    let alreadyOpen = 0;
+    const statusCounts = {};
+    for (const row of result.rows) {
+      statusCounts[row.status] = (statusCounts[row.status] || 0) + 1;
+      if (whatsappService.hasOpenRuntimeSession(row.user_id)) {
+        alreadyOpen += 1;
+        continue;
+      }
+      await taskService.enqueueWhatsappTask(row.user_id, "start", {
+        force: true,
+        source,
+        restoreStatus: row.status,
+        restorePauseReason: row.pause_reason || null,
+        waitForOpen: true
+      }, { priority: 20, maxAttempts: Math.max(6, config.whatsapp.reconnectMaxAttempts) });
+      queued += 1;
+    }
+    if (queued > 0 || alreadyOpen > 0) {
+      logger.info("whatsapp-worker", "Checked connected WhatsApp sessions for runtime restore", {
+        context: { source, queued, alreadyOpen, total: result.rows.length, statusCounts }
+      });
+    }
+    return { queued, alreadyOpen, total: result.rows.length };
+  } finally {
+    restoreRunning = false;
   }
-  if (queued > 0) {
-    logger.info("whatsapp-worker", "Queued connected WhatsApp sessions for startup restore", {
-      context: { queued }
-    });
-  }
-  return { queued };
 }
 
 module.exports = { startWhatsAppWorker, stopWhatsAppWorker, executeTask, restoreConnectedSessions };

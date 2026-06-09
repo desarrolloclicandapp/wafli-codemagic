@@ -1,4 +1,6 @@
 const system = require("../services/systemService");
+const { config } = require("../config/env");
+const { logger } = require("../services/loggerService");
 const { ok } = require("../utils/responses");
 
 async function health(_req, res) { return ok(res, { status: "ok" }); }
@@ -45,5 +47,6 @@ module.exports = {
   chatDiagnostics,
   aiCostDiagnostics,
   purgeExpiredChatMessages,
-  clientContext
+  clientContext,
+  clientError
 };

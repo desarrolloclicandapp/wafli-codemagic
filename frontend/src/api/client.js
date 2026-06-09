@@ -166,7 +166,7 @@ function toUserMessage(error) {
   if (error.code === "native_product_not_configured") return "Ese producto todavía no está configurado en la tienda de esta versión.";
   if (error.code === "native_product_not_found") return "Ese producto todavía no está activo para esta versión de la app.";
   if (error.code === "native_purchase_failed") return "No hemos podido completar la compra nativa.";
-  if (error.code === "whatsapp_required") return "Conecta tu WhatsApp para continuar.";
+  if (error.code === "whatsapp_required") return "Puedes usar WaFli AI sin conectar WhatsApp. Conecta WhatsApp solo si quieres traer tus chats reales.";
   if (error.code === "account_pending_deletion") return "Esta cuenta tiene una eliminacion pendiente.";
   if (error.code === "whatsapp_phone_already_registered") return "Este número de WhatsApp ya está asociado a otra cuenta. Inicia sesión con el correo original o usa otro número.";
   if (error.code === "network_error") return error.message;

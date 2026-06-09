@@ -11,10 +11,12 @@ const {
   LandingScreen, AuthScreen, LegalAcceptanceScreen, SpanishVariantScreen, ToneBaseScreen,
   ConnectScreen, ConnectedSuccessScreen, AddToHomeScreen,
   ChatsListScreen, ChatScreen,
+  ToolsHomeScreen, ToolReplyScreen, ToolIcebreakersScreen, SavedLinesScreen,
   SuggestSheet, OpenerSheet, RewriteSheet, AnalysisSheet,
   PlanScreen, QuotaExhausted, SettingsScreen,
 } = window;
 const LOCAL_CONVERSATIONS = [];
+const MANUAL_AI_CHAT_ID = 'wafli-ai-manual';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -24,9 +26,12 @@ function urlBase64ToUint8Array(base64String) {
 }
 const PRIVATE_SCREENS = new Set([
   'legal', 'spanish-variant', 'tone-base', 'connect', 'connected', 'install',
+  'tools', 'tool-reply', 'tool-icebreakers', 'saved-lines',
   'chats', 'chats-empty', 'chat', 'chat-empty', 'plan', 'settings'
 ]);
-const WHATSAPP_REQUIRED_SCREENS = new Set(['chat', 'chat-empty']);
+// WhatsApp is optional in the standalone tools flow. Do not gate real chat
+// navigation here; ChatScreen and API errors handle unavailable sessions.
+const WHATSAPP_REQUIRED_SCREENS = new Set();
 const ONBOARDING_FLOW_SCREENS = new Set(['legal', 'spanish-variant', 'tone-base', 'connect']);
 const PWA_INSTALL_SEEN_KEY = 'wafli:pwaInstallOpportunitySeen';
 const PWA_INSTALLED_KEY = 'wafli:pwaInstalled';
@@ -44,8 +49,8 @@ const screenForOnboardingStep = (nextStep) => {
   if (step === 'legal') return 'legal';
   if (step === 'profile' || step === 'spanish-variant') return 'spanish-variant';
   if (step === 'tone' || step === 'tone-base' || step === 'base-tone' || step === 'basetone') return 'tone-base';
-  if (step === 'whatsapp' || step === 'connect') return 'chats-empty';
-  return 'chats';
+  if (step === 'whatsapp' || step === 'connect') return 'tools';
+  return 'tools';
 };
 
 function AppLoadingScreen({ label = 'Preparando WaFli...' }) {
@@ -119,9 +124,11 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
     phone: null,
     checkedAt: 0,
   });
+  const [settingsInitialSheet, setSettingsInitialSheet] = React.useState(null);
   const [pwaInstallSeen, setPwaInstallSeen] = React.useState(() => isCapacitorNative || localStorage.getItem(PWA_INSTALL_SEEN_KEY) === '1');
   const [pwaInstalled, setPwaInstalled] = React.useState(() => isCapacitorNative || localStorage.getItem(PWA_INSTALLED_KEY) === '1' || isPwaStandalone());
   const screenRef = React.useRef(initialScreen);
+  const activeChatRef = React.useRef(activeChat);
   const sheetRef = React.useRef(sheet);
   const modalRef = React.useRef(modal);
   const billingSheetRef = React.useRef(billingSheet);
@@ -129,6 +136,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
 
   React.useEffect(() => { setScreen(flagScreen || initialScreen); }, [flagScreen, initialScreen]);
   React.useEffect(() => { screenRef.current = screen; }, [screen]);
+  React.useEffect(() => { activeChatRef.current = activeChat; }, [activeChat]);
   React.useEffect(() => {
     WaFliAPI?.analytics?.trackScreen?.(screen, {
       authenticated: Boolean(WaFliAPI?.client?.isAuthenticated?.()),
@@ -299,13 +307,13 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   }, []);
   React.useEffect(() => {
     const handleWhatsappRequired = async () => {
+      if (activeChatRef.current === MANUAL_AI_CHAT_ID) return;
       setSheet(null);
       setModal(null);
       setBillingSheet(null);
       setActiveChat('');
-      showToast('Conecta tu WhatsApp para ver chats e IA');
-      const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
-      goTo(screenForOnboardingStep(status?.nextStep || 'whatsapp'));
+      showToast('WhatsApp es opcional. Puedes conectar chats cuando quieras.');
+      goTo('chats');
     };
     window.addEventListener('wafli:whatsapp-required', handleWhatsappRequired);
     return () => window.removeEventListener('wafli:whatsapp-required', handleWhatsappRequired);
@@ -530,11 +538,11 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
         return;
       }
       if (current === 'connect') {
-        goTo('tone-base', { replace: true });
+        goTo('chats-empty', { replace: true });
         return;
       }
       if (current === 'connected') {
-        goTo('connect', { replace: true });
+        goTo('chats-empty', { replace: true });
         return;
       }
       if (current === 'chats' || current === 'chats-empty' || current === 'landing') {
@@ -690,7 +698,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
     }
     const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
     if (status) setOnboardingStatus(status);
-    goTo(screenForOnboardingStep(status?.nextStep || 'whatsapp'));
+    goTo(screenForOnboardingStep(status?.nextStep || 'tools'));
   };
   const openNotificationPrePrompt = () => {
     if (isCapacitorNative) {
@@ -801,7 +809,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       if (!alive || !result) return;
 
       const connected = applyWhatsappStatus(result);
-      const isProtectedScreen = WHATSAPP_REQUIRED_SCREENS.has(screen);
+      const isProtectedScreen = WHATSAPP_REQUIRED_SCREENS.has(screen) && activeChatRef.current !== MANUAL_AI_CHAT_ID;
       const changed = lastConnected !== null && lastConnected !== connected;
 
       if (connected) {
@@ -829,7 +837,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
           ...state,
           whatsappInterrupted: true,
         }));
-        goTo('connect');
+        goTo('chats-empty');
       }
 
       lastConnected = connected;
@@ -871,6 +879,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   const isAuthenticated = Boolean(WaFliAPI?.client?.isAuthenticated?.());
   const effectiveScreen = !isAuthenticated && PRIVATE_SCREENS.has(screen) ? 'landing' : screen;
   const whatsappUnavailable = Boolean(whatsappState.ready && !whatsappState.connected);
+  const manualAiChatActive = activeChat === MANUAL_AI_CHAT_ID;
 
   let body;
   if (!authReady) {
@@ -886,7 +895,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   } else if (effectiveScreen === 'tone-base') {
     body = <ToneBaseScreen onBack={() => goTo('spanish-variant')} onContinue={handleToneContinue} />;
   } else if (effectiveScreen === 'connect') {
-    body = <ConnectScreen onBack={() => goTo('chats-empty')} onConnected={() => { showToast('Tu WhatsApp quedó vinculado'); goTo('connected'); }} onContinueWithoutWhatsApp={() => goTo('plan')} />;
+    body = <ConnectScreen onBack={() => goTo('tools')} onConnected={() => { showToast('Tu WhatsApp quedó vinculado'); goTo('connected'); }} onContinueWithoutWhatsApp={() => goTo('tools')} />;
   } else if (effectiveScreen === 'connected') {
     body = <ConnectedSuccessScreen isNativeApp={isCapacitorNative} onContinue={() => { markInstallOpportunitySeen(); goTo('chats'); }} onInstall={openInstallGuide} onInstallOpportunitySeen={markInstallOpportunitySeen} />;
   } else if (effectiveScreen === 'install') {
@@ -896,6 +905,22 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       onDone={() => { markInstallOpportunitySeen(); if (isPwaStandalone()) setPwaInstalled(true); openNotificationPrePrompt(); goTo(installReturnTarget); }}
       onLater={() => { markInstallOpportunitySeen(); goTo(installReturnTarget); }}
     />;
+  } else if (effectiveScreen === 'tools') {
+    body = <ToolsHomeScreen
+      onNavigate={navigate}
+      onOpenReplyTool={() => goTo('tool-reply')}
+      onOpenIcebreakers={() => goTo('tool-icebreakers')}
+      onOpenSavedLines={() => goTo('saved-lines')}
+      onConnectWhatsApp={() => goTo('connect')}
+      onOpenProfileSettings={() => { setSettingsInitialSheet('speaking-style'); goTo('settings'); }}
+      whatsappConnected={whatsappState.connected}
+    />;
+  } else if (effectiveScreen === 'tool-reply') {
+    body = <ToolReplyScreen onBack={() => goTo('tools')} onNavigate={navigate} onQuota={() => setModal('quota')} />;
+  } else if (effectiveScreen === 'tool-icebreakers') {
+    body = <ToolIcebreakersScreen onBack={() => goTo('tools')} onNavigate={navigate} onQuota={() => setModal('quota')} />;
+  } else if (effectiveScreen === 'saved-lines') {
+    body = <SavedLinesScreen onBack={() => goTo('tools')} onNavigate={navigate} />;
   } else if (effectiveScreen === 'chats' || effectiveScreen === 'chats-empty') {
     body = <ChatsListScreen
       empty={effectiveScreen === 'chats-empty'}
@@ -908,7 +933,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       onReconnectWhatsApp={reconnectWhatsApp}
     />;
   } else if (effectiveScreen === 'chat') {
-    body = <ChatScreen matchId={activeChat} composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '') => { setComposerSeed(sourceText); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage((LOCAL_CONVERSATIONS.find(m => m.id === activeChat)?.messages || []).slice(-1)[0]?.text || ''); setSheet('analysis'); }} offline={systemState.offline || whatsappUnavailable} showInstallShortcut={Boolean(!isCapacitorNative && whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat' })} aiSheetOpen={Boolean(sheet)} />;
+    body = <ChatScreen matchId={activeChat} composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '', context = {}) => { setComposerSeed(sourceText); setAiContext(context); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage((LOCAL_CONVERSATIONS.find(m => m.id === activeChat)?.messages || []).slice(-1)[0]?.text || ''); setSheet('analysis'); }} offline={systemState.offline || (whatsappUnavailable && !manualAiChatActive)} showInstallShortcut={Boolean(!isCapacitorNative && whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat' })} aiSheetOpen={Boolean(sheet)} />;
   } else if (effectiveScreen === 'chat-empty') {
     body = <ChatScreen matchId="" composerSeed={composerSeed} onBack={() => goTo('chats')} onSuggest={(context = {}) => { setAiContext(context); setSheet('suggest'); }} onReactivate={(context = {}) => { setAiContext(context); setSheet('reactivate'); }} onRewrite={(sourceText = '') => { setComposerSeed(sourceText); setSheet('rewrite'); }} onAnalyze={() => { setAnalysisMessage(''); setSheet('analysis'); }} offline={systemState.offline || whatsappUnavailable} showInstallShortcut={Boolean(!isCapacitorNative && whatsappState.connected && pwaInstallSeen && !pwaInstalled)} onInstallApp={() => openInstallGuide({ returnScreen: 'chat-empty' })} aiSheetOpen={Boolean(sheet)} />;
   } else if (effectiveScreen === 'plan') {
@@ -919,7 +944,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       onOpenHistory={() => setBillingSheet('history')}
     />;
   } else if (effectiveScreen === 'settings') {
-    body = <SettingsScreen onNavigate={navigate} onShowToast={showToast} notificationPermission={notificationPermission} notificationPrefs={notificationPrefs} onToggleNotification={onToggleNotification} onRequestNotificationPrompt={openNotificationPrePrompt} theme={theme} onThemeChange={setTheme} isNativeApp={isCapacitorNative} />;
+    body = <SettingsScreen onNavigate={navigate} onShowToast={showToast} notificationPermission={notificationPermission} notificationPrefs={notificationPrefs} onToggleNotification={onToggleNotification} onRequestNotificationPrompt={openNotificationPrePrompt} theme={theme} onThemeChange={setTheme} isNativeApp={isCapacitorNative} initialSheet={settingsInitialSheet} onInitialSheetConsumed={() => setSettingsInitialSheet(null)} />;
   } else {
     // Safety fallback: if an unknown screen id is loaded from persisted tweaks/state,
     // render landing instead of leaving a blank screen.
@@ -928,8 +953,12 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
 
   // Density adjustment
   const densityScale = tweakHook?.density === 'compact' ? 0.92 : tweakHook?.density === 'comfy' ? 1.06 : 1;
-  const rootTab = effectiveScreen === 'plan' || effectiveScreen === 'settings' ? effectiveScreen : 'chats';
-  const showSidebar = ['chats', 'chats-empty', 'chat', 'chat-empty', 'plan', 'settings'].includes(effectiveScreen);
+  const rootTab = ['tools', 'tool-reply', 'tool-icebreakers', 'saved-lines'].includes(effectiveScreen)
+    ? 'tools'
+    : effectiveScreen === 'plan' || effectiveScreen === 'settings'
+      ? effectiveScreen
+      : 'chats';
+  const showSidebar = ['tools', 'tool-reply', 'tool-icebreakers', 'saved-lines', 'chats', 'chats-empty', 'chat', 'chat-empty', 'plan', 'settings'].includes(effectiveScreen);
 
   return (
     <div className="phone__content" style={{fontSize: `${15 * densityScale}px`}}>
@@ -939,15 +968,15 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       </main>
 
       <BottomSheet open={sheet === 'suggest'} onClose={() => { setAiContext(null); setSheet(null); }} height="88%">
-        <SuggestSheet chatId={activeChat} quotedMessage={aiContext?.quotedMessage || null} mediaContext={aiContext?.mediaContext || null} onClose={() => { setAiContext(null); setSheet(null); }} onQuota={() => { setAiContext(null); setSheet(null); setModal('quota'); }} onSent={() => { setAiContext(null); setSheet(null); showToast('Mensaje enviado correctamente'); }} />
+        <SuggestSheet chatId={activeChat} quotedMessage={aiContext?.quotedMessage || null} mediaContext={aiContext?.mediaContext || null} manualContext={aiContext?.manualContext || null} canSend={!aiContext?.manualContext} onClose={() => { setAiContext(null); setSheet(null); }} onQuota={() => { setAiContext(null); setSheet(null); setModal('quota'); }} onSent={() => { setAiContext(null); setSheet(null); showToast('Mensaje enviado correctamente'); }} />
       </BottomSheet>
 
       <BottomSheet open={sheet === 'reactivate'} onClose={() => { setAiContext(null); setSheet(null); }} height="88%">
-        <SuggestSheet chatId={activeChat} action="reactivate" title="Reactivar conversación" caption="Una forma sencilla de retomar sin presión." mediaContext={aiContext?.mediaContext || null} onClose={() => { setAiContext(null); setSheet(null); }} onQuota={() => { setAiContext(null); setSheet(null); setModal('quota'); }} onSent={() => { setAiContext(null); setSheet(null); showToast('Mensaje enviado correctamente'); }} />
+        <SuggestSheet chatId={activeChat} action="reactivate" title="Reactivar conversación" caption="Una forma sencilla de retomar sin presión." mediaContext={aiContext?.mediaContext || null} manualContext={aiContext?.manualContext || null} canSend={!aiContext?.manualContext} onClose={() => { setAiContext(null); setSheet(null); }} onQuota={() => { setAiContext(null); setSheet(null); setModal('quota'); }} onSent={() => { setAiContext(null); setSheet(null); showToast('Mensaje enviado correctamente'); }} />
       </BottomSheet>
 
       <BottomSheet open={sheet === 'rewrite'} onClose={() => setSheet(null)} height="88%">
-        <RewriteSheet chatId={activeChat} sourceText={composerSeed} onQuota={() => { setSheet(null); setModal('quota'); }} onUse={(text) => { setComposerSeed(text || ''); setSheet(null); showToast('Texto reescrito cargado en el campo de mensaje'); }} />
+        <RewriteSheet chatId={activeChat} sourceText={composerSeed} manualContext={aiContext?.manualContext || null} onQuota={() => { setSheet(null); setModal('quota'); }} onUse={(text) => { setComposerSeed(text || ''); setSheet(null); showToast('Texto reescrito cargado en el campo de mensaje'); }} />
       </BottomSheet>
       <BottomSheet open={sheet === 'analysis'} onClose={() => setSheet(null)} height="78%">
         <AnalysisSheet chatId={activeChat} message={analysisMessage} onQuota={() => { setSheet(null); setModal('quota'); }} onSuggest={() => setSheet('suggest')} />

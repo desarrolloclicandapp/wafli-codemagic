@@ -10,9 +10,18 @@ const COMMON_WORDS = new Set([
   "Borrador",
   "Chat",
   "Contenido",
+  "Cualquier",
+  "Documento",
+  "Encuesta",
+  "Imagen",
   "Mensaje",
   "Notas",
+  "Sticker",
   "Tono",
+  "Ubicacion",
+  "Usa",
+  "Usalo",
+  "Video",
   "WhatsApp",
   "WaFli"
 ]);

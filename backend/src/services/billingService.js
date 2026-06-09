@@ -11,12 +11,14 @@ function getStripe() {
 
 const priceMap = {};
 if (config.stripe.pricePlus) priceMap[config.stripe.pricePlus] = { type: "plan", plan: "plus" };
+if (config.stripe.pricePro) priceMap[config.stripe.pricePro] = { type: "plan", plan: "pro" };
 if (config.stripe.pricePack50) priceMap[config.stripe.pricePack50] = { type: "pack", amount: config.quota.topUpPackSize };
 
 function resolvePrice(kind, value) {
   if (kind === "plan") {
-    if (value !== "plus") throw new ApiError(400, "unsupported_plan", "Solo Plus esta disponible en V0");
-    return config.stripe.pricePlus;
+    if (value === "plus") return config.stripe.pricePlus;
+    if (value === "pro") return config.stripe.pricePro;
+    throw new ApiError(400, "unsupported_plan", "Este plan no esta disponible");
   }
   if (Number(value || 0) !== Number(config.quota.topUpPackSize || 50)) {
     throw new ApiError(400, "unsupported_pack", "Solo el pack de 50 generaciones esta disponible en V0");
@@ -65,6 +67,7 @@ async function createPortal(user) {
 
 function playProducts() {
   const plusProductId = process.env.PLAY_PRODUCT_PLUS_MONTHLY || "wafli_plus_monthly";
+  const proProductId = process.env.PLAY_PRODUCT_PRO_MONTHLY || "wafli_pro_monthly";
   const packProductId = process.env.PLAY_PRODUCT_PACK_50 || "wafli_pack_50";
   return {
     enabled: String(process.env.PLAY_BILLING_ENABLED || "false").toLowerCase() === "true",
@@ -75,6 +78,12 @@ function playProducts() {
         type: "subscription",
         entitlement: "plus",
         plan: "plus",
+      },
+      {
+        id: proProductId,
+        type: "subscription",
+        entitlement: "pro",
+        plan: "pro",
       },
       {
         id: packProductId,

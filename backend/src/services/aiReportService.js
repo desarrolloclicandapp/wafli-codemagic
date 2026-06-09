@@ -3,11 +3,62 @@ const { ApiError } = require("../utils/responses");
 
 const ALLOWED_REASONS = new Set([
   "not_helpful",
+  "wrong_context",
+  "sounds_ai",
+  "wrong_variant",
+  "invented",
+  "wrong_tone",
   "incorrect",
   "unsafe",
   "privacy",
   "spam",
   "other",
+]);
+
+const SAFE_METADATA_KEYS = new Set([
+  "source",
+  "action",
+  "chatId",
+  "agent",
+  "objective",
+  "variant",
+  "promptVersion",
+  "promptVersionSource",
+  "promptVersionRequested",
+  "promptVersionFallbackUsed",
+  "promptVariant",
+  "decisionContextVersion",
+  "preferenceAdapterRole",
+  "decisionPreventionContract",
+  "responseMove",
+  "initiativeLevel",
+  "turnOwner",
+  "questionPolicy",
+  "riskLevel",
+  "missedOpportunityFlags",
+  "qualityFlags",
+  "dialectWarnings",
+  "spanishNaturalnessFlags",
+  "humanReplyScore",
+  "humanReplyDimensions",
+  "agentFit",
+  "nonObviousValue",
+  "regenerationSimilarity",
+  "model",
+  "objectiveSource",
+  "intensity",
+  "situation",
+  "relationshipType",
+  "usedConversationProfile",
+  "contextCopilotHints",
+  "hasQuotedMessage",
+  "hasMediaContext",
+  "originalLength",
+  "selectedIndex",
+  "wasEditedBeforeReport",
+  "wasEditedBeforeSend",
+  "reportedTextLength",
+  "noteLength",
 ]);
 
 function cleanText(value, maxLength) {
@@ -16,15 +67,34 @@ function cleanText(value, maxLength) {
   return text.slice(0, maxLength);
 }
 
-async function createReport(userId, payload = {}) {
+function sanitizeMetadata(metadata = {}) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return {};
+  const safe = {};
+  for (const [key, value] of Object.entries(metadata)) {
+    if (!SAFE_METADATA_KEYS.has(key)) continue;
+    if (value === undefined) continue;
+    safe[key] = value;
+  }
+  return safe;
+}
+
+function normalizeReportPayload(payload = {}) {
   const generatedText = cleanText(payload.generatedText || payload.generated_text || payload.text, 6000);
-  const reason = ALLOWED_REASONS.has(String(payload.reason || "").trim())
-    ? String(payload.reason).trim()
-    : "other";
+  const rawReason = String(payload.reason || "").trim();
+  const reason = ALLOWED_REASONS.has(rawReason) ? rawReason : "other";
   const action = cleanText(payload.action || payload.aiAction || payload.ai_action, 60) || "unknown";
   const chatId = cleanText(payload.chatId || payload.chat_id, 255) || null;
   const note = cleanText(payload.note || payload.description, 1200) || null;
-  const metadata = payload.metadata && typeof payload.metadata === "object" ? payload.metadata : {};
+  const metadata = sanitizeMetadata(payload.metadata);
+  metadata.action = metadata.action || action;
+  metadata.chatId = metadata.chatId || chatId;
+  metadata.noteLength = note ? note.length : 0;
+  metadata.reportedTextLength = generatedText.length;
+  return { generatedText, reason, action, chatId, note, metadata };
+}
+
+async function createReport(userId, payload = {}) {
+  const { generatedText, reason, action, chatId, note, metadata } = normalizeReportPayload(payload);
 
   if (!generatedText) {
     throw new ApiError(400, "missing_report_content", "Falta el contenido generado a reportar");
@@ -45,4 +115,4 @@ async function createReport(userId, payload = {}) {
   };
 }
 
-module.exports = { createReport };
+module.exports = { createReport, normalizeReportPayload };

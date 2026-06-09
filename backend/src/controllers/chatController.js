@@ -124,6 +124,18 @@ async function updateContact(req, res) {
   return ok(res, { chat: await chatService.updateContact(req.user.id, req.params.chatId, req.body) });
 }
 
+async function getAiProfile(req, res) {
+  return ok(res, await chatService.getChatAiProfile(req.user.id, req.params.chatId));
+}
+
+async function updateAiProfile(req, res) {
+  return ok(res, await chatService.updateChatAiProfile(req.user.id, req.params.chatId, req.body || {}));
+}
+
+async function resetAiProfile(req, res) {
+  return ok(res, await chatService.resetChatAiProfile(req.user.id, req.params.chatId));
+}
+
 async function send(req, res) {
   const text = req.body.message || req.body.text;
   const quotedMessage = req.body.quotedMessage && typeof req.body.quotedMessage === "object" ? req.body.quotedMessage : null;
@@ -222,6 +234,7 @@ function mediaTypeFromUpload(contentType, requestedType) {
   if (requested === "sticker" || mimeType === "image/webp") return "sticker";
   if (requested === "audio" || mimeType.startsWith("audio/")) return "audio";
   if (requested === "image" || mimeType.startsWith("image/")) return "image";
+  if (requested === "video" || mimeType.startsWith("video/")) return "video";
   return null;
 }
 
@@ -242,13 +255,13 @@ async function sendMedia(req, res) {
   const mimeType = String(req.headers["content-type"] || "application/octet-stream").split(";")[0].trim();
   const mediaType = mediaTypeFromUpload(mimeType, req.query.type || req.headers["x-wafli-media-type"]);
   if (!mediaType) {
-    throw new ApiError(400, "unsupported_media_type", "Por ahora puedes enviar imágenes, stickers webp o audios.");
+    throw new ApiError(400, "unsupported_media_type", "Por ahora puedes enviar imágenes, videos, stickers webp o audios.");
   }
   const ptt = mediaType === "audio" && ["1", "true", "yes"].includes(String(req.query.ptt || req.headers["x-wafli-ptt"] || "").trim().toLowerCase());
   const caption = String(req.query.caption || req.headers["x-wafli-caption"] || "").trim();
   const fileName = String(req.query.fileName || req.headers["x-wafli-file-name"] || "").trim() || null;
   const quotedMessage = parseQuotedMessageQuery(req.query.quotedMessage);
-  const pendingMessage = await chatService.createOutgoingMessage(req.user.id, req.params.chatId, caption || (mediaType === "image" ? "Imagen" : mediaType === "audio" ? (ptt ? "Nota de voz" : "Audio") : "Sticker"), {
+  const pendingMessage = await chatService.createOutgoingMessage(req.user.id, req.params.chatId, caption || (mediaType === "image" ? "Imagen" : mediaType === "video" ? "Video" : mediaType === "audio" ? (ptt ? "Nota de voz" : "Audio") : "Sticker"), {
     messageType: mediaType,
     metadata: {
       source: isApiOnly() ? "api_queue_media" : "api_direct_media",
@@ -310,6 +323,9 @@ module.exports = {
   updateMeta,
   startConversation,
   updateContact,
+  getAiProfile,
+  updateAiProfile,
+  resetAiProfile,
   send,
   editMessage,
   deleteMessage,

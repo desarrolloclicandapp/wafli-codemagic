@@ -9,5 +9,10 @@ module.exports = {
   analyze: run("analyze"),
   opener: run("opener"),
   reactivate: run("reactivate"),
-  regenerate: async (req, res) => ok(res, await aiService.generate(req.user.id, req.body.action || "suggest", req.body))
+  regenerate: async (req, res) => ok(res, await aiService.generate(req.user.id, req.body.action || "suggest", req.body)),
+  toolReply: async (req, res) => ok(res, await aiService.generateToolReply(req.user.id, req.body)),
+  toolIcebreakers: async (req, res) => ok(res, await aiService.generateToolIcebreakers(req.user.id, req.body)),
+  listSavedLines: async (req, res) => ok(res, await aiService.listSavedLines(req.user.id, req.query)),
+  saveLine: async (req, res) => ok(res, await aiService.saveLine(req.user.id, req.body)),
+  deleteLine: async (req, res) => ok(res, await aiService.deleteLine(req.user.id, req.params.id))
 };

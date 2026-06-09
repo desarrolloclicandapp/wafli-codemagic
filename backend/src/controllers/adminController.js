@@ -9,6 +9,21 @@ async function users(req, res) {
   return ok(res, await adminService.listUsers(req.query || {}));
 }
 
+async function aiReports(req, res) {
+  return ok(res, await adminService.listAiReports(req.query || {}));
+}
+
+async function aiQuality(req, res) {
+  return ok(res, await adminService.aiQuality(req.query || {}));
+}
+
+async function updateAiReport(req, res) {
+  return ok(res, await adminService.updateAiReportStatus(req.params.id, req.body?.status, {
+    ...req.admin,
+    ...adminService.adminMeta(req),
+  }));
+}
+
 async function extendTrial(req, res) {
   return ok(res, await adminService.extendTrial(req.params.id, req.body?.days, {
     ...req.admin,
@@ -37,4 +52,4 @@ async function deleteUser(req, res) {
   }));
 }
 
-module.exports = { addGenerations, deleteUser, extendTrial, login, suspendUser, users };
+module.exports = { addGenerations, aiQuality, aiReports, deleteUser, extendTrial, login, suspendUser, updateAiReport, users };

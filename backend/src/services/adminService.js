@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const { pool } = require("../config/db");
 const { config } = require("../config/env");
 const { ApiError } = require("../utils/responses");
+const { buildReportEvalCase, summarizeEvalCases } = require("./aiEvalDatasetService");
+const { qualityEventFromGeneration, summarizeQualityEvents } = require("./aiQualityMetricsService");
 
 function requireAdminConfig() {
   const username = process.env.ADMIN_USERNAME || "";
@@ -93,6 +95,40 @@ function mapUserRow(row) {
   };
 }
 
+function mapAiReportRow(row) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    userEmail: row.user_email,
+    chatId: row.chat_id,
+    action: row.ai_action,
+    reason: row.report_reason,
+    note: row.report_note,
+    generatedText: row.generated_text,
+    metadata: row.metadata || {},
+    status: row.status,
+    reviewedAt: row.reviewed_at,
+    createdAt: row.created_at,
+  };
+}
+
+function topEntries(map = {}, limit = 8) {
+  return Object.entries(map || {})
+    .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
+    .slice(0, limit)
+    .map(([key, count]) => ({ key, count }));
+}
+
+function qualityFromReportRow(row = {}) {
+  const metadata = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
+  return {
+    score: metadata.humanReplyScore ?? null,
+    flags: Array.isArray(metadata.qualityFlags) ? metadata.qualityFlags : [],
+    dialectWarnings: Array.isArray(metadata.dialectWarnings) ? metadata.dialectWarnings : [],
+    spanishNaturalnessFlags: Array.isArray(metadata.spanishNaturalnessFlags) ? metadata.spanishNaturalnessFlags : []
+  };
+}
+
 async function listUsers({ q = "", page = 1, limit = 50 } = {}) {
   const safePage = parsePositiveInt(page, 1, 100000);
   const safeLimit = parsePositiveInt(limit, 50, 100);
@@ -150,6 +186,119 @@ async function listUsers({ q = "", page = 1, limit = 50 } = {}) {
     page: safePage,
     limit: safeLimit,
   };
+}
+
+async function listAiReports({ status = "new", page = 1, limit = 50 } = {}) {
+  const safePage = parsePositiveInt(page, 1, 100000);
+  const safeLimit = parsePositiveInt(limit, 50, 100);
+  const safeStatus = String(status || "new").trim().toLowerCase();
+  const offset = (safePage - 1) * safeLimit;
+  const params = [];
+  let where = "";
+  if (safeStatus && safeStatus !== "all") {
+    params.push(safeStatus);
+    where = `WHERE r.status = $${params.length}`;
+  }
+  const countResult = await pool.query(`SELECT COUNT(*)::int AS total FROM ai_content_reports r ${where}`, params);
+  params.push(safeLimit, offset);
+  const result = await pool.query(
+    `SELECT
+       r.id, r.user_id, u.email AS user_email, r.chat_id, r.ai_action, r.report_reason,
+       r.report_note, r.generated_text, r.metadata, r.status, r.reviewed_at, r.created_at
+     FROM ai_content_reports r
+     LEFT JOIN users u ON u.id = r.user_id
+     ${where}
+     ORDER BY r.created_at DESC
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params
+  );
+  return {
+    reports: result.rows.map(mapAiReportRow),
+    total: countResult.rows[0]?.total || 0,
+    page: safePage,
+    limit: safeLimit,
+  };
+}
+
+async function aiQuality({ status = "all", days = 30, limit = 20 } = {}) {
+  const safeDays = parsePositiveInt(days, 30, 365);
+  const safeLimit = parsePositiveInt(limit, 20, 100);
+  const safeStatus = String(status || "all").trim().toLowerCase();
+  const params = [safeDays];
+  let where = `WHERE r.created_at >= NOW() - ($1 * INTERVAL '1 day')`;
+  if (safeStatus && safeStatus !== "all") {
+    params.push(safeStatus);
+    where += ` AND r.status = $${params.length}`;
+  }
+
+  params.push(500);
+  const result = await pool.query(
+    `SELECT
+       r.id, r.user_id, u.email AS user_email, r.chat_id, r.ai_action, r.report_reason,
+       r.report_note, r.generated_text, r.metadata, r.status, r.reviewed_at, r.created_at
+     FROM ai_content_reports r
+     LEFT JOIN users u ON u.id = r.user_id
+     ${where}
+     ORDER BY r.created_at DESC
+     LIMIT $${params.length}`,
+    params
+  );
+
+  const events = result.rows.map((row) => qualityEventFromGeneration({
+    action: row.ai_action,
+    metadata: row.metadata || {},
+    quality: qualityFromReportRow(row),
+    reportReason: row.report_reason
+  }));
+  const summary = summarizeQualityEvents(events);
+  const evalCases = result.rows.map((row, index) => buildReportEvalCase({
+    ...mapAiReportRow(row),
+    fromDb: true
+  }, index));
+  const dataset = summarizeEvalCases(evalCases);
+  const recentReports = result.rows.slice(0, safeLimit).map(mapAiReportRow);
+
+  return {
+    filters: {
+      status: safeStatus,
+      days: safeDays,
+      limit: safeLimit,
+      sampledReports: result.rows.length
+    },
+    summary,
+    dataset,
+    top: {
+      flags: topEntries(summary.byFlag),
+      reasons: topEntries(summary.byReportReason),
+      agents: topEntries(summary.byAgent),
+      variants: topEntries(summary.byVariant),
+      responseMoves: topEntries(summary.byResponseMove),
+      situations: topEntries(summary.bySituation),
+      initiativeLevels: topEntries(summary.byInitiativeLevel),
+      scoreBuckets: topEntries(summary.byScoreBucket)
+    },
+    recentReports
+  };
+}
+
+async function updateAiReportStatus(reportId, status, admin) {
+  const safeId = Number.parseInt(reportId, 10);
+  const safeStatus = String(status || "").trim().toLowerCase();
+  if (!Number.isFinite(safeId) || safeId <= 0) throw new ApiError(400, "invalid_report_id", "Reporte invalido");
+  if (!["new", "reviewing", "resolved", "ignored"].includes(safeStatus)) {
+    throw new ApiError(400, "invalid_report_status", "Estado de reporte invalido");
+  }
+  const before = await pool.query(`SELECT * FROM ai_content_reports WHERE id = $1`, [safeId]);
+  if (!before.rows[0]) throw new ApiError(404, "report_not_found", "Reporte no encontrado");
+  const result = await pool.query(
+    `UPDATE ai_content_reports
+     SET status = $2::varchar, reviewed_at = CASE WHEN $2::varchar IN ('resolved', 'ignored') THEN NOW() ELSE reviewed_at END
+     WHERE id = $1
+     RETURNING *`,
+    [safeId, safeStatus]
+  );
+  await writeAudit(pool, admin, "update_ai_report_status", { id: before.rows[0].user_id }, before.rows[0], result.rows[0], { reportId: safeId, status: safeStatus }).catch(() => {});
+  return { report: mapAiReportRow({ ...result.rows[0], user_email: null }) };
 }
 
 async function snapshotUser(client, userId) {
@@ -316,9 +465,12 @@ async function deleteUser(userId, confirmation, admin) {
 module.exports = {
   addGenerations,
   adminMeta,
+  aiQuality,
   deleteUser,
   extendTrial,
+  listAiReports,
   listUsers,
   login,
   suspendUser,
+  updateAiReportStatus,
 };

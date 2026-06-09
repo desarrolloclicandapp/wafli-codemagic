@@ -83,6 +83,7 @@ function IconButton({ onClick, children, label }) {
 // Bottom navigation
 function BottomNav({ active, onChange }) {
   const items = [
+    { id: 'tools', label: 'Herramientas', Icon: Icons.Sparkles },
     { id: 'chats', label: 'Chats', Icon: Icons.Chats },
     { id: 'plan', label: 'Plan', Icon: Icons.Plan },
     { id: 'settings', label: 'Ajustes', Icon: Icons.Settings },
@@ -109,6 +110,7 @@ function BottomNav({ active, onChange }) {
 
 function DesktopSidebar({ active, onChange }) {
   const items = [
+    { id: 'tools', label: 'Herramientas', helper: 'IA sin WhatsApp', Icon: Icons.Sparkles },
     { id: 'chats', label: 'Chats', helper: 'Conversaciones', Icon: Icons.Chats },
     { id: 'plan', label: 'Plan', helper: 'Cuota y pagos', Icon: Icons.Plan },
     { id: 'settings', label: 'Ajustes', helper: 'Preferencias', Icon: Icons.Settings },
@@ -137,7 +139,7 @@ function DesktopSidebar({ active, onChange }) {
         })}
       </nav>
       <div className="desktop-sidebar__footer">
-        <span className="t-caption">Tu WhatsApp e IA en un solo lugar</span>
+        <span className="t-caption">IA para responder mejor</span>
       </div>
     </aside>
   );

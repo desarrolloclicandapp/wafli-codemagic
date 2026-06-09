@@ -1,6 +1,8 @@
 ﻿const { pool, withRetry } = require("../config/db");
 const { config } = require("../config/env");
 
+const INIT_DB_LOCK_NAMESPACE = 7331;
+const INIT_DB_LOCK_KEY = 20260608;
 async function query(client, sql, params) {
   return client.query(sql, params);
 }
@@ -24,7 +26,11 @@ async function initDb() {
     `);
     console.log(`[DB] Initializing WaFli database database=${target.rows[0].database} schema=${target.rows[0].schema} user=${target.rows[0].username}`);
     await query(client, "BEGIN");
-
+    // API and worker can boot at the same time during deploy. Serialize DDL to avoid Postgres deadlocks.
+    await query(client, "SELECT pg_advisory_xact_lock($1, $2)", [
+      INIT_DB_LOCK_NAMESPACE,
+      INIT_DB_LOCK_KEY,
+    ]);
     await query(client, `
       CREATE TABLE IF NOT EXISTS users (
         id BIGSERIAL PRIMARY KEY,
@@ -90,7 +96,7 @@ async function initDb() {
         user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
         alias VARCHAR(120),
         spanish_variant VARCHAR(40) NOT NULL DEFAULT 'Neutro',
-        base_tone VARCHAR(40) NOT NULL DEFAULT 'Desenfadado',
+        base_tone VARCHAR(40) NOT NULL DEFAULT 'Ligoteo',
         ui_language VARCHAR(10) NOT NULL DEFAULT 'ES',
         profile_completed BOOLEAN NOT NULL DEFAULT FALSE,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -100,6 +106,8 @@ async function initDb() {
     await query(client, `ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN NOT NULL DEFAULT FALSE;`);
     await query(client, `ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS spanish_variant_completed BOOLEAN NOT NULL DEFAULT FALSE;`);
     await query(client, `ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS base_tone_completed BOOLEAN NOT NULL DEFAULT FALSE;`);
+    await query(client, `ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS ai_style_profile JSONB NOT NULL DEFAULT '{}'::jsonb;`);
+    await query(client, `ALTER TABLE user_profiles ALTER COLUMN base_tone SET DEFAULT 'Ligoteo';`);
 
     await query(client, `
       CREATE TABLE IF NOT EXISTS legal_acceptances (
@@ -435,6 +443,9 @@ async function initDb() {
       UPDATE quota_balances
       SET included_limit = ${Number(config.quota.plusMonthlyMessages)}, updated_at = NOW()
       WHERE plan_name IN ('plus', 'plus_trial') AND included_limit <> ${Number(config.quota.plusMonthlyMessages)};
+      UPDATE quota_balances
+      SET included_limit = ${Number(config.quota.proMonthlyMessages)}, updated_at = NOW()
+      WHERE plan_name = 'pro' AND included_limit <> ${Number(config.quota.proMonthlyMessages)};
     `);
 
     await query(client, `
@@ -646,6 +657,20 @@ async function initDb() {
       CREATE INDEX IF NOT EXISTS idx_ai_content_reports_status ON ai_content_reports(status, created_at DESC);
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS ai_saved_lines (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        text TEXT NOT NULL,
+        tone VARCHAR(80),
+        variant VARCHAR(80),
+        source VARCHAR(80) NOT NULL DEFAULT 'icebreaker',
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_saved_lines_user_created ON ai_saved_lines(user_id, created_at DESC);
+    `);
+
     await query(client, `
       CREATE TABLE IF NOT EXISTS play_purchase_receipts (
         id BIGSERIAL PRIMARY KEY,
@@ -676,11 +701,15 @@ async function initDb() {
         app_user_id VARCHAR(255),
         product_id VARCHAR(255),
         payload JSONB NOT NULL DEFAULT '{}',
-        processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        processed_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_revenuecat_events_app_user ON revenuecat_events(app_user_id, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_revenuecat_events_type ON revenuecat_events(event_type, created_at DESC);
+    `);
+    await query(client, `
+      ALTER TABLE revenuecat_events ALTER COLUMN processed_at DROP NOT NULL;
+      ALTER TABLE revenuecat_events ALTER COLUMN processed_at DROP DEFAULT;
     `);
 
     await query(client, `

@@ -63,6 +63,8 @@ function getTextProvider() {
         model: selectedModel,
         temperature,
         messages
+      }, {
+        timeout: config.openai.timeoutMs
       });
       return {
         text: completion.choices?.[0]?.message?.content || "",
@@ -84,6 +86,8 @@ function getTextProvider() {
       const result = await client.audio.transcriptions.create({
         model: config.openai.transcriptionModel,
         file
+      }, {
+        timeout: config.openai.timeoutMs
       });
       return result.text?.trim() || "";
     }
