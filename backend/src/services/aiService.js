@@ -4,7 +4,7 @@ const chatService = require("./chatService");
 const conversationProfileService = require("./conversationProfileService");
 const quotaService = require("./quotaService");
 const { anonymize, cleanGeneratedText } = require("./aiAnonymizer");
-const { actionPrompt, normalizeTone, normalizeVariant, postprocessAiText, turnGuardPrompt } = require("./aiPromptRegistry");
+const { actionPrompt, normalizeTone, normalizeVariant, postprocessAiText, turnGuardPrompt, staticSystemPreamble } = require("./aiPromptRegistry");
 const { getTextProvider } = require("./aiProviders");
 const { calculateAiCost, combineAiCosts } = require("./aiCostService");
 const { qualityPolicyPrompt, applyQualityPostprocess, evaluateAiResponse } = require("./aiQualityService");
@@ -224,6 +224,38 @@ function recentOwnTextsForQuality(messages = []) {
     .map((message) => compactText(messageTextForSignals(message) || asMessage(message).body || "", 220))
     .filter(Boolean)
     .slice(-5);
+}
+
+// #4 Huella de estilo: descriptor compacto del modo de escribir del PROPIO usuario,
+// calculado SOLO desde sus mensajes escritos a mano (excluye los generados por IA
+// para no retroalimentar el estilo del modelo consigo mismo).
+function buildUserStyleFingerprint(messages = []) {
+  const own = [...messages]
+    .map(asMessage)
+    .filter((m) => m.sender === "me" && (m.metadata || {}).source !== "ai_suggestion")
+    .map((m) => String(m.body || messageTextForSignals(m) || "").trim())
+    .filter(Boolean);
+  if (own.length < 3) return "";
+
+  const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}❤️]/u;
+  const wordCounts = own.map((t) => t.split(/\s+/).filter(Boolean).length);
+  const avgWords = Math.round(wordCounts.reduce((a, b) => a + b, 0) / own.length);
+  const shortRatio = own.filter((t) => t.split(/\s+/).filter(Boolean).length <= 4).length / own.length;
+  const emojiRatio = own.filter((t) => EMOJI_RE.test(t)).length / own.length;
+  const lowerStartRatio = own.filter((t) => /^[a-záéíóúñ]/.test(t)).length / own.length;
+  const joined = own.join(" \n ").toLowerCase();
+  const voseo = /\b(vos|sos|ten[eé]s|quer[eé]s|pod[eé]s|dale|che)\b/.test(joined);
+  const tuteo = /\b(t[uú]|tienes|quieres|puedes|vale|tio|tío)\b/.test(joined);
+
+  const traits = [
+    `longitud_media=${avgWords}_palabras`,
+    shortRatio >= 0.5 ? "tiende a mensajes muy cortos" : avgWords >= 18 ? "tiende a mensajes largos" : "longitud media",
+    emojiRatio >= 0.4 ? "usa emojis con frecuencia" : emojiRatio <= 0.05 ? "casi no usa emojis" : "usa emojis con moderacion",
+    lowerStartRatio >= 0.6 ? "suele escribir en minuscula y sin puntuacion formal" : "",
+    voseo && !tuteo ? "usa voseo (vos/sos)" : tuteo && !voseo ? "usa tuteo (tu)" : ""
+  ].filter(Boolean);
+
+  return `estilo_detectado_usuario: ${traits.join("; ")}. Imita esta cadencia, longitud y registro para que el mensaje suene a la persona usuaria; es preferencia suave, no copies frases ni fuerces emojis.`;
 }
 
 function repetitionRetryNeeded(qualityMeta = {}) {
@@ -768,7 +800,16 @@ function shortGeneratedFallback(action, metadata = {}, payload = {}) {
 
 function modelForAction(action = "suggest") {
   const normalized = normalizeAction(action);
-  return config.openai.models?.[normalized] || config.openai.model || "gpt-4.1-mini";
+  return config.openai.models?.[normalized] || config.openai.model || "gpt-5-mini";
+}
+
+// Las acciones contextuales de mas calidad (analyze/recommend) usan un razonamiento
+// ligero ("low"); las acciones interactivas (suggest, rewrite, opener, reactivate)
+// van a "minimal" para priorizar latencia: el usuario espera las sugerencias en vivo.
+function reasoningEffortForAction(action = "suggest", agent = "") {
+  const normalized = normalizeAction(action);
+  if (["analyze", "recommend"].includes(normalized)) return config.openai.reasoningEffortQuality;
+  return config.openai.reasoningEffort;
 }
 
 function generationTemperature(action = "suggest", promptConfig = {}, metadata = {}) {
@@ -1320,6 +1361,7 @@ async function buildContext(userId, chatId, extra = {}, provider, profile = {}) 
     tone
   });
   const userAiStylePrompt = formatUserAiStyleProfile(profile);
+  const userStyleFingerprint = buildUserStyleFingerprint(orderedRecent);
   const conversationIntent = detectConversationIntent({
     action,
     draft: extra.draft || extra.message || "",
@@ -1352,6 +1394,7 @@ async function buildContext(userId, chatId, extra = {}, provider, profile = {}) 
   const textContext = anonymize([
     `perfil_usuario: variante=${variant}; agente=${contextIntelligence.agent || requestedAgent || tone}; tono=${tone}; alias=${profile.alias || profile.display_name || profile.name || "yo"}`,
     userAiStylePrompt,
+    userStyleFingerprint,
     conversationProfilePrompt,
     `hora_actual_contexto: iso=${contextNow.iso}; local=${contextNow.local}; timezone=${contextNow.timeZone}`,
     `span_linea_tiempo: mensajes=${contextTimelineSpan.messageCount}; primero=${contextTimelineSpan.firstMessageAt || "n/a"}; ultimo=${contextTimelineSpan.lastMessageAt || "n/a"}; span_horas=${contextTimelineSpan.spanHours ?? "n/a"}; silencio_horas=${contextTimelineSpan.silenceHours ?? "n/a"}`,
@@ -1534,6 +1577,9 @@ function providerErrorToApiError(error) {
   return new ApiError(503, "ai_generation_failed", "No hemos podido generar la sugerencia. Intentalo de nuevo.", providerDetails);
 }
 
+// Acciones que ofrecen al usuario 2-3 propuestas con movimientos distintos.
+const MULTI_OPTION_ACTIONS = ["suggest", "reactivate", "opener"];
+
 function alternativesFor(action, text) {
   if (action !== "opener") return [];
   return String(text || "")
@@ -1541,6 +1587,102 @@ function alternativesFor(action, text) {
     .map(cleanGeneratedText)
     .filter(Boolean)
     .slice(0, 3);
+}
+
+// Parsea la salida del modelo (varias opciones, una por linea) en mensajes limpios.
+// Tolera vinetas, numeracion o etiquetas tipo "Opcion 1:".
+function parseGeneratedOptions(rawText = "") {
+  const lines = String(rawText || "")
+    .split(/\n+/)
+    .map((line) => line
+      .replace(/^\s*(?:\d+\s*[.\)\-:]|[-*•·]|opci[oó]n\s*\d*\s*[:.\-]?|alternativa\s*\d*\s*[:.\-]?)\s*/i, "")
+      .trim())
+    .map(cleanGeneratedText)
+    .filter(Boolean);
+  const seen = new Set();
+  const options = [];
+  for (const line of lines) {
+    const key = line.toLowerCase().replace(/\s+/g, " ").trim();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    options.push(line);
+    if (options.length >= 3) break;
+  }
+  return options;
+}
+
+function multiOptionInstruction(action = "suggest") {
+  if (!MULTI_OPTION_ACTIONS.includes(action)) return "";
+  const variety = action === "opener"
+    ? "Cada opcion desde un ANGULO distinto: una observacion concreta, una pregunta con intencion, o un guiño a un detalle del contexto."
+    : "Cada opcion con un MOVIMIENTO conversacional diferente (por ejemplo: reaccionar con algo propio, proponer algo concreto, preguntar con intencion, picar o bromear suave, o compartir/confesar algo).";
+  return [
+    "Formato de salida: devuelve 2 o 3 opciones distintas, cada una en su PROPIA LINEA y lista para enviar tal cual.",
+    variety,
+    "No las numeres, no pongas guiones ni titulos, no las expliques: solo el texto de cada mensaje, uno por linea. Que se note variedad real entre ellas, no la misma frase reformulada."
+  ].join(" ");
+}
+
+// Guia situacional (#2): orienta el TIPO de movimiento util segun la intencion
+// detectada, SIN dar frases que el modelo pueda copiar (preserva la soltura).
+const SITUATIONAL_MOVE_HINTS = {
+  plan_requested: "La situacion pide proponer algo concreto y facil de aceptar, no solo decir disponibilidad.",
+  plan_confirmed: "Ya hay plan; confirma y cierra un detalle sin sobreexplicar ni reabrir la decision.",
+  boundary_rejection: "Hay un limite explicito; respetalo, baja intensidad y no reabras el plan ni insistas.",
+  apology_delay: "Hubo demora o disculpa; reconocela sin dramatizar y retoma el hilo con naturalidad.",
+  banter_flirt: "Hay juego y quimica; sigue la chispa con algo propio, sin exagerar ni sexualizar.",
+  emotional_support: "Toca acompanar; valida breve y ofrece presencia o ayuda concreta, sin diagnosticar ni sermonear.",
+  professional_task: "Es una gestion; resuelve o pide el dato minimo imprescindible, directo y sin rodeos.",
+  direct_question: "Hay una pregunta directa; respondela primero y con claridad antes de cualquier otra cosa.",
+  greeting: "Es un saludo; abre suave con algo propio y con intencion, nunca un saludo plano.",
+  own_message_continuation: "El ultimo mensaje es propio; continua esa idea desde la voz del usuario, no respondas como el contacto.",
+  reactivate_thread: "Hilo enfriado; abre FRESCO como si saludaras de nuevo o rompieras el hielo, sin recapitular el tema viejo, sin reproche y SIN proponer un plan o cita directamente (solo reabrir el canal).",
+  unavailable_media: "Hay multimedia no visible; no inventes su contenido, pide o sugiere una descripcion breve.",
+  general_reply: ""
+};
+
+function situationalMoveHint(intent = "") {
+  const hint = SITUATIONAL_MOVE_HINTS[String(intent || "").toLowerCase()] || "";
+  return hint ? `guia_situacional: ${hint}` : "";
+}
+
+// P1.2 Few-shot situacional: 1 ejemplo corto para las combinaciones (intencion x
+// agente) de mayor valor. Es ANCLA de estilo/movimiento, no plantilla: el modelo no
+// debe copiarlo. Solo se inyecta cuando hay senal fuerte de intencion (no en general_reply).
+const SITUATIONAL_EXAMPLES = {
+  plan_requested: {
+    Ligoteo: "contacto='y que podriamos hacer?' -> 'Un cafe tranqui y si pinta caminamos un rato, vos decime que dia te queda'.",
+    Amistoso: "contacto='que hacemos el finde?' -> 'Podemos armar algo simple, una vuelta y after, te tiro opciones si queres'.",
+    Profesional: "contacto='como seguimos?' -> 'Te propongo una call corta esta semana y cerramos los puntos, te paso dos horarios'."
+  },
+  boundary_rejection: {
+    Ligoteo: "contacto='hoy no puedo, otro dia' -> 'Tranqui, sin drama, cuando te quede bien lo vemos'.",
+    Amistoso: "contacto='no tengo ganas de hablar' -> 'Te entiendo, cualquier cosa aca estoy, sin apuro'.",
+    Profesional: "contacto='ahora no puedo atender esto' -> 'Sin problema, lo dejamos para cuando puedas y me decis'."
+  },
+  emotional_support: {
+    Amistoso: "contacto='estoy hecho mierda hoy' -> 'Que feo dia, eh. Si queres descargas conmigo o cortamos un rato y ya'.",
+    Ligoteo: "contacto='ando bajon' -> 'Ey, te leo. Si te sirve te hago compania un rato sin presion'.",
+    Profesional: "contacto='estoy desbordado con todo' -> 'Se siente. Si te ayuda, priorizamos lo urgente y el resto lo corremos'."
+  },
+  professional_task: {
+    Profesional: "contacto='me pasas el informe?' -> 'Va, hoy te mando lo cerrado y te marco lo que falta'.",
+    Amistoso: "contacto='podes ayudarme con algo del laburo?' -> 'Dale, contame que es y vemos como lo resolvemos'.",
+    Ligoteo: "contacto='necesito una mano con un tema serio' -> 'Claro, contame tranqui y lo vemos juntos'."
+  },
+  banter_flirt: {
+    Ligoteo: "contacto='sos un caso jaja' -> 'Me lo tomo como cumplido, igual vos no te quedas atras eh'.",
+    Amistoso: "contacto='jaja me caes bien' -> 'Vos tambien, sos de la gente que suma'.",
+    Profesional: "contacto='trabajas mucho eh' -> 'Cuando algo me gusta le meto, asi salen las cosas bien'."
+  }
+};
+
+function situationalExample(intent = "", agent = "") {
+  const byIntent = SITUATIONAL_EXAMPLES[String(intent || "").toLowerCase()];
+  if (!byIntent) return "";
+  const agentKey = /ligoteo/i.test(agent) ? "Ligoteo" : /profesional/i.test(agent) ? "Profesional" : "Amistoso";
+  const example = byIntent[agentKey] || "";
+  return example ? `ejemplo_de_movimiento (ancla, no copies literal): ${example}` : "";
 }
 
 async function generate(userId, requestedAction, payload = {}) {
@@ -1646,7 +1788,7 @@ async function generate(userId, requestedAction, payload = {}) {
       ? `Regeneracion: el usuario ya vio una propuesta anterior. No repitas el mismo arranque, la misma estructura ni el mismo cierre. Da una alternativa distinta, igual de enviable y contextual.${previousGeneratedTextForPrompt}`
       : "";
     const antiRecycleInstruction = recentGeneratedTexts.length
-      ? `Memoria anti-reciclaje activa para este chat: evita reciclar estas propuestas recientes y no uses el mismo movimiento conversacional:\n${recentGeneratedTexts.map((item) => `- ${item}`).join("\n")}`
+      ? `Memoria anti-reciclaje activa para este chat: evita reciclar estas propuestas recientes y NO arranques con el mismo movimiento conversacional que ya usaste en ellas (si la ultima propuso un plan, ahora reacciona o pregunta; rota el angulo):\n${recentGeneratedTexts.map((item) => `- ${item}`).join("\n")}`
       : "";
     const turnGuardInstruction = turnGuardPrompt(context.content, {
       agent: promptState.agent,
@@ -1655,19 +1797,40 @@ async function generate(userId, requestedAction, payload = {}) {
       action,
       objective: promptState.objective
     });
+    const optionsInstruction = multiOptionInstruction(action);
+    const situationalInstruction = [
+      situationalMoveHint(context.metadata.intent),
+      situationalExample(context.metadata.intent, context.metadata.agent)
+    ].filter(Boolean).join("\n");
     const completionMessages = [
-      { role: "system", content: `${promptConfig.prompt}\n\n${aiDecisionContextPrompt(aiDecisionContext)}\n\n${qualityContractPrompt(action, context.metadata)}\n\n${qualityPolicyPrompt(action, qualityState)}${regenerationInstruction ? `\n\n${regenerationInstruction}` : ""}${antiRecycleInstruction ? `\n\n${antiRecycleInstruction}` : ""}` },
-      { role: "user", content: [context.content, turnGuardInstruction].filter(Boolean).join("\n\n") }
+      // El preambulo estatico va PRIMERO (prefijo cacheable); las partes dinamicas
+      // (agente, variante, estado, contexto de decision, politica de calidad) despues.
+      { role: "system", content: `${staticSystemPreamble()}\n\n${promptConfig.prompt}\n\n${aiDecisionContextPrompt(aiDecisionContext)}\n\n${qualityContractPrompt(action, context.metadata)}\n\n${qualityPolicyPrompt(action, qualityState)}${regenerationInstruction ? `\n\n${regenerationInstruction}` : ""}${antiRecycleInstruction ? `\n\n${antiRecycleInstruction}` : ""}` },
+      { role: "user", content: [context.content, situationalInstruction, turnGuardInstruction, optionsInstruction].filter(Boolean).join("\n\n") }
     ];
     const temperature = generationTemperature(action, promptConfig, context.metadata);
     const completion = await provider.complete({
       model,
       temperature,
+      reasoningEffort: reasoningEffortForAction(action, context.metadata.agent),
       messages: completionMessages
     });
     const rawText = providerCompletionText(completion);
 
-    const placeholderRewrite = await rewriteWithoutPlaceholders(provider, cleanForTurn(rawText, action, context.metadata), promptConfig.tone, model);
+    // Multi-opcion: el modelo devuelve 2-3 propuestas (una por linea). Parseamos
+    // antes del pipeline, procesamos la primera a fondo y limpiamos el resto.
+    const isMultiOption = MULTI_OPTION_ACTIONS.includes(action);
+    const parsedOptions = isMultiOption ? parseGeneratedOptions(rawText) : [];
+    const primaryRaw = parsedOptions.length ? parsedOptions[0] : rawText;
+    const cleanOption = (value) => postprocessAiText(cleanForTurn(value, action, context.metadata), {
+      variant: promptConfig.variant,
+      action,
+      tone: promptConfig.tone,
+      state: context.metadata,
+      context: context.content
+    });
+
+    const placeholderRewrite = await rewriteWithoutPlaceholders(provider, cleanForTurn(primaryRaw, action, context.metadata), promptConfig.tone, model);
     let text = postprocessAiText(placeholderRewrite.text, {
       variant: promptConfig.variant,
       action,
@@ -1689,7 +1852,21 @@ async function generate(userId, requestedAction, payload = {}) {
     const qualityPostprocess = applyQualityPostprocess(text, qualityState, context.content);
     text = qualityPostprocess.text;
 
-    let alternatives = alternativesFor(action, text);
+    let alternatives;
+    if (isMultiOption) {
+      const extraOptions = parsedOptions.slice(1)
+        .map((option) => cleanOption(option))
+        .filter((option) => option && !isTooShortGeneratedText(option));
+      const seen = new Set();
+      alternatives = [text, ...extraOptions].filter((option) => {
+        const key = String(option || "").toLowerCase().replace(/\s+/g, " ").trim();
+        if (!option || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 3);
+    } else {
+      alternatives = alternativesFor(action, text);
+    }
     let finalText = action === "opener" && alternatives.length ? alternatives.join("\n") : text;
     let qualityMeta = evaluateAiResponse(finalText, qualityState, context.content);
     if (Array.isArray(qualityPostprocess.postprocessFlags) && qualityPostprocess.postprocessFlags.length) {
@@ -1751,6 +1928,9 @@ async function generate(userId, requestedAction, payload = {}) {
       usedConversationProfile: Boolean(context.metadata.usedConversationProfile),
       selectedModel: model,
       temperature,
+      temperatureApplied: completion?.raw?.temperatureApplied ?? null,
+      reasoningEffort: completion?.raw?.reasoningEffortApplied ?? null,
+      verbosity: completion?.raw?.verbosityApplied ?? null,
       modelStrategy: ["reactivate", "analyze", "recommend"].includes(action) ? "quality_contextual" : "fast_cost_controlled",
       generatedTextForAntiRepeat: compactText(finalText, 320),
       ...safeContextMetadata
@@ -2060,6 +2240,12 @@ module.exports = {
   detectThreadState,
   __test: {
     contextLimitInfoForAction,
-    PROMPT_RIGIDITY_PROFILE
+    PROMPT_RIGIDITY_PROFILE,
+    buildUserStyleFingerprint,
+    parseGeneratedOptions,
+    multiOptionInstruction,
+    situationalMoveHint,
+    situationalExample,
+    reasoningEffortForAction
   }
 };

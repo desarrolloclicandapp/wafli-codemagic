@@ -35,6 +35,9 @@ const WHATSAPP_REQUIRED_SCREENS = new Set();
 const ONBOARDING_FLOW_SCREENS = new Set(['legal', 'spanish-variant', 'tone-base', 'connect']);
 const PWA_INSTALL_SEEN_KEY = 'wafli:pwaInstallOpportunitySeen';
 const PWA_INSTALLED_KEY = 'wafli:pwaInstalled';
+const AI_PERMANENT_CONSENT_KEY = 'wafli:aiDataSharingConsent:permanent';
+const AI_SESSION_CONSENT_KEY = 'wafli:aiDataSharingConsent:session';
+const AI_STARTUP_CONSENT_CHOICE_KEY = 'wafli:aiDataSharingConsent:startupChoice';
 
 function isPwaStandalone() {
   return Boolean(
@@ -65,6 +68,65 @@ function AppLoadingScreen({ label = 'Preparando WaFli...' }) {
   );
 }
 
+function aiConsentActionLabel(action = '') {
+  const key = String(action || '').toLowerCase();
+  return {
+    suggest: 'generar una sugerencia de respuesta',
+    rewrite: 'reescribir un mensaje',
+    analyze: 'analizar un mensaje',
+    opener: 'romper el hielo',
+    reactivate: 'reactivar una conversación',
+    regenerate: 'regenerar una respuesta',
+    tool_reply: 'usar ¿Qué le respondo?',
+    tool_icebreakers: 'usar Rompe el hielo',
+    session_start: 'usar las funciones de IA esta sesión',
+  }[key] || 'usar la IA';
+}
+
+function hasSessionAiConsent() {
+  try {
+    return sessionStorage.getItem(AI_SESSION_CONSENT_KEY) === 'allowed';
+  } catch (error) {
+    return false;
+  }
+}
+
+function hasPermanentAiConsent() {
+  try {
+    return localStorage.getItem(AI_PERMANENT_CONSENT_KEY) === 'allowed';
+  } catch (error) {
+    return false;
+  }
+}
+
+function rememberPermanentAiConsent() {
+  try {
+    localStorage.setItem(AI_PERMANENT_CONSENT_KEY, 'allowed');
+    localStorage.removeItem(AI_STARTUP_CONSENT_CHOICE_KEY);
+  } catch (error) {}
+}
+
+function rememberSessionAiConsent() {
+  try {
+    sessionStorage.setItem(AI_SESSION_CONSENT_KEY, 'allowed');
+  } catch (error) {}
+}
+
+function shouldPromptAiConsentOnStartup() {
+  try {
+    const choice = localStorage.getItem(AI_STARTUP_CONSENT_CHOICE_KEY);
+    return !choice || choice === 'session';
+  } catch (error) {
+    return false;
+  }
+}
+
+function rememberStartupAiConsentChoice(choice) {
+  try {
+    if (choice) localStorage.setItem(AI_STARTUP_CONSENT_CHOICE_KEY, choice);
+  } catch (error) {}
+}
+
 // WaFliApp - main navigation state machine
 function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   const params = new URLSearchParams(window.location.search);
@@ -79,6 +141,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   const [sheet, setSheet] = React.useState(null); // 'suggest' | 'reactivate' | 'rewrite' | 'analysis' | null
   const [modal, setModal] = React.useState(flagModal === 'quota' ? 'quota' : null); // 'quota' | null
   const [billingSheet, setBillingSheet] = React.useState(null); // plans | packs | history | success
+  const [aiConsentRequest, setAiConsentRequest] = React.useState(null);
   const [toast, setToast] = React.useState(null);
   const [analysisMessage, setAnalysisMessage] = React.useState('');
   const [composerSeed, setComposerSeed] = React.useState('');
@@ -133,6 +196,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   const modalRef = React.useRef(modal);
   const billingSheetRef = React.useRef(billingSheet);
   const notifPromptRef = React.useRef(showNotifPrePrompt);
+  const aiConsentRequestRef = React.useRef(null);
 
   React.useEffect(() => { setScreen(flagScreen || initialScreen); }, [flagScreen, initialScreen]);
   React.useEffect(() => { screenRef.current = screen; }, [screen]);
@@ -147,6 +211,53 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   React.useEffect(() => { modalRef.current = modal; }, [modal]);
   React.useEffect(() => { billingSheetRef.current = billingSheet; }, [billingSheet]);
   React.useEffect(() => { notifPromptRef.current = showNotifPrePrompt; }, [showNotifPrePrompt]);
+  React.useEffect(() => { aiConsentRequestRef.current = aiConsentRequest; }, [aiConsentRequest]);
+  const resolveAiConsentRequest = React.useCallback((allowed) => {
+    const current = aiConsentRequestRef.current;
+    if (allowed === 'always') {
+      rememberPermanentAiConsent();
+      if (current?.action === 'session_start') rememberStartupAiConsentChoice('always');
+    } else if (allowed === 'session') {
+      rememberSessionAiConsent();
+      if (current?.action === 'session_start') rememberStartupAiConsentChoice('session');
+    } else if (current?.action === 'session_start') {
+      rememberStartupAiConsentChoice('no');
+    }
+    if (current?.onDecision) current.onDecision(allowed || false);
+    setAiConsentRequest(null);
+  }, []);
+  React.useEffect(() => {
+    const handleAiConsentRequest = (event) => {
+      const detail = event?.detail || {};
+      if (typeof detail.onDecision !== 'function') return;
+      detail.markHandled?.();
+      if (aiConsentRequestRef.current?.onDecision) {
+        aiConsentRequestRef.current.onDecision(false);
+      }
+      setAiConsentRequest({
+        action: detail.action || 'ai',
+        provider: detail.provider || 'OpenAI',
+        onDecision: detail.onDecision,
+      });
+    };
+    window.addEventListener('wafli:ai-data-sharing-consent', handleAiConsentRequest);
+    return () => window.removeEventListener('wafli:ai-data-sharing-consent', handleAiConsentRequest);
+  }, []);
+  React.useEffect(() => {
+    if (!authReady || !WaFliAPI?.client?.isAuthenticated?.()) return;
+    if (hasPermanentAiConsent() || hasSessionAiConsent() || !shouldPromptAiConsentOnStartup()) return;
+    window.dispatchEvent(new CustomEvent('wafli:ai-data-sharing-consent', {
+      detail: {
+        action: 'session_start',
+        provider: 'OpenAI',
+        markHandled: () => {},
+        onDecision: (allowed) => {
+          if (allowed === 'always') rememberPermanentAiConsent();
+          if (allowed === 'session' || allowed === true) rememberSessionAiConsent();
+        },
+      },
+    }));
+  }, [authReady]);
   React.useEffect(() => {
     let alive = true;
     const boot = async () => {
@@ -408,6 +519,10 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       active.blur();
       return true;
     }
+    if (aiConsentRequestRef.current) {
+      resolveAiConsentRequest(false);
+      return true;
+    }
     const backEvent = new CustomEvent('wafli:native-back', { cancelable: true });
     window.dispatchEvent(backEvent);
     if (backEvent.defaultPrevented) return true;
@@ -420,7 +535,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       return true;
     }
     return false;
-  }, []);
+  }, [resolveAiConsentRequest]);
   const markInstallOpportunitySeen = React.useCallback(() => {
     localStorage.setItem(PWA_INSTALL_SEEN_KEY, '1');
     setPwaInstallSeen(true);
@@ -999,6 +1114,28 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
           onOpenPlans={() => { setModal(null); setBillingSheet('plans'); }}
           onOpenPacks={() => { setModal(null); setBillingSheet('packs'); }}
         />
+      </FullModal>
+      <FullModal open={Boolean(aiConsentRequest)} onClose={() => resolveAiConsentRequest(false)}>
+        <div style={{padding: '26px 22px 22px', display: 'flex', flexDirection: 'column', gap: 14}}>
+          <div>
+            <span className="t-caption" style={{color: 'var(--text-tertiary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em'}}>Permiso de IA</span>
+            <h2 className="t-h2" style={{margin: '6px 0 0'}}>Antes de usar la IA</h2>
+          </div>
+          <p className="t-body" style={{margin: 0, color: 'var(--text-secondary)'}}>
+            Para {aiConsentActionLabel(aiConsentRequest?.action)}, WaFli enviará a {aiConsentRequest?.provider || 'OpenAI'}, proveedor externo de IA, solo los datos necesarios para esta acción.
+          </p>
+          <div className="card" style={{padding: 12, display: 'flex', flexDirection: 'column', gap: 8}}>
+            <div className="t-small"><strong>Datos que pueden enviarse:</strong> mensaje o conversación que pegues o selecciones, contexto reciente relevante, objetivo/instrucciones y capturas que adjuntes voluntariamente.</div>
+            <div className="t-small"><strong>Uso:</strong> {aiConsentRequest?.provider || 'OpenAI'} procesa esos datos para generar el resultado solicitado.</div>
+            <div className="t-small"><strong>Control:</strong> WaFli no envía mensajes automáticamente ni comparte tus chats con IA en segundo plano.</div>
+          </div>
+          <p className="t-caption" style={{margin: 0, color: 'var(--text-tertiary)'}}>
+            Si cancelas, no se enviará nada al proveedor de IA y no se generará la respuesta.
+          </p>
+          <button className="btn btn--primary btn--full" onClick={() => resolveAiConsentRequest('always')}>Sí</button>
+          <button className="btn btn--secondary btn--full" onClick={() => resolveAiConsentRequest('session')}>Solo por esta sesión</button>
+          <button className="btn btn--secondary btn--full" onClick={() => resolveAiConsentRequest(false)}>No</button>
+        </div>
       </FullModal>
       <BottomSheet open={showNotifPrePrompt} onClose={() => setShowNotifPrePrompt(false)} height="52%">
         <div style={{padding: '12px 18px 18px', display: 'flex', flexDirection: 'column', gap: 10}}>

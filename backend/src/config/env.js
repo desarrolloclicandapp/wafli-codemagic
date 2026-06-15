@@ -141,14 +141,14 @@ const config = {
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY || "",
-    model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+    model: process.env.OPENAI_MODEL || "gpt-5-mini",
     models: {
-      suggest: process.env.OPENAI_MODEL_SUGGEST || process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      rewrite: process.env.OPENAI_MODEL_REWRITE || process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      opener: process.env.OPENAI_MODEL_OPENER || process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      reactivate: process.env.OPENAI_MODEL_REACTIVATE || process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      analyze: process.env.OPENAI_MODEL_ANALYZE || process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      recommend: process.env.OPENAI_MODEL_RECOMMEND || process.env.OPENAI_MODEL || "gpt-4.1-mini"
+      suggest: process.env.OPENAI_MODEL_SUGGEST || process.env.OPENAI_MODEL || "gpt-5-mini",
+      rewrite: process.env.OPENAI_MODEL_REWRITE || process.env.OPENAI_MODEL || "gpt-5-mini",
+      opener: process.env.OPENAI_MODEL_OPENER || process.env.OPENAI_MODEL || "gpt-5-mini",
+      reactivate: process.env.OPENAI_MODEL_REACTIVATE || process.env.OPENAI_MODEL || "gpt-5-mini",
+      analyze: process.env.OPENAI_MODEL_ANALYZE || process.env.OPENAI_MODEL || "gpt-5-mini",
+      recommend: process.env.OPENAI_MODEL_RECOMMEND || process.env.OPENAI_MODEL || "gpt-5-mini"
     },
     contextMessageLimit: readInt("AI_CONTEXT_MESSAGE_LIMIT", 24),
     contextLimits: {
@@ -164,7 +164,15 @@ const config = {
     imageContextMaxFiles: Math.max(0, readInt("AI_IMAGE_CONTEXT_MAX_FILES", 1)),
     imageContextMaxBytes: Math.max(0, readInt("AI_IMAGE_CONTEXT_MAX_BYTES", 350000)),
     timeoutMs: Math.max(1000, readInt("OPENAI_TIMEOUT_MS", 25000)),
-    transcriptionModel: process.env.OPENAI_TRANSCRIPTION_MODEL || "gpt-4o-mini-transcribe"
+    transcriptionModel: process.env.OPENAI_TRANSCRIPTION_MODEL || "gpt-4o-mini-transcribe",
+    // Esfuerzo de razonamiento para modelos de la familia gpt-5/o-series.
+    // "minimal" => sin tokens de razonamiento (rapido y barato), ideal para
+    // sugerencias de WhatsApp. Las acciones de mas calidad usan "low".
+    reasoningEffort: (process.env.OPENAI_REASONING_EFFORT || "minimal").trim().toLowerCase(),
+    reasoningEffortQuality: (process.env.OPENAI_REASONING_EFFORT_QUALITY || "low").trim().toLowerCase(),
+    // Verbosidad de salida (familia gpt-5): "low" mantiene los mensajes cortos,
+    // ideal para WhatsApp. Configurable y con red de seguridad en el provider.
+    verbosity: (process.env.OPENAI_VERBOSITY || "low").trim().toLowerCase()
   },
   quota: {
     freeDailyMessages: readInt("WFL_FREE_DAILY_MESSAGES", 5),

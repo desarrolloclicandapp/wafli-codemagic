@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const ai = require("../controllers/aiController");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { requireAuth, requireWhatsappConnected } = require("../middleware/auth");
@@ -20,13 +20,27 @@ function requireWhatsappConnectedUnlessManual(req, res, next) {
   return requireWhatsappConnected(req, res, next);
 }
 
-router.post("/tools/reply", requireAuth, aiLimiter, asyncHandler(ai.toolReply));
-router.post("/tools/icebreakers", requireAuth, aiLimiter, asyncHandler(ai.toolIcebreakers));
+function requireAiDataSharingConsent(req, res, next) {
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  const value = body.aiDataSharingConsent ?? body.ai_data_sharing_consent;
+  if (value === true || value === "true" || value === 1 || value === "1") return next();
+  const error = new Error("Debes autorizar el envío de datos a OpenAI antes de generar una respuesta con IA.");
+  error.code = "ai_data_sharing_consent_required";
+  error.status = 400;
+  error.statusCode = 400;
+  return next(error);
+}
+
+router.post("/feedback", requireAuth, asyncHandler(ai.recordFeedback));
+router.get("/feedback/summary", requireAuth, asyncHandler(ai.feedbackSummary));
+
+router.post("/tools/reply", requireAuth, requireAiDataSharingConsent, aiLimiter, asyncHandler(ai.toolReply));
+router.post("/tools/icebreakers", requireAuth, requireAiDataSharingConsent, aiLimiter, asyncHandler(ai.toolIcebreakers));
 router.get("/tools/saved-lines", requireAuth, asyncHandler(ai.listSavedLines));
 router.post("/tools/saved-lines", requireAuth, asyncHandler(ai.saveLine));
 router.delete("/tools/saved-lines/:id", requireAuth, asyncHandler(ai.deleteLine));
 
-router.use(requireAuth, requireWhatsappConnectedUnlessManual, aiLimiter);
+router.use(requireAuth, requireWhatsappConnectedUnlessManual, requireAiDataSharingConsent, aiLimiter);
 router.post("/suggest", asyncHandler(ai.suggest));
 router.post("/rewrite", asyncHandler(ai.rewrite));
 router.post("/analyze", asyncHandler(ai.analyze));

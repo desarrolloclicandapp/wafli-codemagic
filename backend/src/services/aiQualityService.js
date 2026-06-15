@@ -1531,16 +1531,15 @@ function qualityPolicyPrompt(action = "suggest", metadata = {}) {
         `prevention_contract=${(metadata.aiDecisionContext.preventionContract || []).join(",")}`
       ].join("\n")
     : "";
+  // Esta capa final no repite los guardrails genericos (ya estan en el prompt base,
+  // el agente y el contrato de decision). Solo aporta lo especifico de esta peticion:
+  // recordatorio de agente/variante, response_move, contrato compartido, anti-reciclaje
+  // y ajustes por accion.
   return [
     `calidad_wafli_prompt_variant=${PROMPT_VARIANT}`,
-    `compatibilidad_prompt_anterior=${PROMPT_VARIANT_V1}`,
-    "Entrega solo un mensaje listo para enviar por WhatsApp.",
-    "Debe aportar algo util y contextual: avanzar, aclarar, suavizar, cerrar, bromear o acompanar; no repitas lo obvio.",
+    "Entrega solo un mensaje listo para enviar por WhatsApp, util y contextual.",
     `Agente ${agent.label}: ${agent.must}. Evita: ${agent.avoid.join(", ")}.`,
     `Variante: ${dialect.label}. Prioriza tratamiento, cadencia y vocabulario natural; no mezcles variantes.`,
-    "Guardrails criticos: no inventar hechos, fechas, horas, acuerdos, disponibilidad, emociones ni contenido multimedia; respetar limites explicitos; no confundir quien habla; no cambiar la intencion del rewrite.",
-    "Libertad creativa: varia forma, ritmo, microgancho, iniciativa y estructura. Si una regla generica choca con el foco claro del chat, gana el foco salvo riesgo alto.",
-    "No uses frases de asistente, prefijos, placeholders, explicaciones ni salida con varias alternativas salvo que la accion lo pida.",
     responseMovePrompt(metadata),
     sharedDecisionContract,
     metadata.previousGeneratedText ? `Regeneracion: evita repetir esta propuesta anterior: ${compactQualityText(metadata.previousGeneratedText)}.` : "",
@@ -1898,170 +1897,77 @@ function useContextualLightRepairMode(metadata = {}) {
 }
 
 function applyQualityPostprocess(text = "", metadata = {}, context = "") {
-  let value = String(text || "").trim();
-  const postprocessFlags = [];
-  const flagOnlyRepairMode = useContextualLightRepairMode(metadata);
-  const variantKey = normalizeVariantKey(metadata.variant || metadata.locale || metadata.spanishVariant || metadata.languageVariant);
-  value = value
+  // Recorte agresivo (soltura): el post-procesado solo limpia formato y aplica
+  // reparaciones de SEGURIDAD (multimedia inventada, view-once, limites/boundary y
+  // confusion de turno). El resto de problemas de estilo se MARCAN como flags para
+  // telemetria pero NO se reescriben: confiamos en el prompt y el modelo.
+  // evaluateAiResponse sigue puntuando todo sin alterar el texto.
+  let value = String(text || "").trim()
     .replace(/^(?:respuesta sugerida|mensaje sugerido|aqui tienes|te sugiero responder)[:\-\s]+/i, "")
     .replace(/\s+/g, " ")
     .trim();
   value = stripRepeatedOpeningPhrase(value);
-  if (hasTemplateCommaOpening(value, metadata, context) && flagOnlyRepairMode) {
-    postprocessFlags.push("template_comma_opening_flagged_without_repair");
-  } else {
-    value = stripTemplateCommaOpening(value, metadata, context);
-  }
-  if ((PATTERNED_REPLY_RE.test(value) || hasLowValuePatternedOpening(value, metadata, context)) && flagOnlyRepairMode) {
-    postprocessFlags.push("patterned_reply_flagged_without_repair");
-  } else {
-    value = stripLowValuePatternedOpening(value, metadata, context);
-  }
+
+  const postprocessFlags = [];
+
+  // --- Reparaciones de seguridad (mutan el texto) ---
   if (hasUnsupportedMediaClaim(value, metadata, context)) {
     value = mediaUnavailableFallback(metadata, context);
-  }
-  if (hasViewOnceUnhelpfulTail(value, metadata, context)) {
+    postprocessFlags.push("unsupported_media_claim_repaired");
+  } else if (hasViewOnceUnhelpfulTail(value, metadata, context)) {
     value = mediaUnavailableFallback(metadata, context);
+    postprocessFlags.push("view_once_tail_repaired");
   }
-  value = visibleMeetingFactFallback(value, metadata, context) || value;
   if (hasPlanAfterBoundary(value, metadata, context)) {
     value = romanticBoundaryFallback(metadata, context);
-  }
-  if (hasGroupInviteIssue(value, metadata, context)) {
-    if (flagOnlyRepairMode) postprocessFlags.push("group_invite_issue_flagged_without_repair");
-    else value = groupInviteFallback(metadata, context);
-  }
-  if (hasPrematureConnectionDatePlan(value, metadata, context)) {
-    if (flagOnlyRepairMode) postprocessFlags.push("connection_to_date_drift_flagged_without_repair");
-    else value = connectionReactionFallback(metadata, context);
-  }
-  if (hasWrongSmileAttribution(value, metadata, context)) {
-    value = smileAttributionFallback(metadata, context);
-  }
-  if (hasWrongMannersAttribution(value, metadata, context)) {
-    value = mannersAttributionFallback(metadata);
-  }
-  if (hasContactWorkingAttributionIssue(value, metadata, context)) {
-    value = contactWorkingFallback(metadata);
-  }
-  if (hasMissedInitialGreeting(value, metadata, context)) {
-    if (flagOnlyRepairMode) postprocessFlags.push("missed_initial_greeting_flagged_without_repair");
-    else value = initialGreetingFallback(metadata);
-  }
-  if (hasDelayPressureReply(value, metadata, context)) {
-    if (flagOnlyRepairMode) postprocessFlags.push("delay_pressure_reply_flagged_without_repair");
-    else value = delayApologyFallback(metadata);
-  }
-  if (hasLaughToPlanDrift(value, metadata, context)) {
-    if (flagOnlyRepairMode) postprocessFlags.push("laugh_to_plan_drift_flagged_without_repair");
-    else value = laughConnectionFallback(metadata);
-  }
-  if (hasIgnoredAudioTranscript(value, metadata, context)) {
-    value = audioTranscriptFallback(metadata, context);
-  }
-  if (hasWeakMeetingConfirmation(value, metadata, context)) {
-    value = meetingConfirmationFallback(metadata, context);
-  }
-  if (hasOverdoneMeetingConfirmation(value, metadata, context)) {
-    value = meetingConfirmationFallback(metadata, context);
+    postprocessFlags.push("plan_after_boundary_repaired");
   }
   if (hasPushAfterCloseOrBoundary(value, metadata, context)) {
     value = closeOrBoundaryFallback(metadata, context);
-  }
-  if (hasCannedDatePlan(value, metadata, context) && !flagOnlyRepairMode) {
-    value = cannedDatePlanFallback(metadata, context) || value;
-  } else if (hasCannedDatePlan(value, metadata, context)) {
-    postprocessFlags.push("canned_date_plan_flagged_without_fallback");
-  }
-  if (hasLowPressureFormulaOveruse(value, metadata, context)) {
-    if (flagOnlyRepairMode) postprocessFlags.push("low_pressure_formula_overuse_flagged_without_repair");
-    else value = stripOverusedLowPressureFormula(value, metadata, context);
-  }
-  if (repeatedStyleChunkFromHistory(value, metadata, context)) {
-    if (flagOnlyRepairMode) postprocessFlags.push("style_formula_recycling_flagged_without_repair");
-    else value = stripRepeatedStyleChunk(value, metadata, context);
-  }
-  value = value
-    .replace(/\blisto\s+oro\b/gi, "es oro")
-    .replace(/\bjajaja\s+sale,\s*/gi, "jajaja, ")
-    .replace(/\bni\s+nada\s+sale,\s*/gi, "ni nada, ")
-    .replace(/\bqu[e\u00e9]\s+bueno\s+de\s+que\b/gi, "Qu\u00e9 bueno que")
-    .replace(/\ba\s+m[i\u00ed]\s+tambi[e\u00e9]n\s+(?:de\s+)?que\s+te\s+(?:haya\s+)?(?:apeteciera|apetezca|gustara|gustase|molara|molase|encantara|encantase),?\s*/gi, "A m\u00ed tambi\u00e9n me gust\u00f3. ")
-    .replace(/\ba\s+m[i\u00ed]\s+tambi[e\u00e9]n\s+(?:de\s+)?que\s+te\s+haya\s+(?:molado|encantado),?\s*/gi, "A m\u00ed tambi\u00e9n me gust\u00f3. ")
-    .replace(/\ba\s+m[i\u00ed]\s+tambi[e\u00e9]n\s+de\s+que\s+te\s+haya\s+gustado,?\s*/gi, "A m\u00ed tambi\u00e9n me gust\u00f3. ")
-    .replace(/\ba\s+m[i\u00ed]\s+tambi[e\u00e9]n\s+que\s+te\s+haya\s+gustado,?\s*/gi, "A m\u00ed tambi\u00e9n me gust\u00f3. ")
-    .replace(/\ba\s+m[i\u00ed]\s+tambi[e\u00e9]n\s+que\s+te\s+haya\s+pasado,?\s*/gi, "A m\u00ed tambi\u00e9n me gust\u00f3. ")
-    .replace(/\b(A\s+m[i\u00ed]\s+tambi[e\u00e9]n\s+me\s+gust[o\u00f3]\.?)\s*yo\s+tambi[e\u00e9]n\.?\s*si\s+te\s+apetece,?\s*/gi, "$1 ")
-    .replace(/\byo\s+tambi[e\u00e9]n\.?\s*si\s+te\s+apetece,?\s*/gi, "")
-    .replace(/^\s*le,\s*pues\s+/i, "")
-    .replace(/^\s*le,\s*/i, "")
-    .replace(/^\s*pues\s+/i, "")
-    .replace(/^\s*tranqui,\s+podemos\b(?=[\s\S]{0,120}\btranqui\b)/i, "Podemos")
-    .replace(/\ba\s+m[i\u00ed]\s+tambi[e\u00e9]n\s+que\s+te\s+apetezca,?\s*/gi, "A mi tambien me apetece. ")
-    .replace(/\ba\s+m[i\u00ed]\s+tambi[e\u00e9]n\s+de\s+que\s+te\s+haya\s+hecho\s+pensar\b/gi, "Me quede pensando en eso tambien")
-    .replace(/\bA\s+mi\s+tambien\s+me\s+gusto\.\s+A\s+mi\s+tambien\s+me\s+/gi, "A m\u00ed tambi\u00e9n me gust\u00f3. Me ")
-    .replace(/^(A\s+m[i\u00ed]\s+tambi[e\u00e9]n)[,.\s]+A\s+m[i\u00ed]\s+tambi[e\u00e9]n\s+me\s+/i, "$1 me ")
-    .replace(/\.\s+quedamos\b/gi, ". Quedamos")
-    .replace(/\.\s+esta\s+semana\b/gi, ". Esta semana")
-    .replace(/\bqu[e\u00e9]\s+tomamos\s+algo\b/gi, "tomamos algo")
-    .replace(/\bluego\s+ya\s+qu[e\u00e9]\s+apetece\s+hacer\b/gi, "luego vemos que apetece hacer")
-    .replace(/\?\s*Apetece\.?$/i, ".")
-    .replace(/\s+Apetece\.?$/i, "")
-    .replace(/\bte\s+merec[e\u00e9]s\s+un\s+buen\.?$/i, variantKey === "es-AR" ? "te merec\u00e9s un buen descanso" : "te mereces un buen descanso")
-    .replace(/\bdescanso\s+bien\s+merecido\b/gi, "descanso merecido")
-    .replace(/\bhablamos\s+aqu[i\u00ed]\s+estoy\b/gi, "hablamos. Estoy")
-    .replace(/\balgun\b/gi, "alg\u00fan")
-    .replace(/\bpuede\s+que\s+nos\s+damos\b/gi, "podemos darnos")
-    .replace(/\bcon\s+ganas\s+de\s+seguir\s+haciendo\.?$/gi, "con ganas de seguir intentando")
-    .replace(/\bno\s+m[a\u00e1]s\s+cuando\b/gi, "cuando")
-    .replace(/\s+vos\s+dale,?\s+qu[e\u00e9]\s+plan\b/gi, "")
-    .replace(/\baqu[i\u00ed]\s+estoy\s+piola\s+para\b/gi, "aqui estoy para")
-    .replace(/\s+y\.$/i, ".")
-    .trim();
-  if (normalizeAgentKey(metadata.agent || metadata.tone) === "ligoteo" && /\b(?:demor|tard|perd[o\u00f3]n|perdon|no pude|contestar|responder|ocupad[oa])\b/i.test(textFromContext(context))) {
-    value = value
-      .replace(/\bno te preocupes,\s*esas cosas pasan,\s*/i, "No pasa nada. ")
-      .replace(/,\s*c[o\u00f3]mo va todo\??$/i, ". Cuando puedas seguimos con calma")
-      .replace(/\.\s*c[o\u00f3]mo va todo\??$/i, ". Cuando puedas seguimos con calma")
-      .trim();
-  }
-  if (shouldRepairRewriteFidelity(value, metadata, context)) {
-    value = faithfulRewriteFallback(metadata, context) || value;
-  }
-  if (hasLowValueOpening(value, metadata, context) && flagOnlyRepairMode) {
-    postprocessFlags.push("low_value_opening_flagged_without_repair");
-  } else {
-    value = stripLowValueOpening(value, metadata, context);
-  }
-  if (hasProfessionalCasualTail(value, metadata, context) && flagOnlyRepairMode) {
-    postprocessFlags.push("professional_casual_tail_flagged_without_repair");
-  } else {
-    value = stripProfessionalCasualTail(value, metadata, context);
-  }
-  if (hasGenericQuestionTail(value, metadata, context) && flagOnlyRepairMode) {
-    postprocessFlags.push("generic_question_tail_flagged_without_repair");
-  } else {
-    value = stripValidationQuestionTail(value);
-  }
-  if (hasBadPlayfulDoubtResponse(value, metadata, context) && flagOnlyRepairMode) {
-    postprocessFlags.push("playful_doubt_bad_closure_flagged_without_repair");
-  } else {
-    value = repairPlayfulDoubtResponse(value, metadata, context);
+    postprocessFlags.push("push_after_close_or_boundary_repaired");
   }
   value = repairOwnTurnContactReply(value, metadata);
-  if (hasMissedOpportunity(value, metadata, context) && flagOnlyRepairMode) {
-    postprocessFlags.push("missed_opportunity_flagged_without_repair");
-  } else {
-    value = repairMissedOpportunity(value, metadata, context);
+
+  // --- Detectores de estilo: solo marcar, no reescribir ---
+  const styleChecks = [
+    ["template_comma_opening", hasTemplateCommaOpening(value, metadata, context)],
+    ["patterned_reply", PATTERNED_REPLY_RE.test(value) || hasLowValuePatternedOpening(value, metadata, context)],
+    ["group_invite_issue", hasGroupInviteIssue(value, metadata, context)],
+    ["connection_to_date_drift", hasPrematureConnectionDatePlan(value, metadata, context)],
+    ["smile_attribution", hasWrongSmileAttribution(value, metadata, context)],
+    ["manners_attribution", hasWrongMannersAttribution(value, metadata, context)],
+    ["contact_working_attribution", hasContactWorkingAttributionIssue(value, metadata, context)],
+    ["missed_initial_greeting", hasMissedInitialGreeting(value, metadata, context)],
+    ["delay_pressure_reply", hasDelayPressureReply(value, metadata, context)],
+    ["laugh_to_plan_drift", hasLaughToPlanDrift(value, metadata, context)],
+    ["ignored_audio_transcript", hasIgnoredAudioTranscript(value, metadata, context)],
+    ["weak_meeting_confirmation", hasWeakMeetingConfirmation(value, metadata, context)],
+    ["overdone_meeting_confirmation", hasOverdoneMeetingConfirmation(value, metadata, context)],
+    ["canned_date_plan", hasCannedDatePlan(value, metadata, context)],
+    ["low_pressure_formula_overuse", hasLowPressureFormulaOveruse(value, metadata, context)],
+    ["style_formula_recycling", repeatedStyleChunkFromHistory(value, metadata, context)],
+    ["rewrite_fidelity", shouldRepairRewriteFidelity(value, metadata, context)],
+    ["low_value_opening", hasLowValueOpening(value, metadata, context)],
+    ["professional_casual_tail", hasProfessionalCasualTail(value, metadata, context)],
+    ["generic_question_tail", hasGenericQuestionTail(value, metadata, context)],
+    ["playful_doubt_bad_closure", hasBadPlayfulDoubtResponse(value, metadata, context)],
+    ["missed_opportunity", hasMissedOpportunity(value, metadata, context)]
+  ];
+  for (const [flag, tripped] of styleChecks) {
+    if (tripped) postprocessFlags.push(`${flag}_flagged_without_repair`);
   }
-  value = value
-    .replace(/^\s*le,\s*/i, "")
-    .replace(/\s+/g, " ")
-    .trim();
+
+  value = value.replace(/\s+/g, " ").trim();
+
+  // repairMode conserva la semantica anterior: "flag_only" en el camino contextual
+  // ligero (solo se marca el estilo) y "critical" cuando el contexto es sensible.
+  // En ambos casos solo se reparan guardrails de seguridad; el estilo nunca se reescribe.
+  const repairMode = useContextualLightRepairMode(metadata) ? "flag_only" : "critical";
+
   return {
     text: value,
     postprocessFlags,
-    repairMode: flagOnlyRepairMode ? "flag_only" : "critical",
+    repairMode,
     quality: evaluateAiResponse(value, metadata, context)
   };
 }

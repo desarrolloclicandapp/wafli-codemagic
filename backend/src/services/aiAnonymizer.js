@@ -41,11 +41,15 @@ function maskNames(text) {
 }
 
 function anonymize(text = "") {
-  return maskNames(String(text || ""))
+  // Enmascara identificadores estructurados (email, url, documento, telefono)
+  // ANTES que los nombres, para que maskNames no rompa el match de un email
+  // o documento que empiece por mayuscula (p.ej. John.Doe@x.com).
+  const masked = String(text || "")
     .replace(EMAIL_RE, "[email]")
     .replace(URL_RE, "[url]")
     .replace(DNI_RE, "[documento]")
     .replace(PHONE_RE, "[telefono]");
+  return maskNames(masked);
 }
 
 function cleanGeneratedText(text = "") {

@@ -657,7 +657,7 @@ async function initDb() {
       CREATE INDEX IF NOT EXISTS idx_ai_content_reports_status ON ai_content_reports(status, created_at DESC);
     `);
 
-    await pool.query(`
+    await query(client, `
       CREATE TABLE IF NOT EXISTS ai_saved_lines (
         id BIGSERIAL PRIMARY KEY,
         user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -669,6 +669,27 @@ async function initDb() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
       CREATE INDEX IF NOT EXISTS idx_ai_saved_lines_user_created ON ai_saved_lines(user_id, created_at DESC);
+    `);
+
+    await query(client, `
+      CREATE TABLE IF NOT EXISTS ai_generation_feedback (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+        chat_id VARCHAR(255),
+        ai_action VARCHAR(60) NOT NULL DEFAULT 'suggest',
+        agent VARCHAR(80),
+        objective VARCHAR(120),
+        variant VARCHAR(80),
+        response_move VARCHAR(120),
+        outcome VARCHAR(40) NOT NULL,
+        option_index INTEGER,
+        option_count INTEGER,
+        was_edited BOOLEAN NOT NULL DEFAULT FALSE,
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_generation_feedback_user ON ai_generation_feedback(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_ai_generation_feedback_agent ON ai_generation_feedback(agent, outcome, created_at DESC);
     `);
 
     await query(client, `

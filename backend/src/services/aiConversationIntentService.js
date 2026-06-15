@@ -158,8 +158,11 @@ function classifyIntent({
   const isShort = normalized.length <= 42;
 
   if (normalizedAction === "rewrite" || compactText(draft)) return INTENTS.REWRITE_DRAFT;
+  // reactivate es una eleccion deliberada de reabrir el hilo: se trata SIEMPRE como
+  // reapertura fresca (saludar/romper el hielo), no como responder al mensaje viejo.
+  if (normalizedAction === "reactivate") return INTENTS.REACTIVATE_THREAD;
   if (mediaUnavailable) return INTENTS.UNAVAILABLE_MEDIA;
-  if (turnOwner === "usuario" && normalizedAction !== "reactivate") return INTENTS.OWN_MESSAGE_CONTINUATION;
+  if (turnOwner === "usuario") return INTENTS.OWN_MESSAGE_CONTINUATION;
 
   if (detectPattern(normalized, [
     /\b(no quiero|no puedo|prefiero no|mejor no|hoy no puedo|no me presiones|necesito espacio|dejame|dejame tranquila|dejame tranquilo)\b/,
@@ -319,8 +322,8 @@ function detectConversationIntent({
   const owner = ownerForMessage(focusMessage || {}, isGroup);
   const nowMs = parseTimestampMs(now) || Date.now();
   const lastMs = sentAtMs(focusMessage || ordered[ordered.length - 1] || {});
-  const inactiveHours = Number.isFinite(Number(threadState?.inactivityHours))
-    ? Number(threadState.inactivityHours)
+  const inactiveHours = Number.isFinite(Number(threadState?.inactiveHours))
+    ? Number(threadState.inactiveHours)
     : lastMs
       ? Math.max(0, (nowMs - lastMs) / 3600000)
       : 0;
