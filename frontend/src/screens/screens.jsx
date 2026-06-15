@@ -6020,15 +6020,6 @@ function ToolsHomeScreen({ onNavigate, onOpenReplyTool, onOpenIcebreakers, onOpe
               </div>
             </div>
           ) : null}
-          <div className="card" style={{padding: 14, display: 'grid', gap: 10}}>
-            <div className="row" style={{justifyContent: 'space-between', gap: 10}}>
-              <div>
-                <span className="t-h3" style={{fontSize: 16}}>Mis líneas guardadas</span>
-                <p className="t-small" style={{margin: '4px 0 0', color: 'var(--text-secondary)'}}>Copia o borra aperturas que hayas guardado.</p>
-              </div>
-              <button type="button" className="btn btn--secondary btn--md" onClick={onOpenSavedLines}>Abrir</button>
-            </div>
-          </div>
           <div style={{padding: '8px 2px 2px'}}>
             <span className="t-caption" style={{fontWeight: 700, color: 'var(--text-secondary)'}}>Próximamente</span>
           </div>
