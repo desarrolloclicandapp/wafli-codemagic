@@ -8,7 +8,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 const {
   Icons, WaFliAPI,
   BottomSheet, FullModal, Toast, StatusBar, DesktopSidebar,
-  LandingScreen, AuthScreen, LegalAcceptanceScreen, SpanishVariantScreen, ToneBaseScreen,
+  LandingScreen, AuthScreen, LegalAcceptanceScreen, AiConsentOnboardingScreen, SpanishVariantScreen, ToneBaseScreen,
   ConnectScreen, ConnectedSuccessScreen, AddToHomeScreen,
   ChatsListScreen, ChatScreen,
   ToolsHomeScreen, ToolReplyScreen, ToolIcebreakersScreen, SavedLinesScreen,
@@ -25,14 +25,14 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
 const PRIVATE_SCREENS = new Set([
-  'legal', 'spanish-variant', 'tone-base', 'connect', 'connected', 'install',
+  'legal', 'ai-consent', 'spanish-variant', 'tone-base', 'connect', 'connected', 'install',
   'tools', 'tool-reply', 'tool-icebreakers', 'saved-lines',
   'chats', 'chats-empty', 'chat', 'chat-empty', 'plan', 'settings'
 ]);
 // WhatsApp is optional in the standalone tools flow. Do not gate real chat
 // navigation here; ChatScreen and API errors handle unavailable sessions.
 const WHATSAPP_REQUIRED_SCREENS = new Set();
-const ONBOARDING_FLOW_SCREENS = new Set(['legal', 'spanish-variant', 'tone-base', 'connect']);
+const ONBOARDING_FLOW_SCREENS = new Set(['legal', 'ai-consent', 'spanish-variant', 'tone-base', 'connect']);
 const PWA_INSTALL_SEEN_KEY = 'wafli:pwaInstallOpportunitySeen';
 const PWA_INSTALLED_KEY = 'wafli:pwaInstalled';
 const AI_PERMANENT_CONSENT_KEY = 'wafli:aiDataSharingConsent:permanent';
@@ -50,9 +50,10 @@ function isPwaStandalone() {
 const screenForOnboardingStep = (nextStep) => {
   const step = String(nextStep || '').replace(/_/g, '-').toLowerCase();
   if (step === 'legal') return 'legal';
+  if (step === 'ai-consent' || step === 'ai_consent' || step === 'ai') return 'ai-consent';
   if (step === 'profile' || step === 'spanish-variant') return 'spanish-variant';
   if (step === 'tone' || step === 'tone-base' || step === 'base-tone' || step === 'basetone') return 'tone-base';
-  if (step === 'whatsapp' || step === 'connect') return 'tools';
+  if (step === 'whatsapp' || step === 'connect') return 'connect';
   return 'tools';
 };
 
@@ -245,6 +246,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
   }, []);
   React.useEffect(() => {
     if (!authReady || !WaFliAPI?.client?.isAuthenticated?.()) return;
+    if (ONBOARDING_FLOW_SCREENS.has(screenRef.current) || screenRef.current === 'auth' || screenRef.current === 'landing') return;
     if (hasPermanentAiConsent() || hasSessionAiConsent() || !shouldPromptAiConsentOnStartup()) return;
     window.dispatchEvent(new CustomEvent('wafli:ai-data-sharing-consent', {
       detail: {
@@ -257,7 +259,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
         },
       },
     }));
-  }, [authReady]);
+  }, [authReady, screen]);
   React.useEffect(() => {
     let alive = true;
     const boot = async () => {
@@ -782,12 +784,48 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
       goTo('legal');
     }
   };
-  const handleLegalContinue = async () => {
+  const handleLegalContinue = async (options = {}) => {
+    const aiDataSharingConsent = Boolean(options?.aiDataSharingConsent);
     try {
-      await WaFliAPI?.me?.acceptLegal?.({ isAdult: true, termsVersion: '2026-05', privacyVersion: '2026-05' });
+      await WaFliAPI?.me?.acceptLegal?.({
+        isAdult: true,
+        termsVersion: '2026-05',
+        privacyVersion: '2026-05',
+        aiDataSharingConsent,
+        aiDataSharingProvider: 'OpenAI',
+      });
     } catch (error) {
       if (WaFliAPI?.client?.isAuthenticated?.()) showToast(WaFliAPI.client.toUserMessage(error));
       return;
+    }
+    if (aiDataSharingConsent) {
+      rememberPermanentAiConsent();
+    } else {
+      rememberStartupAiConsentChoice('no');
+    }
+    const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
+    if (status) setOnboardingStatus(status);
+    goTo(screenForOnboardingStep(status?.nextStep || 'profile'));
+  };
+  const handleAiConsentContinue = async (options = {}) => {
+    const aiDataSharingConsent = Boolean(options?.aiDataSharingConsent);
+    try {
+      await WaFliAPI?.me?.acceptLegal?.({
+        isAdult: true,
+        termsVersion: '2026-05',
+        privacyVersion: '2026-05',
+        aiDataSharingConsent,
+        aiDataSharingProvider: 'OpenAI',
+        aiConsentOnly: true,
+      });
+    } catch (error) {
+      if (WaFliAPI?.client?.isAuthenticated?.()) showToast(WaFliAPI.client.toUserMessage(error));
+      return;
+    }
+    if (aiDataSharingConsent) {
+      rememberPermanentAiConsent();
+    } else {
+      rememberStartupAiConsentChoice('no');
     }
     const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
     if (status) setOnboardingStatus(status);
@@ -813,7 +851,7 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
     }
     const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
     if (status) setOnboardingStatus(status);
-    goTo(screenForOnboardingStep(status?.nextStep || 'tools'));
+    goTo(screenForOnboardingStep(status?.nextStep || 'whatsapp'));
   };
   const openNotificationPrePrompt = () => {
     if (isCapacitorNative) {
@@ -1005,12 +1043,24 @@ function WaFliApp({ initialScreen = 'landing', tweakHook }) {
     body = <AuthScreen onBack={() => goTo('landing')} onMagicLink={handleAuthReady} onGoogleContinue={handleAuthReady} onShowToast={showToast} />;
   } else if (effectiveScreen === 'legal') {
     body = <LegalAcceptanceScreen onBack={() => goTo('auth')} onContinue={handleLegalContinue} />;
+  } else if (effectiveScreen === 'ai-consent') {
+    body = <AiConsentOnboardingScreen onBack={() => goTo('settings')} onContinue={handleAiConsentContinue} />;
   } else if (effectiveScreen === 'spanish-variant') {
     body = <SpanishVariantScreen onBack={() => goTo('legal')} onContinue={handleSpanishContinue} />;
   } else if (effectiveScreen === 'tone-base') {
     body = <ToneBaseScreen onBack={() => goTo('spanish-variant')} onContinue={handleToneContinue} />;
   } else if (effectiveScreen === 'connect') {
-    body = <ConnectScreen onBack={() => goTo('tools')} onConnected={() => { showToast('Tu WhatsApp quedó vinculado'); goTo('connected'); }} onContinueWithoutWhatsApp={() => goTo('tools')} />;
+    const connectFromOnboarding = onboardingStatus?.nextStep === 'whatsapp';
+    body = <ConnectScreen
+      onBack={() => goTo(connectFromOnboarding ? 'tone-base' : 'tools')}
+      onConnected={() => { showToast('Tu WhatsApp quedó vinculado'); goTo('connected'); }}
+      onContinueWithoutWhatsApp={async () => {
+        await WaFliAPI?.me?.updateProfile?.({ whatsappOnboardingSkipped: true }).catch(() => null);
+        const status = await WaFliAPI?.me?.onboardingStatus?.().catch(() => null);
+        if (status) setOnboardingStatus(status);
+        goTo('tools');
+      }}
+    />;
   } else if (effectiveScreen === 'connected') {
     body = <ConnectedSuccessScreen isNativeApp={isCapacitorNative} onContinue={() => { markInstallOpportunitySeen(); goTo('chats'); }} onInstall={openInstallGuide} onInstallOpportunitySeen={markInstallOpportunitySeen} />;
   } else if (effectiveScreen === 'install') {

@@ -903,6 +903,7 @@ function AuthScreen({ onBack, onMagicLink, onOpenLegal, onShowToast }) {
 function LegalAcceptanceScreen({ onBack, onContinue }) {
   const [ageOk, setAgeOk] = React.useState(false);
   const [legalOk, setLegalOk] = React.useState(false);
+  const [aiConsentOk, setAiConsentOk] = React.useState(false);
   const [doc, setDoc] = React.useState(null);
   const canContinue = ageOk && legalOk;
   return (
@@ -934,8 +935,20 @@ function LegalAcceptanceScreen({ onBack, onContinue }) {
           <p className="t-caption" style={{color: 'var(--text-secondary)', textWrap: 'pretty'}}>
             Entiendo que WaFli puede procesar contexto reciente de mis conversaciones cuando solicito una acción de IA. Soy responsable de usarlo de forma legal, respetuosa y respetando la privacidad de terceros.
           </p>
+          <div className="card" style={{padding: 12, marginTop: 12, background: 'var(--accent-soft)', borderColor: 'rgba(14, 165, 143, 0.18)'}}>
+            <label style={{display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer'}}>
+              <input type="checkbox" checked={aiConsentOk} onChange={(e) => setAiConsentOk(e.target.checked)} style={{marginTop: 3}} />
+              <span style={{fontSize: 14.5}}>
+                Autorizo que WaFli use OpenAI como proveedor externo de IA para procesar los mensajes,
+                capturas o contexto que yo elija enviar al usar funciones de IA.
+              </span>
+            </label>
+            <p className="t-caption" style={{margin: '8px 0 0', color: 'var(--text-secondary)', textWrap: 'pretty'}}>
+              Este permiso es opcional en este paso. Si no lo marcas, podrás continuar y WaFli te pedirá permiso antes de generar con IA. WaFli no envía mensajes automáticamente ni comparte tus chats con OpenAI en segundo plano.
+            </p>
+          </div>
         </div>
-        <button className="btn btn--primary btn--full" style={{marginTop: 14, opacity: canContinue ? 1 : 0.55}} disabled={!canContinue} onClick={onContinue}>
+        <button className="btn btn--primary btn--full" style={{marginTop: 14, opacity: canContinue ? 1 : 0.55}} disabled={!canContinue} onClick={() => onContinue?.({ aiDataSharingConsent: aiConsentOk })}>
           Continuar
         </button>
       </div>
@@ -961,6 +974,51 @@ function LegalAcceptanceScreen({ onBack, onContinue }) {
           onClose={() => setDoc(null)}
         />
       ) : null}
+    </>
+  );
+}
+
+function AiConsentOnboardingScreen({ onBack, onContinue }) {
+  const [choice, setChoice] = React.useState('');
+  const aiConsentOk = choice === 'yes';
+  const canContinue = choice === 'yes' || choice === 'no';
+  return (
+    <>
+      <AppHeader
+        title="Permiso de IA"
+        leading={<IconButton onClick={onBack} label="Atrás"><Icons.Back size={20} /></IconButton>}
+      />
+      <div className="scroll-y" style={{padding: '20px 22px 24px'}}>
+        <div className="card" style={{padding: 16, display: 'grid', gap: 12}}>
+          <div>
+            <span className="t-caption" style={{fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '.08em'}}>OpenAI como proveedor externo</span>
+            <h1 className="t-h2" style={{margin: '6px 0 0'}}>Antes de usar respuestas con IA</h1>
+          </div>
+          <p className="t-small" style={{margin: 0, color: 'var(--text-secondary)', textWrap: 'pretty'}}>
+            WaFli puede enviar a OpenAI, proveedor externo de IA, solo los datos necesarios cuando tú uses una función de IA: mensajes o conversaciones que pegues o selecciones, contexto reciente relevante, instrucciones, objetivos y capturas que adjuntes voluntariamente.
+          </p>
+          <p className="t-small" style={{margin: 0, color: 'var(--text-secondary)', textWrap: 'pretty'}}>
+            OpenAI procesa esos datos para generar el resultado solicitado. WaFli no envía mensajes automáticamente ni comparte tus chats con IA en segundo plano.
+          </p>
+          <label className="card" style={{padding: 12, display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', borderColor: aiConsentOk ? 'var(--accent)' : 'var(--border)'}}>
+            <input type="radio" name="ai-data-sharing-choice" checked={choice === 'yes'} onChange={() => setChoice('yes')} style={{marginTop: 3}} />
+            <span>
+              <span style={{display: 'block', fontWeight: 800}}>Sí, autorizo el uso de OpenAI</span>
+              <span className="t-caption" style={{color: 'var(--text-secondary)'}}>No volveremos a pedir este permiso salvo que borres tus datos o cambie el tratamiento de datos.</span>
+            </span>
+          </label>
+          <label className="card" style={{padding: 12, display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', borderColor: choice === 'no' ? 'var(--accent)' : 'var(--border)'}}>
+            <input type="radio" name="ai-data-sharing-choice" checked={choice === 'no'} onChange={() => setChoice('no')} style={{marginTop: 3}} />
+            <span>
+              <span style={{display: 'block', fontWeight: 800}}>No por ahora</span>
+              <span className="t-caption" style={{color: 'var(--text-secondary)'}}>Puedes entrar a WaFli. Si intentas generar con IA, te pediremos permiso antes de enviar datos a OpenAI.</span>
+            </span>
+          </label>
+        </div>
+        <button className="btn btn--primary btn--full" style={{marginTop: 14, opacity: canContinue ? 1 : 0.55}} disabled={!canContinue} onClick={() => onContinue?.({ aiDataSharingConsent: aiConsentOk })}>
+          Continuar
+        </button>
+      </div>
     </>
   );
 }
@@ -7239,7 +7297,7 @@ function PaymentSuccessSheet({ onBack }) {
 
 Object.assign(window, {
   LEGAL_DOCUMENTS, PublicLegalPage,
-  LandingScreen, AuthScreen, LegalAcceptanceScreen, SpanishVariantScreen, ToneBaseScreen, ConnectScreen, ConnectedSuccessScreen, AddToHomeScreen, StaticInfoScreen, ChatsListScreen, ChatScreen,
+  LandingScreen, AuthScreen, LegalAcceptanceScreen, AiConsentOnboardingScreen, SpanishVariantScreen, ToneBaseScreen, ConnectScreen, ConnectedSuccessScreen, AddToHomeScreen, StaticInfoScreen, ChatsListScreen, ChatScreen,
   ToolsHomeScreen, ToolReplyScreen, ToolIcebreakersScreen, SavedLinesScreen,
   SuggestSheet, RewriteSheet, AnalysisSheet, OpenerSheet, PlanScreen, QuotaExhausted, SettingsScreen,
   PlanSelectorSheet, PackSelectorSheet, UsageHistorySheet, PaymentSuccessSheet,
